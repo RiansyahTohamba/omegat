@@ -1,0 +1,20 @@
+private static IProject currentProject;
+private static IMainWindow mainWindow;
+protected static IEditor editor;
+private static ITagValidation tagValidation;
+private static IIssues issuesWindow;
+private static IMatcher matcher;
+private static ISpellChecker spellChecker;
+private static FilterMaster filterMaster;
+
+protected static IAutoSave saveThread;
+
+protected static IGlossaries glossary;
+private static GlossaryManager glossaryManager;
+private static MachineTranslateTextArea machineTranslatePane;
+private static DictionariesTextArea dictionaries;
+@SuppressWarnings("unused")
+private static MultipleTransPane multiple;
+private static INotes notes;
+private static IComments comments;
+private static Segmenter segmenter;
