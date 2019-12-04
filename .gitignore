@@ -1,5 +1,5 @@
 build
-
+out
 # Gradle
 .gradle
 .settings

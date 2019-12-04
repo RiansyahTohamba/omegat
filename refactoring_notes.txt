@@ -1,0 +1,8 @@
+4-12-19
+omegat ini versinya 5.2.0 (dev)
+
+Core.initialize() dijalankan di class Main.
+Dalam Method Core.initialize() ada 17 instansiasi object.
+Itulah yang menyebabkan high coupling
+
+https://stackoverflow.com/questions/579454/big-class-decomposition-in-java
