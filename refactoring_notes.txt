@@ -1,8 +1,60 @@
+MainWindow me = new MainWindow();
+mainWindow = me;
+...
+machineTranslatePane = new MachineTranslateTextArea(me);
+
+//saat menu pane machineTranslation di klik , selanjutnya?
+public static MachineTranslateTextArea getMachineTranslatePane() {
+    return machineTranslatePane;
+}
+
+siapa saja yang memanggil getMachineTranslatePane?
+//MainWindowMenuHandler.java
+...
+String tr = Core.getMachineTranslatePane().getDisplayedTranslation();
+if (tr == null) {
+  Core.getMachineTranslatePane().forceLoad();
+}
+...
+Bisa ga dibuat lewat Core? jadi harus lewat Core semuanya. Ayo coba refactor !!
+//langsung lewat objectnya 
+MachineTranslateTextArea.new.forceLoad
+
+
+
+
+-------------------------------------------------
+5-12-19
+> 12.30
+paper alshayeb metric nya : 
+
+Reduce coupling by fowler
+@article{fowler2001reducing,
+  title={Reducing coupling},
+  author={Fowler, Martin},
+  journal={IEEE Software},
+  number={4},
+  pages={102--104},
+  year={2001},
+  publisher={IEEE}
+}
+-------------------------------------------------
+< 12.30
+an explanation about CBO is in diary.
+What is the ideal CBO threshold? CodeMR give 
+formula for In-In?
+InIn = CBO > 30 ^ apalagi metric object?
+
+coupling apa saja ? 
+coba periksa paper impact of refactoring?
+
+----------------------------------------
 4-12-19
 omegat ini versinya 5.2.0 (dev)
 
-Core.initialize() dijalankan di class Main.
-Dalam Method Core.initialize() ada 17 instansiasi object.
+Core.initializeGUI() dijalankan di class Main.
+Dalam Method Core.initializeGUI() ada 17 instansiasi object.
 Itulah yang menyebabkan high coupling
+Apakah adanya kelas Core/GUI dengan banyak coupling itu aman-aman saja kah?
 
 https://stackoverflow.com/questions/579454/big-class-decomposition-in-java

@@ -294,6 +294,7 @@ public final class Main {
 
         try {
             Core.initializeGUI(PARAMS);
+            
         } catch (Throwable ex) {
             Log.log(ex);
             showError(ex);
