@@ -461,9 +461,11 @@ public final class MainWindowMenuHandler {
     }
 
     public void editOverwriteMachineTranslationMenuItemActionPerformed() {
-        String tr = Core.getMachineTranslatePane().getDisplayedTranslation();
+        MachineTranslateTextArea mtranslatepane = new MachineTranslateTextArea(new MainWindow());
+
+        String tr = mtranslatepane.getDisplayedTranslation();
         if (tr == null) {
-            Core.getMachineTranslatePane().forceLoad();
+            mtranslatepane.forceLoad();
         } else if (!StringUtil.isEmpty(tr)) {
             Core.getEditor().replaceEditText(tr);
         }

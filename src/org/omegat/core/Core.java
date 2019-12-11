@@ -180,10 +180,6 @@ public final class Core {
         EntryKey.setIgnoreFileContext(newFilterMaster.getConfig().isIgnoreFileContext());
     }
 
-    public static MachineTranslateTextArea getMachineTranslatePane() {
-        return machineTranslatePane;
-    }
-
     public static IAutoSave getAutoSave() {
         return saveThread;
     }
@@ -277,7 +273,6 @@ public final class Core {
         matcher = new MatchesTextArea(me);
         notes = new NotesTextArea(me);
         comments = new CommentsTextArea(me);
-        machineTranslatePane = new MachineTranslateTextArea(me);
 
         dictionaries = new DictionariesTextArea(me);
         multiple = new MultipleTransPane(me);
