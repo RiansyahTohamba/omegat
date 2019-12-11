@@ -233,8 +233,6 @@ public final class Core {
         currentProject = new NotLoadedProject();
 
         // 2. Initialize application frame
-        MainWindow me = new MainWindow();
-        mainWindow = me;
 
         Core.registerMarker(new ProtectedPartsMarker());
         Core.registerMarker(new RemoveTagMarker());
@@ -256,28 +254,39 @@ public final class Core {
 
         segmenter = new Segmenter(Preferences.getSRX());
         filterMaster = new FilterMaster(Preferences.getFilters());
+        dependOnMainWindow();
 
-        // 3. Initialize other components. They add themselves to the main window.
-        editor = new EditorController(me);
+        //tag validation is used in initializeConsole too
         tagValidation = new TagValidationTool();
-        issuesWindow = new IssuesPanelController(me);
-        matcher = new MatchesTextArea(me);
-        GlossaryTextArea glossaryArea = new GlossaryTextArea(me);
-        glossary = glossaryArea;
-        glossaryManager = new GlossaryManager(glossaryArea);
-        notes = new NotesTextArea(me);
-        comments = new CommentsTextArea(me);
-        machineTranslatePane = new MachineTranslateTextArea(me);
-        dictionaries = new DictionariesTextArea(me);
         spellChecker = new SpellChecker();
-        multiple = new MultipleTransPane(me);
-        new SegmentPropertiesArea(me);
 
         SaveThread th = new SaveThread();
         saveThread = th;
         th.start();
 
         new VersionCheckThread(10).start();
+    }
+
+    private static void dependOnMainWindow() {
+        // 3. Initialize other components. They add themselves to the main window.
+        MainWindow me = new MainWindow();
+        mainWindow = me;
+
+        editor = new EditorController(me);
+        issuesWindow = new IssuesPanelController(me);
+        matcher = new MatchesTextArea(me);
+        notes = new NotesTextArea(me);
+        comments = new CommentsTextArea(me);
+        machineTranslatePane = new MachineTranslateTextArea(me);
+
+        dictionaries = new DictionariesTextArea(me);
+        multiple = new MultipleTransPane(me);
+
+        GlossaryTextArea glossaryArea = new GlossaryTextArea(me);
+        glossary = glossaryArea;
+        glossaryManager = new GlossaryManager(glossaryArea);
+
+        new SegmentPropertiesArea(me);
     }
 
     /**
