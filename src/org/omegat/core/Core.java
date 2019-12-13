@@ -273,7 +273,7 @@ public final class Core {
         matcher = new MatchesTextArea(me);
         notes = new NotesTextArea(me);
         comments = new CommentsTextArea(me);
-
+        machineTranslatePane = new MachineTranslateTextArea(me);
         dictionaries = new DictionariesTextArea(me);
         multiple = new MultipleTransPane(me);
 
@@ -282,6 +282,9 @@ public final class Core {
         glossaryManager = new GlossaryManager(glossaryArea);
 
         new SegmentPropertiesArea(me);
+    }
+    public static MachineTranslateTextArea getMachineTranslatePane() {
+        return machineTranslatePane;
     }
 
     /**
