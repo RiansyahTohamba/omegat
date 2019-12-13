@@ -583,37 +583,37 @@ public final class MainWindowMenuHandler {
 
     /** Set active match to #1. */
     public void editSelectFuzzy1MenuItemActionPerformed() {
-        Core.getMatcher().setActiveMatch(0);
+        DependOnMainWindow.getMatcher().setActiveMatch(0);
     }
 
     /** Set active match to #2. */
     public void editSelectFuzzy2MenuItemActionPerformed() {
-        Core.getMatcher().setActiveMatch(1);
+        DependOnMainWindow.getMatcher().setActiveMatch(1);
     }
 
     /** Set active match to #3. */
     public void editSelectFuzzy3MenuItemActionPerformed() {
-        Core.getMatcher().setActiveMatch(2);
+        DependOnMainWindow.getMatcher().setActiveMatch(2);
     }
 
     /** Set active match to #4. */
     public void editSelectFuzzy4MenuItemActionPerformed() {
-        Core.getMatcher().setActiveMatch(3);
+        DependOnMainWindow.getMatcher().setActiveMatch(3);
     }
 
     /** Set active match to #5. */
     public void editSelectFuzzy5MenuItemActionPerformed() {
-        Core.getMatcher().setActiveMatch(4);
+        DependOnMainWindow.getMatcher().setActiveMatch(4);
     }
 
     /** Set active match to the next one */
     public void editSelectFuzzyNextMenuItemActionPerformed() {
-        Core.getMatcher().setNextActiveMatch();
+        DependOnMainWindow.getMatcher().setNextActiveMatch();
     }
 
     /** Set active match to the previous one */
     public void editSelectFuzzyPrevMenuItemActionPerformed() {
-        Core.getMatcher().setPrevActiveMatch();
+        DependOnMainWindow.getMatcher().setPrevActiveMatch();
     }
 
     public void insertCharsLRMActionPerformed() {
@@ -733,7 +733,7 @@ public final class MainWindowMenuHandler {
     }
 
     public void gotoMatchSourceSegmentActionPerformed() {
-        NearString ns = Core.getMatcher().getActiveMatch();
+        NearString ns = DependOnMainWindow.getMatcher().getActiveMatch();
         if (ns != null && ns.comesFrom == MATCH_SOURCE.MEMORY) {
             DependOnMainWindow.getEditor().gotoEntry(ns.source, ns.key);
         }
