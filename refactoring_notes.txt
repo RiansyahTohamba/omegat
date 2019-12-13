@@ -1,3 +1,4 @@
+
 LIHAT git merge !!!
   public static IAutoSave getAutoSave() {
 //        TODO: Penggunaannya di kelas ini :
@@ -8,8 +9,15 @@ LIHAT git merge !!!
 
         return saveThread;
     }
---------------------
-BERES
+-----------------------
+BERES mindahin object didalam initializeGUI, labour intensive wkwkw
+sesudahnya saya pakai bantuan intelij nikmat banget pindahinnya :D
+prosedur mindahin kelas dgn intelij
+1. extract method yang panjang
+2. nanti muncul method_baru
+3. pilih method_baru lalu klik kanan refactor > extract > delegate untuk memindahkan method_baru ke class_baru
+4. pindahkan accessor terkait (method access nya dan variabel private nya) ke class_baru
+----
 Core.getEditor() ditemukan di 49 files, mungkin saja files itu classes
 , di kelas-kelas ini juga nanti ditambahkan import org.omegat.core.DependOnMainWindow;
 CommandVarExpansion.java
