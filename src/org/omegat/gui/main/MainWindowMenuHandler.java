@@ -199,7 +199,7 @@ public final class MainWindowMenuHandler {
         if (Preferences.isPreference(Preferences.TAGS_VALID_REQUIRED)) {
             List<ErrorReport> stes = Core.getTagValidation().listInvalidTags();
             if (!stes.isEmpty()) {
-                Core.getIssues().showAll(OStrings.getString("TF_MESSAGE_COMPILE"));
+                DependOnMainWindow.getIssues().showAll(OStrings.getString("TF_MESSAGE_COMPILE"));
                 return false;
             }
         }
@@ -234,7 +234,7 @@ public final class MainWindowMenuHandler {
         if (Preferences.isPreference(Preferences.TAGS_VALID_REQUIRED)) {
             List<ErrorReport> stes = Core.getTagValidation().listInvalidTags(sourcePattern);
             if (!stes.isEmpty()) {
-                Core.getIssues().showForFiles(midName, OStrings.getString("TF_MESSAGE_COMPILE"));
+                DependOnMainWindow.getIssues().showForFiles(midName, OStrings.getString("TF_MESSAGE_COMPILE"));
                 return;
             }
         }
@@ -842,11 +842,11 @@ public final class MainWindowMenuHandler {
                 return;
             }
         }
-        Core.getIssues().showAll();
+        DependOnMainWindow.getIssues().showAll();
     }
 
     public void toolsCheckIssuesCurrentFileMenuItemActionPerformed() {
-        Core.getIssues().showForFiles(Pattern.quote(Core.getEditor().getCurrentFile()));
+        DependOnMainWindow.getIssues().showForFiles(Pattern.quote(Core.getEditor().getCurrentFile()));
     }
 
     /**

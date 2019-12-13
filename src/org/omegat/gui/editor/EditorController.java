@@ -36,6 +36,7 @@
 
 package org.omegat.gui.editor;
 
+import org.omegat.core.DependOnMainWindow;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
@@ -1257,7 +1258,7 @@ public class EditorController implements IEditor {
                 protected void done() {
                     try {
                         if (!get()) {
-                            Core.getIssues().showForFiles(Pattern.quote(file), entry.entryNum());
+                            DependOnMainWindow.getIssues().showForFiles(Pattern.quote(file), entry.entryNum());
                         }
                     } catch (InterruptedException | ExecutionException e) {
                         LOGGER.log(Level.SEVERE, "Exception when validating tags on leave", e);

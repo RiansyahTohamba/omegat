@@ -107,7 +107,6 @@ public final class Core {
     private static IMainWindow mainWindow;
     protected static IEditor editor;
     private static ITagValidation tagValidation;
-    private static IIssues issuesWindow;
     private static IMatcher matcher;
     private static ISpellChecker spellChecker;
     private static FilterMaster filterMaster;
@@ -156,9 +155,7 @@ public final class Core {
         return tagValidation;
     }
 
-    public static IIssues getIssues() {
-        return issuesWindow;
-    }
+
 
     /** Get matcher component instance. */
     public static IMatcher getMatcher() {
