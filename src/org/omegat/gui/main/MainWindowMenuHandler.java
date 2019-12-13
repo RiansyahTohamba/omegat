@@ -437,8 +437,8 @@ public final class MainWindowMenuHandler {
 
     public void editUndoMenuItemActionPerformed() {
         Component focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-        if (focused == Core.getNotes()) {
-            Core.getNotes().undo();
+        if (focused == DependOnMainWindow.getNotes()) {
+            DependOnMainWindow.getNotes().undo();
         } else {
             DependOnMainWindow.getEditor().undo();
         }
@@ -446,8 +446,8 @@ public final class MainWindowMenuHandler {
 
     public void editRedoMenuItemActionPerformed() {
         Component focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-        if (focused == Core.getNotes()) {
-            Core.getNotes().redo();
+        if (focused == DependOnMainWindow.getNotes()) {
+            DependOnMainWindow.getNotes().redo();
         } else {
             DependOnMainWindow.getEditor().redo();
         }
@@ -522,14 +522,14 @@ public final class MainWindowMenuHandler {
             SourceTextEntry ste = DependOnMainWindow.getEditor().getCurrentEntry();
             selection = ste.getSrcText();
         }
-        Core.getDictionaries().searchText(selection);
+        DependOnMainWindow.getDictionaries().searchText(selection);
     }
 
     public void editCreateGlossaryEntryMenuItemActionPerformed() {
         if (!Core.getProject().isProjectLoaded()) {
             return;
         }
-        Core.getGlossary().showCreateGlossaryEntryDialog(Core.getMainWindow().getApplicationFrame());
+        DependOnMainWindow.getGlossary().showCreateGlossaryEntryDialog(Core.getMainWindow().getApplicationFrame());
     }
 
     public void editFindInProjectMenuItemActionPerformed() {
