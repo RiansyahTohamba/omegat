@@ -63,7 +63,6 @@ import org.omegat.gui.editor.mark.RemoveTagMarker;
 import org.omegat.gui.editor.mark.ReplaceMarker;
 import org.omegat.gui.editor.mark.WhitespaceMarkerFactory;
 import org.omegat.gui.exttrans.IMachineTranslation;
-import org.omegat.gui.exttrans.MachineTranslateTextArea;
 import org.omegat.gui.glossary.GlossaryManager;
 import org.omegat.gui.glossary.GlossaryTextArea;
 import org.omegat.gui.glossary.IGlossaries;
