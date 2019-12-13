@@ -174,19 +174,19 @@ public class GlossaryTextArea extends EntryInfoThreadPane<List<GlossaryEntry>>
     @Override
     protected void onProjectOpen() {
         clear();
-        Core.getGlossaryManager().start();
+        DependOnMainWindow.getGlossaryManager().start();
     }
 
     @Override
     protected void onProjectClose() {
         clear();
         setText(EXPLANATION);
-        Core.getGlossaryManager().stop();
+        DependOnMainWindow.getGlossaryManager().stop();
     }
 
     @Override
     protected void startSearchThread(SourceTextEntry newEntry) {
-        new FindGlossaryThread(GlossaryTextArea.this, newEntry, Core.getGlossaryManager()).start();
+        new FindGlossaryThread(GlossaryTextArea.this, newEntry, DependOnMainWindow.getGlossaryManager()).start();
     }
 
     /**

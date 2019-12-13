@@ -47,6 +47,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.omegat.core.Core;
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.data.EntryKey;
 import org.omegat.core.data.ExternalTMX;
 import org.omegat.core.data.IProject;
@@ -369,7 +370,7 @@ public class Searcher {
         // search the glossary, if requested
         if (m_searchExpression.glossary) {
             String intro = OStrings.getString("SW_GLOSSARY_RESULT");
-            List<GlossaryEntry> entries = Core.getGlossaryManager().getLocalEntries();
+            List<GlossaryEntry> entries = DependOnMainWindow.getGlossaryManager().getLocalEntries();
             for (GlossaryEntry en : entries) {
                 checkEntry(en.getSrcText(), en.getLocText(), null, null, null, ENTRY_ORIGIN_GLOSSARY, intro);
                 // stop searching if the max. nr of hits has been reached
