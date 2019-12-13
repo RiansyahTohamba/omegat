@@ -20,11 +20,8 @@ public final class DependOnMainWindow {
     private static IIssues issuesWindow;
     // protected buat apa kalau ga bisa di extend?wkwk
     protected static IEditor editor;
-    static void dependOnMainWindow() {
-        /*        TODO: how to separate these objects?  */
-        MainWindow me = new MainWindow();
-        Core.mainWindow = me;
-
+    static void dependOnMainWindow(MainWindow me) {
+        
         editor = new EditorController(me);
 
         issuesWindow = new IssuesPanelController(me);

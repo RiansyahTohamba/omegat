@@ -242,7 +242,9 @@ public final class Core {
 
         segmenter = new Segmenter(Preferences.getSRX());
         filterMaster = new FilterMaster(Preferences.getFilters());
-        DependOnMainWindow.dependOnMainWindow();
+        MainWindow me = new MainWindow();
+        mainWindow = me;
+        DependOnMainWindow.dependOnMainWindow(me);
 
         //tag validation is used in initializeConsole too
         tagValidation = new TagValidationTool();
