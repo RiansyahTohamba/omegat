@@ -232,11 +232,11 @@ public class MainWindow extends JFrame implements IMainWindow {
         String text = getSelectedTextInMatcher();
         boolean fromMT = false;
         if (StringUtil.isEmpty(text)) {
-            NearString near = Core.getMatcher().getActiveMatch();
+            NearString near = DependOnMainWindow.getMatcher().getActiveMatch();
             if (near != null) {
                 text = near.translation;
                 if (Preferences.isPreference(Preferences.CONVERT_NUMBERS)) {
-                    text = Core.getMatcher().substituteNumbers(DependOnMainWindow.getEditor().getCurrentEntry().getSrcText(),
+                    text = DependOnMainWindow.getMatcher().substituteNumbers(DependOnMainWindow.getEditor().getCurrentEntry().getSrcText(),
                         near.source, near.translation);
                 }
 
@@ -270,11 +270,11 @@ public class MainWindow extends JFrame implements IMainWindow {
             return;
         }
 
-        NearString near = Core.getMatcher().getActiveMatch();
+        NearString near = DependOnMainWindow.getMatcher().getActiveMatch();
         if (near != null) {
             String translation = near.translation;
             if (Preferences.isPreference(Preferences.CONVERT_NUMBERS)) {
-                translation = Core.getMatcher().substituteNumbers(DependOnMainWindow.getEditor().getCurrentEntry().getSrcText(),
+                translation = DependOnMainWindow.getMatcher().substituteNumbers(DependOnMainWindow.getEditor().getCurrentEntry().getSrcText(),
                         near.source, near.translation);
             }
             if (near.comesFrom == NearString.MATCH_SOURCE.TM
@@ -289,7 +289,7 @@ public class MainWindow extends JFrame implements IMainWindow {
     }
 
     private String getSelectedTextInMatcher() {
-        IMatcher matcher = Core.getMatcher();
+        IMatcher matcher = DependOnMainWindow.getMatcher();
         return matcher instanceof JTextComponent
                 ? ((JTextComponent) matcher).getSelectedText()
                 : null;
