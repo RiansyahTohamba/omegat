@@ -53,7 +53,6 @@ import org.omegat.gui.comments.IComments;
 import org.omegat.gui.dictionaries.DictionariesTextArea;
 import org.omegat.gui.dictionaries.IDictionaries;
 import org.omegat.gui.editor.EditorController;
-import org.omegat.gui.editor.IEditor;
 import org.omegat.gui.editor.mark.BidiMarkerFactory;
 import org.omegat.gui.editor.mark.ComesFromAutoTMMarker;
 import org.omegat.gui.editor.mark.FontFallbackMarker;
@@ -105,7 +104,7 @@ public final class Core {
 
     private static IProject currentProject;
     private static IMainWindow mainWindow;
-    protected static IEditor editor;
+    
     private static ITagValidation tagValidation;
     private static IMatcher matcher;
     private static ISpellChecker spellChecker;
@@ -145,10 +144,7 @@ public final class Core {
         return mainWindow;
     }
 
-    /** Get editor instance. */
-    public static IEditor getEditor() {
-        return editor;
-    }
+    
 
     /** Get tag validation component instance. */
     public static ITagValidation getTagValidation() {

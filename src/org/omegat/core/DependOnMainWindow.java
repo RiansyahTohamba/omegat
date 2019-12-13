@@ -1,5 +1,6 @@
 package org.omegat.core;
 
+import org.omegat.gui.editor.IEditor;
 import org.omegat.gui.comments.CommentsTextArea;
 import org.omegat.gui.dictionaries.DictionariesTextArea;
 import org.omegat.gui.editor.EditorController;
@@ -17,13 +18,15 @@ import org.omegat.gui.properties.SegmentPropertiesArea;
 public final class DependOnMainWindow {
     private static MachineTranslateTextArea machineTranslatePane;
     private static IIssues issuesWindow;
-
+    // protected buat apa kalau ga bisa di extend?wkwk
+    protected static IEditor editor;
     static void dependOnMainWindow() {
         /*        TODO: how to separate these objects?  */
         MainWindow me = new MainWindow();
         Core.mainWindow = me;
 
-        Core.editor = new EditorController(me);
+        editor = new EditorController(me);
+
         issuesWindow = new IssuesPanelController(me);
         Core.matcher = new MatchesTextArea(me);
         Core.notes = new NotesTextArea(me);
@@ -38,6 +41,12 @@ public final class DependOnMainWindow {
 
         new SegmentPropertiesArea(me);
     }
+
+    /** Get editor instance. */
+    public static IEditor getEditor() {
+        return editor;
+    }    
+
     public static MachineTranslateTextArea getMachineTranslatePane() {
         return machineTranslatePane;
     }
