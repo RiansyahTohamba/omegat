@@ -860,7 +860,7 @@ public class EditorController implements IEditor {
         // forget about old marks
         builder.createSegmentElement(true, currentTranslation);
 
-        Core.getNotes().setNoteText(currentTranslation.note);
+        DependOnMainWindow.getNotes().setNoteText(currentTranslation.note);
 
         // then add new marks
         markerController.reprocessImmediately(builder);
@@ -1146,7 +1146,7 @@ public class EditorController implements IEditor {
 
         PrepareTMXEntry newen = new PrepareTMXEntry();
         newen.source = sb.ste.getSrcText();
-        newen.note = Core.getNotes().getNoteText();
+        newen.note = DependOnMainWindow.getNotes().getNoteText();
         if (forceTranslation != null) { // there is force translation
             switch (forceTranslation) {
             case UNTRANSLATED:
@@ -1239,7 +1239,7 @@ public class EditorController implements IEditor {
             }
         }
 
-        Core.getNotes().clear();
+        DependOnMainWindow.getNotes().clear();
 
         // then add new marks
         markerController.reprocessImmediately(m_docSegList[displayedEntryIndex]);
