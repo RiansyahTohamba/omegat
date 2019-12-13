@@ -1,3 +1,86 @@
+LIHAT git merge !!!
+  public static IAutoSave getAutoSave() {
+//        TODO: Penggunaannya di kelas ini :
+//        RealProject
+//        ProjectFactory
+//        dipakai buat enable/disable
+//Core.getAutoSave().enable() OR Core.getAutoSave().disable()
+
+        return saveThread;
+    }
+
+1. Move Method
+adakah di core.java ?
+
+ ------------------------------------------------------------------------
+2. Move Field
+adakah di core.java ?
+
+ ------------------------------------------------------------------------
+3. Change Bidirectional Association to Unidirectional
+adakah di core.java ?
+
+------------------------------------------------------------------------
+4. Extract Class (EC) :
+adakah di core.java ?
+
+ ------------------------------------------------------------------------
+5. Hide Delegate (HD): use it to let another class act as go-between.
+adakah di Core.java ?
+
+
+Client : class MainWindowMenuHandler
+
+client jadi mengetahui semua yg ada di Core.getMachineTranslatePane() (class MachineTranslateTextArea)
+
+HD menurunkan CBO.
+
+------------------------
+6. Replace Delegation with Inheritance RDwI
+RDwi menurunkan CBO dgn meningkatkan DIT
+
+pada kasus core,RDwI tidak ditemukan
+
+Next?
+Mana kode yang mengindikasikan delegasi? Buka core.java
+
+Semuanya coupling karena ada me = new MainWindow();
+
+Kita harus mencari pemakaian Core.blabla
+(Labour Intensive wkwkw)
+-----------------------------------
+
+
+Mari kita lihat mana code yg bisa di-replace dengan inheritance
+
+Delegasi dibuat karena tidak semua kode mesti dibuat dalam inheritance
+
+class A{
+    a()
+    b()
+    c()
+}
+class B extends A{
+    @override
+    b()
+    @override
+    c()
+}
+maka delegasi lebih cocok untuk kode diatas
+-----------------------------------
+Delegation vs inheritance bandingkan secara CBO?
+CBO berkurang saat kita buat ubah delegasi jadi inheritance
+
+Sekarang lagi mencoba  core/samples/[delegation vs inheritance]
+salah satu refactoring InIn adalah replace delegation with inheritance
+
+CBO bukan akumulasi semua CBO_method tapi akumulasi ada distinction juga,
+jika object yang terlibat cuman 1 ,maka yang 1 itu tidak akan diulangi lagi
+
+ga ada kaitan antara atribut milik class dengan CBO,
+CBO mulai ditandai saat instance creation ex: a = new A()
+
+----------------------------------------------------
 MainWindow me = new MainWindow();
 mainWindow = me;
 ...
