@@ -35,6 +35,7 @@ import javax.swing.text.Highlighter.HighlightPainter;
 import org.omegat.core.Core;
 import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.CoreEvents;
+import org.omegat.core.RegMarker;
 import org.omegat.core.data.SourceTextEntry;
 import org.omegat.core.events.IApplicationEventListener;
 import org.omegat.gui.editor.UnderlineFactory;
@@ -70,7 +71,7 @@ public final class LanguageToolWrapper {
 
     public static void init() {
 
-        Core.registerMarker(new LanguageToolMarker());
+        RegMarker.registerMarker(new LanguageToolMarker());
         IssueProviders.addIssueProvider(new LanguageToolIssueProvider());
 
         CoreEvents.registerProjectChangeListener(e -> {
