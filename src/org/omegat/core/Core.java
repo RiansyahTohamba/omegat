@@ -250,7 +250,7 @@ public final class Core {
 
         segmenter = new Segmenter(Preferences.getSRX());
         filterMaster = new FilterMaster(Preferences.getFilters());
-        dependOnMainWindow();
+        DependOnMainWindow.dependOnMainWindow();
 
         //tag validation is used in initializeConsole too
         tagValidation = new TagValidationTool();
@@ -263,26 +263,8 @@ public final class Core {
         new VersionCheckThread(10).start();
     }
 
-    private static void dependOnMainWindow() {
-        // 3. Initialize other components. They add themselves to the main window.
-        MainWindow me = new MainWindow();
-        mainWindow = me;
 
-        editor = new EditorController(me);
-        issuesWindow = new IssuesPanelController(me);
-        matcher = new MatchesTextArea(me);
-        notes = new NotesTextArea(me);
-        comments = new CommentsTextArea(me);
-        machineTranslatePane = new MachineTranslateTextArea(me);
-        dictionaries = new DictionariesTextArea(me);
-        multiple = new MultipleTransPane(me);
 
-        GlossaryTextArea glossaryArea = new GlossaryTextArea(me);
-        glossary = glossaryArea;
-        glossaryManager = new GlossaryManager(glossaryArea);
-
-        new SegmentPropertiesArea(me);
-    }
     public static MachineTranslateTextArea getMachineTranslatePane() {
         return machineTranslatePane;
     }
