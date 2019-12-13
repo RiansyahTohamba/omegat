@@ -53,6 +53,6 @@ public final class TestCoreInitializer {
     }
 
     public static void initGlossary(IGlossaries glossaries) {
-        Core.glossary = glossaries;
+        DependOnMainWindow.glossary = glossaries;
     }
 }

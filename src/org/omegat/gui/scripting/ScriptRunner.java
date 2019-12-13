@@ -159,7 +159,7 @@ public final class ScriptRunner {
         Bindings bindings = engine.createBindings();
         bindings.put(VAR_PROJECT, Core.getProject());
         bindings.put(VAR_EDITOR, DependOnMainWindow.getEditor());
-        bindings.put(VAR_GLOSSARY, Core.getGlossary());
+        bindings.put(VAR_GLOSSARY, DependOnMainWindow.getGlossary());
         bindings.put(VAR_MAINWINDOW, Core.getMainWindow());
         bindings.put(VAR_CORE, Core.class);
 

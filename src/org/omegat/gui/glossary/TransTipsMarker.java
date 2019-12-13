@@ -33,7 +33,6 @@ import java.util.List;
 
 import javax.swing.text.Highlighter.HighlightPainter;
 import org.omegat.core.DependOnMainWindow;
-import org.omegat.core.Core;
 import org.omegat.core.data.SourceTextEntry;
 import org.omegat.gui.editor.UnderlineFactory;
 import org.omegat.gui.editor.mark.IMarker;
@@ -61,7 +60,7 @@ public class TransTipsMarker implements IMarker {
         if (!DependOnMainWindow.getEditor().getSettings().isMarkGlossaryMatches()) {
             return null;
         }
-        List<GlossaryEntry> glossaryEntries = Core.getGlossary().getDisplayedEntries();
+        List<GlossaryEntry> glossaryEntries = DependOnMainWindow.getGlossary().getDisplayedEntries();
         if (glossaryEntries == null || glossaryEntries.isEmpty()) {
             return null;
         }
@@ -70,7 +69,7 @@ public class TransTipsMarker implements IMarker {
 
         for (GlossaryEntry ent : glossaryEntries) {
             String tooltip = renderer.renderToHtml(ent);
-            List<Token[]> tokens = Core.getGlossaryManager().searchSourceMatchTokens(ste, ent);
+            List<Token[]> tokens = DependOnMainWindow.getGlossaryManager().searchSourceMatchTokens(ste, ent);
             marks.addAll(getMarksForTokens(tokens, ste.getSrcText(), tooltip));
         }
         return marks;

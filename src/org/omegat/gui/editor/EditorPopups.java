@@ -274,7 +274,7 @@ public final class EditorPopups {
             JMenuItem item = menu.add(OStrings.getString("GUI_GLOSSARYWINDOW_addentry"));
             item.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
-                    Core.getGlossary()
+                    DependOnMainWindow.getGlossary()
                             .showCreateGlossaryEntryDialog(Core.getMainWindow().getApplicationFrame());
                  }
             });

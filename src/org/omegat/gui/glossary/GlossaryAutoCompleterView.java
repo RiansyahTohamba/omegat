@@ -32,7 +32,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
-import org.omegat.core.Core;
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.gui.editor.autocompleter.AutoCompleter;
 import org.omegat.gui.editor.autocompleter.AutoCompleterItem;
 import org.omegat.gui.editor.autocompleter.AutoCompleterListView;
@@ -71,7 +71,7 @@ public class GlossaryAutoCompleterView extends AutoCompleterListView {
         String sortMatchTo = wordChunk;
 
         List<AutoCompleterItem> result = new ArrayList<AutoCompleterItem>();
-        List<GlossaryEntry> entries = Core.getGlossary().getDisplayedEntries();
+        List<GlossaryEntry> entries = DependOnMainWindow.getGlossary().getDisplayedEntries();
 
         // Get contextual results
         fillMatchingTerms(result, entries, wordChunk);
