@@ -34,7 +34,6 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.text.JTextComponent;
 import org.omegat.core.DependOnMainWindow;
-import org.omegat.core.Core;
 import org.omegat.gui.editor.IPopupMenuConstructor;
 import org.omegat.gui.editor.SegmentBuilder;
 import org.omegat.util.Token;
@@ -66,7 +65,7 @@ public class TransTipsPopup implements IPopupMenuConstructor {
         }
         Set<String> added = new HashSet<>();
         for (GlossaryEntry ge : GlossaryTextArea.nowEntries) {
-            for (Token[] toks : Core.getGlossaryManager().searchSourceMatchTokens(sb.getSourceTextEntry(), ge)) {
+            for (Token[] toks : DependOnMainWindow.getGlossaryManager().searchSourceMatchTokens(sb.getSourceTextEntry(), ge)) {
                 for (Token tok : toks) {
                     // is inside found word ?
                     if (startSource + tok.getOffset() <= mousepos

@@ -35,6 +35,7 @@ import javax.swing.text.JTextComponent;
 import javax.swing.text.Utilities;
 
 import org.omegat.core.Core;
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.data.ProtectedPart;
 import org.omegat.core.data.SourceTextEntry;
 import org.omegat.gui.editor.IEditor.CHANGE_CASE_TO;
@@ -352,7 +353,7 @@ public final class EditorUtils {
     public static String replaceGlossaryEntries(String text) {
         Locale locale = Core.getProject().getProjectProperties().getSourceLanguage().getLocale();
         ITokenizer tokenizer = Core.getProject().getSourceTokenizer();
-        return replaceGlossaryEntries(text, Core.getGlossaryManager().getGlossaryEntries(text),
+        return replaceGlossaryEntries(text, DependOnMainWindow.getGlossaryManager().getGlossaryEntries(text),
                 locale, tokenizer);
     }
 

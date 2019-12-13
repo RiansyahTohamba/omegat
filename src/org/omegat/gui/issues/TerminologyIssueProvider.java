@@ -46,6 +46,7 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
 import org.omegat.core.Core;
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.data.SourceTextEntry;
 import org.omegat.core.data.TMXEntry;
 import org.omegat.gui.glossary.GlossaryEntry;
@@ -74,12 +75,12 @@ class TerminologyIssueProvider implements IIssueProvider {
 
     @Override
     public List<IIssue> getIssues(SourceTextEntry sourceEntry, TMXEntry tmxEntry) {
-        List<GlossaryEntry> entries = Core.getGlossaryManager().searchSourceMatches(sourceEntry);
+        List<GlossaryEntry> entries = DependOnMainWindow.getGlossaryManager().searchSourceMatches(sourceEntry);
         if (entries.isEmpty()) {
             return Collections.emptyList();
         }
         return entries.stream().map(e -> {
-            List<String> trgTerms = Core.getGlossaryManager().searchTargetMatches(tmxEntry.translation,
+            List<String> trgTerms = DependOnMainWindow.getGlossaryManager().searchTargetMatches(tmxEntry.translation,
                     sourceEntry.getProtectedParts(), e);
             return trgTerms.isEmpty() ? new TerminologyIssue(sourceEntry, tmxEntry, e) : null;
         }).filter(Objects::nonNull).collect(Collectors.toList());
@@ -204,7 +205,7 @@ class TerminologyIssueProvider implements IIssueProvider {
             splitPanel.firstTextPane.setText(ste.getSrcText());
             splitPanel.lastTextPane.setText(tmxEntry.translation);
             StyledDocument doc = splitPanel.firstTextPane.getStyledDocument();
-            for (Token[] toks : Core.getGlossaryManager().searchSourceMatchTokens(ste, glossaryEntry)) {
+            for (Token[] toks : DependOnMainWindow.getGlossaryManager().searchSourceMatchTokens(ste, glossaryEntry)) {
                 for (Token tok : toks) {
                     doc.setCharacterAttributes(tok.getOffset(), tok.getLength(), ERROR_STYLE, false);
                 }

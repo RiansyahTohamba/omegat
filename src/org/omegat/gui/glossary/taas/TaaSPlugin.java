@@ -40,6 +40,7 @@ import javax.xml.transform.stream.StreamSource;
 
 import org.omegat.core.Core;
 import org.omegat.core.CoreEvents;
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.events.IApplicationEventListener;
 import org.omegat.gui.preferences.PreferencesControllers;
 import org.omegat.gui.preferences.PreferencesWindowController;
@@ -114,7 +115,7 @@ public final class TaaSPlugin {
                 Preferences.addPropertyChangeListener(Preferences.TAAS_LOOKUP,
                         e -> lookup.setSelected((Boolean) e.getNewValue()));
                 if (client.isAllowed()) {
-                    Core.getGlossaryManager().addGlossaryProvider(glossary);
+                    DependOnMainWindow.getGlossaryManager().addGlossaryProvider(glossary);
                 }
             }
 
