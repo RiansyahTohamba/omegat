@@ -34,7 +34,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.data.EntryKey;
 import org.omegat.core.data.IProject;
 import org.omegat.core.data.NotLoadedProject;
@@ -49,36 +48,19 @@ import org.omegat.core.threads.VersionCheckThread;
 import org.omegat.filters2.IFilter;
 import org.omegat.filters2.master.FilterMaster;
 import org.omegat.filters2.master.PluginUtils;
-import org.omegat.gui.comments.CommentsTextArea;
 import org.omegat.gui.comments.IComments;
 import org.omegat.gui.dictionaries.DictionariesTextArea;
 import org.omegat.gui.dictionaries.IDictionaries;
-import org.omegat.gui.editor.EditorController;
-import org.omegat.gui.editor.mark.BidiMarkerFactory;
-import org.omegat.gui.editor.mark.ComesFromAutoTMMarker;
-import org.omegat.gui.editor.mark.FontFallbackMarker;
 import org.omegat.gui.editor.mark.IMarker;
-import org.omegat.gui.editor.mark.NBSPMarker;
-import org.omegat.gui.editor.mark.ProtectedPartsMarker;
-import org.omegat.gui.editor.mark.RemoveTagMarker;
-import org.omegat.gui.editor.mark.ReplaceMarker;
-import org.omegat.gui.editor.mark.WhitespaceMarkerFactory;
 import org.omegat.gui.exttrans.IMachineTranslation;
 import org.omegat.gui.glossary.GlossaryManager;
-import org.omegat.gui.glossary.GlossaryTextArea;
 import org.omegat.gui.glossary.IGlossaries;
-import org.omegat.gui.glossary.TransTipsMarker;
-import org.omegat.gui.issues.IIssues;
-import org.omegat.gui.issues.IssuesPanelController;
 import org.omegat.gui.main.ConsoleWindow;
 import org.omegat.gui.main.IMainWindow;
 import org.omegat.gui.main.MainWindow;
 import org.omegat.gui.matches.IMatcher;
-import org.omegat.gui.matches.MatchesTextArea;
 import org.omegat.gui.multtrans.MultipleTransPane;
 import org.omegat.gui.notes.INotes;
-import org.omegat.gui.notes.NotesTextArea;
-import org.omegat.gui.properties.SegmentPropertiesArea;
 import org.omegat.languagetools.LanguageToolWrapper;
 import org.omegat.tokenizer.ITokenizer;
 import org.omegat.util.Preferences;
@@ -106,27 +88,18 @@ public final class Core {
     private static IMainWindow mainWindow;
     
     private static ITagValidation tagValidation;
-    private static IMatcher matcher;
     private static ISpellChecker spellChecker;
     private static FilterMaster filterMaster;
 
     protected static IAutoSave saveThread;
     private static final ReentrantLock EXCLUSIVE_RUN_LOCK = new ReentrantLock();
 
-    protected static IGlossaries glossary;
-    private static GlossaryManager glossaryManager;
-    private static DictionariesTextArea dictionaries;
-    @SuppressWarnings("unused")
-    private static MultipleTransPane multiple;
-    private static INotes notes;
-    private static IComments comments;
     private static Segmenter segmenter;
 
     private static Map<String, String> cmdLineParams = Collections.emptyMap();
 
     private static final List<String> PLUGINS_LOADING_ERRORS = Collections
             .synchronizedList(new ArrayList<String>());
-
 
     /** Get project instance. */
     public static IProject getProject() {
@@ -151,12 +124,6 @@ public final class Core {
     }
 
 
-
-    /** Get matcher component instance. */
-    public static IMatcher getMatcher() {
-        return matcher;
-    }
-
     /** Get spell checker instance. */
     public static ISpellChecker getSpellChecker() {
         return spellChecker;
@@ -173,33 +140,6 @@ public final class Core {
 
     public static IAutoSave getAutoSave() {
         return saveThread;
-    }
-
-    /** Get glossary instance. */
-    public static IGlossaries getGlossary() {
-        return glossary;
-    }
-
-    public static GlossaryManager getGlossaryManager() {
-        return glossaryManager;
-    }
-
-    /** Get notes instance. */
-    public static INotes getNotes() {
-        return notes;
-    }
-
-    /**
-     * Get comments area
-     *
-     * @return the comment area
-     */
-    public static IComments getComments() {
-        return comments;
-    }
-
-    public static IDictionaries getDictionaries() {
-        return dictionaries;
     }
 
     public static Segmenter getSegmenter() {
@@ -240,8 +180,6 @@ public final class Core {
 
         new VersionCheckThread(10).start();
     }
-
-
 
 
     /**
