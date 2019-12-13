@@ -33,7 +33,7 @@ import java.util.Set;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.text.JTextComponent;
-
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.Core;
 import org.omegat.gui.editor.IPopupMenuConstructor;
 import org.omegat.gui.editor.SegmentBuilder;
@@ -50,7 +50,7 @@ import org.omegat.util.Token;
 public class TransTipsPopup implements IPopupMenuConstructor {
     public void addItems(final JPopupMenu menu, JTextComponent comp, final int mousepos,
             boolean isInActiveEntry, boolean isInActiveTranslation, SegmentBuilder sb) {
-        if (!Core.getEditor().getSettings().isMarkGlossaryMatches()) {
+        if (!DependOnMainWindow.getEditor().getSettings().isMarkGlossaryMatches()) {
             return;
         }
 
@@ -75,7 +75,7 @@ public class TransTipsPopup implements IPopupMenuConstructor {
                         for (String s : ge.getLocTerms(true)) {
                             if (!added.contains(s)) {
                                 JMenuItem it = menu.add(s);
-                                it.addActionListener(e -> Core.getEditor().insertText(s));
+                                it.addActionListener(e -> DependOnMainWindow.getEditor().insertText(s));
                                 added.add(s);
                             }
                         }

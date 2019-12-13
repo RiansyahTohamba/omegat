@@ -32,7 +32,7 @@ import java.util.regex.Matcher;
 
 import javax.swing.text.AttributeSet;
 import javax.swing.text.Highlighter.HighlightPainter;
-
+import org.omegat.core.DependOnMainWindow;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.omegat.core.Core;
 import org.omegat.core.data.ProtectedPart;
@@ -60,7 +60,7 @@ public class ProtectedPartsMarker implements IMarker {
             throws Exception {
         HighlightPainter painter;
         AttributeSet attrs;
-        if (((EditorController) Core.getEditor()).getOrientation() == Document3.ORIENTATION.ALL_LTR) {
+        if (((EditorController) DependOnMainWindow.getEditor()).getOrientation() == Document3.ORIENTATION.ALL_LTR) {
             attrs = ATTRIBUTES_LTR;
             painter = null;
         } else {

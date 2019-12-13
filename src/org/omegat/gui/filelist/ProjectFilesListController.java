@@ -88,7 +88,7 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import javax.swing.text.BadLocationException;
-
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.Core;
 import org.omegat.core.CoreEvents;
 import org.omegat.core.data.IProject;
@@ -598,7 +598,7 @@ public class ProjectFilesListController {
     private void selectCurrentFile(List<IProject.FileInfo> files) {
         // clear selection from possible previous multiple selections
         list.tableFiles.getSelectionModel().clearSelection();
-        String currentFile = Core.getEditor().getCurrentFile();
+        String currentFile = DependOnMainWindow.getEditor().getCurrentFile();
         // set current file as default selection
         for (int i = 0; i < files.size(); i++) {
             if (files.get(i).filePath.equals(currentFile)) {
@@ -871,8 +871,8 @@ public class ProjectFilesListController {
         list.setCursor(hourglassCursor);
         try {
             int modelRow = list.tableFiles.convertRowIndexToModel(row);
-            Core.getEditor().gotoFile(modelRow);
-            Core.getEditor().requestFocus();
+            DependOnMainWindow.getEditor().gotoFile(modelRow);
+            DependOnMainWindow.getEditor().requestFocus();
         } catch (IndexOutOfBoundsException ex) {
             // Data changed.
         } finally {
@@ -914,7 +914,7 @@ public class ProjectFilesListController {
             try {
                 int modelRow = list.tableFiles.convertRowIndexToModel(row);
                 IProject.FileInfo fi = files.get(modelRow);
-                return fi.filePath.equals(Core.getEditor().getCurrentFile());
+                return fi.filePath.equals(DependOnMainWindow.getEditor().getCurrentFile());
             } catch (IndexOutOfBoundsException ex) {
                 // data changed
                 return false;

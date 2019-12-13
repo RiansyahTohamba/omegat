@@ -29,7 +29,7 @@ package org.omegat.gui.editor.mark;
 import org.omegat.core.Core;
 import org.omegat.util.OStrings;
 import org.omegat.util.gui.Styles;
-
+import org.omegat.core.DependOnMainWindow;
 /**
  * Collection of Markers for whitespace symbols.
  *
@@ -49,7 +49,7 @@ public class WhitespaceMarkerFactory {
             patternChar = ' ';
         }
         protected boolean isEnabled() {
-            return Core.getEditor().getSettings().isMarkWhitespace();
+            return DependOnMainWindow.getEditor().getSettings().isMarkWhitespace();
         }
     }
     /**
@@ -63,7 +63,7 @@ public class WhitespaceMarkerFactory {
             patternChar = '\t';
         }
         protected boolean isEnabled() {
-            return Core.getEditor().getSettings().isMarkWhitespace();
+            return DependOnMainWindow.getEditor().getSettings().isMarkWhitespace();
         }
     }
     /**
@@ -81,7 +81,7 @@ public class WhitespaceMarkerFactory {
             patternChar = '\n';
         }
         protected boolean isEnabled() {
-            return Core.getEditor().getSettings().isMarkWhitespace();
+            return DependOnMainWindow.getEditor().getSettings().isMarkWhitespace();
         }
     }
     //no need for CR marker. There are no CR's.

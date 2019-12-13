@@ -28,7 +28,7 @@ package org.omegat.gui.editor.mark;
 import java.awt.Font;
 import java.util.ArrayList;
 import java.util.List;
-
+import org.omegat.core.DependOnMainWindow;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.SimpleAttributeSet;
@@ -47,7 +47,7 @@ public class FontFallbackMarker implements IMarker {
         editorFont = Core.getMainWindow().getApplicationFont();
         CoreEvents.registerFontChangedEventListener(newFont -> {
             editorFont = newFont;
-            Core.getEditor().remarkOneMarker(this.getClass().getName());
+            DependOnMainWindow.getEditor().remarkOneMarker(this.getClass().getName());
         });
     }
 
@@ -78,7 +78,7 @@ public class FontFallbackMarker implements IMarker {
     }
 
     private boolean isEnabled() {
-        return Core.getEditor().getSettings().isDoFontFallback();
+        return DependOnMainWindow.getEditor().getSettings().isDoFontFallback();
     }
 
     private void createMarks(List<Mark> acc, Mark.ENTRY_PART part, String text, int firstMissing) {

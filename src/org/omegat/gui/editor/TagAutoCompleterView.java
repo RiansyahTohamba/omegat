@@ -39,6 +39,7 @@ import org.omegat.util.OStrings;
 import org.omegat.util.TagUtil;
 import org.omegat.util.TagUtil.Tag;
 import org.omegat.util.Token;
+import org.omegat.core.DependOnMainWindow;
 
 /**
  * An AutoCompleterView for inserting missing tags.
@@ -159,7 +160,7 @@ public class TagAutoCompleterView extends AutoCompleterListView {
          * @return regex string
          */
         private String buildRegex() {
-            ProtectedPart[] protectedParts = Core.getEditor().getCurrentEntry().getProtectedParts();
+            ProtectedPart[] protectedParts = DependOnMainWindow.getEditor().getCurrentEntry().getProtectedParts();
             if (protectedParts.length == 0) {
                 return null;
             }

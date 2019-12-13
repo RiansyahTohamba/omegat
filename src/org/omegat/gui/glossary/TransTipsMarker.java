@@ -32,7 +32,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import javax.swing.text.Highlighter.HighlightPainter;
-
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.Core;
 import org.omegat.core.data.SourceTextEntry;
 import org.omegat.gui.editor.UnderlineFactory;
@@ -58,7 +58,7 @@ public class TransTipsMarker implements IMarker {
         if (!isActive || sourceText == null) {
             return null;
         }
-        if (!Core.getEditor().getSettings().isMarkGlossaryMatches()) {
+        if (!DependOnMainWindow.getEditor().getSettings().isMarkGlossaryMatches()) {
             return null;
         }
         List<GlossaryEntry> glossaryEntries = Core.getGlossary().getDisplayedEntries();

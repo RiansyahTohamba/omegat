@@ -225,7 +225,7 @@ public final class MainWindowMenuHandler {
      * Create current translated document.
      */
     public void projectSingleCompileMenuItemActionPerformed() {
-        String midName = Core.getEditor().getCurrentFile();
+        String midName = DependOnMainWindow.getEditor().getCurrentFile();
         if (StringUtil.isEmpty(midName)) {
             return;
         }
@@ -309,7 +309,7 @@ public final class MainWindowMenuHandler {
             return;
         }
         String root = Core.getProject().getProjectProperties().getSourceRoot();
-        String path = Core.getEditor().getCurrentFile();
+        String path = DependOnMainWindow.getEditor().getCurrentFile();
         if (StringUtil.isEmpty(path)) {
             return;
         }
@@ -325,7 +325,7 @@ public final class MainWindowMenuHandler {
             return;
         }
         String root = Core.getProject().getProjectProperties().getTargetRoot();
-        String path = Core.getEditor().getCurrentTargetFile();
+        String path = DependOnMainWindow.getEditor().getCurrentTargetFile();
         if (StringUtil.isEmpty(path)) {
             return;
         }
@@ -374,7 +374,7 @@ public final class MainWindowMenuHandler {
          // Bug #902: commit the current entry first
         // We do it before checking project status, so that it can eventually change it
         if (Core.getProject().isProjectLoaded()) {
-            Core.getEditor().commitAndLeave();
+            DependOnMainWindow.getEditor().commitAndLeave();
         }
 
         boolean projectModified = false;
@@ -440,7 +440,7 @@ public final class MainWindowMenuHandler {
         if (focused == Core.getNotes()) {
             Core.getNotes().undo();
         } else {
-            Core.getEditor().undo();
+            DependOnMainWindow.getEditor().undo();
         }
     }
 
@@ -449,7 +449,7 @@ public final class MainWindowMenuHandler {
         if (focused == Core.getNotes()) {
             Core.getNotes().redo();
         } else {
-            Core.getEditor().redo();
+            DependOnMainWindow.getEditor().redo();
         }
     }
 
@@ -466,7 +466,7 @@ public final class MainWindowMenuHandler {
         if (tr == null) {
             DependOnMainWindow.getMachineTranslatePane().forceLoad();
         } else if (!StringUtil.isEmpty(tr)) {
-            Core.getEditor().replaceEditText(tr);
+            DependOnMainWindow.getEditor().replaceEditText(tr);
         }
     }
 
@@ -477,11 +477,11 @@ public final class MainWindowMenuHandler {
         if (!Core.getProject().isProjectLoaded()) {
             return;
         }
-        String toInsert = Core.getEditor().getCurrentEntry().getSrcText();
+        String toInsert = DependOnMainWindow.getEditor().getCurrentEntry().getSrcText();
         if (Preferences.isPreference(Preferences.GLOSSARY_REPLACE_ON_INSERT)) {
             toInsert = EditorUtils.replaceGlossaryEntries(toInsert);
         }
-        Core.getEditor().replaceEditText(toInsert);
+        DependOnMainWindow.getEditor().replaceEditText(toInsert);
     }
 
     /** inserts the source text of a segment at cursor position */
@@ -489,20 +489,20 @@ public final class MainWindowMenuHandler {
         if (!Core.getProject().isProjectLoaded()) {
             return;
         }
-        String toInsert = Core.getEditor().getCurrentEntry().getSrcText();
+        String toInsert = DependOnMainWindow.getEditor().getCurrentEntry().getSrcText();
         if (Preferences.isPreference(Preferences.GLOSSARY_REPLACE_ON_INSERT)) {
             toInsert = EditorUtils.replaceGlossaryEntries(toInsert);
         }
-        Core.getEditor().insertText(toInsert);
+        DependOnMainWindow.getEditor().insertText(toInsert);
     }
 
     public void editExportSelectionMenuItemActionPerformed() {
         if (!Core.getProject().isProjectLoaded()) {
             return;
         }
-        String selection = Core.getEditor().getSelectedText();
+        String selection = DependOnMainWindow.getEditor().getSelectedText();
         if (selection == null) {
-            SourceTextEntry ste = Core.getEditor().getCurrentEntry();
+            SourceTextEntry ste = DependOnMainWindow.getEditor().getCurrentEntry();
             TMXEntry te = Core.getProject().getTranslationInfo(ste);
             if (te.isTranslated()) {
                 selection = te.translation;
@@ -517,9 +517,9 @@ public final class MainWindowMenuHandler {
         if (!Core.getProject().isProjectLoaded()) {
             return;
         }
-        String selection = Core.getEditor().getSelectedText();
+        String selection = DependOnMainWindow.getEditor().getSelectedText();
         if (selection == null) {
-            SourceTextEntry ste = Core.getEditor().getCurrentEntry();
+            SourceTextEntry ste = DependOnMainWindow.getEditor().getCurrentEntry();
             selection = ste.getSrcText();
         }
         Core.getDictionaries().searchText(selection);
@@ -617,43 +617,43 @@ public final class MainWindowMenuHandler {
     }
 
     public void insertCharsLRMActionPerformed() {
-        Core.getEditor().insertText("\u200E");
+        DependOnMainWindow.getEditor().insertText("\u200E");
     }
 
     public void insertCharsRLMActionPerformed() {
-        Core.getEditor().insertText("\u200F");
+        DependOnMainWindow.getEditor().insertText("\u200F");
     }
 
     public void insertCharsLREActionPerformed() {
-        Core.getEditor().insertText("\u202A");
+        DependOnMainWindow.getEditor().insertText("\u202A");
     }
 
     public void insertCharsRLEActionPerformed() {
-        Core.getEditor().insertText("\u202B");
+        DependOnMainWindow.getEditor().insertText("\u202B");
     }
 
     public void insertCharsPDFActionPerformed() {
-        Core.getEditor().insertText("\u202C");
+        DependOnMainWindow.getEditor().insertText("\u202C");
     }
 
     public void editMultipleDefaultActionPerformed() {
-        Core.getEditor().setAlternateTranslationForCurrentEntry(false);
+        DependOnMainWindow.getEditor().setAlternateTranslationForCurrentEntry(false);
     }
 
     public void editMultipleAlternateActionPerformed() {
-        Core.getEditor().setAlternateTranslationForCurrentEntry(true);
+        DependOnMainWindow.getEditor().setAlternateTranslationForCurrentEntry(true);
     }
 
     public void editRegisterUntranslatedMenuItemActionPerformed() {
-        Core.getEditor().registerUntranslated();
+        DependOnMainWindow.getEditor().registerUntranslated();
     }
 
     public void editRegisterEmptyMenuItemActionPerformed() {
-        Core.getEditor().registerEmptyTranslation();
+        DependOnMainWindow.getEditor().registerEmptyTranslation();
     }
 
     public void editRegisterIdenticalMenuItemActionPerformed() {
-        Core.getEditor().registerIdenticalTranslation();
+        DependOnMainWindow.getEditor().registerIdenticalTranslation();
     }
 
     public void optionsPreferencesMenuItemActionPerformed() {
@@ -662,51 +662,51 @@ public final class MainWindowMenuHandler {
     }
 
     public void cycleSwitchCaseMenuItemActionPerformed() {
-        Core.getEditor().changeCase(IEditor.CHANGE_CASE_TO.CYCLE);
+        DependOnMainWindow.getEditor().changeCase(IEditor.CHANGE_CASE_TO.CYCLE);
     }
 
     public void sentenceCaseMenuItemActionPerformed() {
-        Core.getEditor().changeCase(IEditor.CHANGE_CASE_TO.SENTENCE);
+        DependOnMainWindow.getEditor().changeCase(IEditor.CHANGE_CASE_TO.SENTENCE);
     }
 
     public void titleCaseMenuItemActionPerformed() {
-        Core.getEditor().changeCase(IEditor.CHANGE_CASE_TO.TITLE);
+        DependOnMainWindow.getEditor().changeCase(IEditor.CHANGE_CASE_TO.TITLE);
     }
 
     public void upperCaseMenuItemActionPerformed() {
-        Core.getEditor().changeCase(IEditor.CHANGE_CASE_TO.UPPER);
+        DependOnMainWindow.getEditor().changeCase(IEditor.CHANGE_CASE_TO.UPPER);
     }
 
     public void lowerCaseMenuItemActionPerformed() {
-        Core.getEditor().changeCase(IEditor.CHANGE_CASE_TO.LOWER);
+        DependOnMainWindow.getEditor().changeCase(IEditor.CHANGE_CASE_TO.LOWER);
     }
 
     public void gotoNextUntranslatedMenuItemActionPerformed() {
-        Core.getEditor().nextUntranslatedEntry();
+        DependOnMainWindow.getEditor().nextUntranslatedEntry();
     }
 
     public void gotoNextUniqueMenuItemActionPerformed() {
-        Core.getEditor().nextUniqueEntry();
+        DependOnMainWindow.getEditor().nextUniqueEntry();
     }
 
     public void gotoNextTranslatedMenuItemActionPerformed() {
-        Core.getEditor().nextTranslatedEntry();
+        DependOnMainWindow.getEditor().nextTranslatedEntry();
     }
 
     public void gotoNextSegmentMenuItemActionPerformed() {
-        Core.getEditor().nextEntry();
+        DependOnMainWindow.getEditor().nextEntry();
     }
 
     public void gotoPreviousSegmentMenuItemActionPerformed() {
-        Core.getEditor().prevEntry();
+        DependOnMainWindow.getEditor().prevEntry();
     }
 
     public void gotoNextNoteMenuItemActionPerformed() {
-        Core.getEditor().nextEntryWithNote();
+        DependOnMainWindow.getEditor().nextEntryWithNote();
     }
 
     public void gotoPreviousNoteMenuItemActionPerformed() {
-        Core.getEditor().prevEntryWithNote();
+        DependOnMainWindow.getEditor().prevEntryWithNote();
     }
 
     /**
@@ -720,118 +720,118 @@ public final class MainWindowMenuHandler {
         int jumpTo = dialog.getResult();
 
         if (jumpTo != -1) {
-            Core.getEditor().gotoEntry(jumpTo);
+            DependOnMainWindow.getEditor().gotoEntry(jumpTo);
         }
     }
 
     public void gotoHistoryBackMenuItemActionPerformed() {
-        Core.getEditor().gotoHistoryBack();
+        DependOnMainWindow.getEditor().gotoHistoryBack();
     }
 
     public void gotoHistoryForwardMenuItemActionPerformed() {
-        Core.getEditor().gotoHistoryForward();
+        DependOnMainWindow.getEditor().gotoHistoryForward();
     }
 
     public void gotoMatchSourceSegmentActionPerformed() {
         NearString ns = Core.getMatcher().getActiveMatch();
         if (ns != null && ns.comesFrom == MATCH_SOURCE.MEMORY) {
-            Core.getEditor().gotoEntry(ns.source, ns.key);
+            DependOnMainWindow.getEditor().gotoEntry(ns.source, ns.key);
         }
     }
 
     public void viewMarkTranslatedSegmentsCheckBoxMenuItemActionPerformed() {
-        Core.getEditor().getSettings()
+        DependOnMainWindow.getEditor().getSettings()
                 .setMarkTranslated(mainWindow.menu.viewMarkTranslatedSegmentsCheckBoxMenuItem.isSelected());
     }
 
     public void viewMarkUntranslatedSegmentsCheckBoxMenuItemActionPerformed() {
-        Core.getEditor()
+        DependOnMainWindow.getEditor()
                 .getSettings()
                 .setMarkUntranslated(
                         mainWindow.menu.viewMarkUntranslatedSegmentsCheckBoxMenuItem.isSelected());
     }
 
     public void viewMarkParagraphStartCheckBoxMenuItemActionPerformed() {
-        Core.getEditor()
+        DependOnMainWindow.getEditor()
                 .getSettings()
                 .setMarkParagraphDelimitations(
                         mainWindow.menu.viewMarkParagraphStartCheckBoxMenuItem.isSelected());
     }
 
     public void viewDisplaySegmentSourceCheckBoxMenuItemActionPerformed() {
-        Core.getEditor()
+        DependOnMainWindow.getEditor()
                 .getSettings()
                 .setDisplaySegmentSources(
                         mainWindow.menu.viewDisplaySegmentSourceCheckBoxMenuItem.isSelected());
     }
 
     public void viewMarkNonUniqueSegmentsCheckBoxMenuItemActionPerformed() {
-        Core.getEditor()
+        DependOnMainWindow.getEditor()
                 .getSettings()
                 .setMarkNonUniqueSegments(
                         mainWindow.menu.viewMarkNonUniqueSegmentsCheckBoxMenuItem.isSelected());
     }
 
     public void viewMarkNotedSegmentsCheckBoxMenuItemActionPerformed() {
-        Core.getEditor()
+        DependOnMainWindow.getEditor()
                 .getSettings()
                 .setMarkNotedSegments(
                         mainWindow.menu.viewMarkNotedSegmentsCheckBoxMenuItem.isSelected());
     }
 
     public void viewMarkNBSPCheckBoxMenuItemActionPerformed() {
-        Core.getEditor()
+        DependOnMainWindow.getEditor()
                 .getSettings()
                 .setMarkNBSP(
                         mainWindow.menu.viewMarkNBSPCheckBoxMenuItem.isSelected());
     }
 
     public void viewMarkWhitespaceCheckBoxMenuItemActionPerformed() {
-        Core.getEditor()
+        DependOnMainWindow.getEditor()
                 .getSettings()
                 .setMarkWhitespace(
                         mainWindow.menu.viewMarkWhitespaceCheckBoxMenuItem.isSelected());
     }
 
     public void viewMarkBidiCheckBoxMenuItemActionPerformed() {
-        Core.getEditor()
+        DependOnMainWindow.getEditor()
                 .getSettings()
                 .setMarkBidi(
                         mainWindow.menu.viewMarkBidiCheckBoxMenuItem.isSelected());
     }
 
     public void viewMarkAutoPopulatedCheckBoxMenuItemActionPerformed() {
-        Core.getEditor().getSettings()
+        DependOnMainWindow.getEditor().getSettings()
                 .setMarkAutoPopulated(mainWindow.menu.viewMarkAutoPopulatedCheckBoxMenuItem.isSelected());
     }
 
     public void viewMarkGlossaryMatchesCheckBoxMenuItemActionPerformed() {
-        Core.getEditor().getSettings()
+        DependOnMainWindow.getEditor().getSettings()
                 .setMarkGlossaryMatches(mainWindow.menu.viewMarkGlossaryMatchesCheckBoxMenuItem.isSelected());
     }
 
     public void viewMarkLanguageCheckerCheckBoxMenuItemActionPerformed() {
-        Core.getEditor().getSettings()
+        DependOnMainWindow.getEditor().getSettings()
                 .setMarkLanguageChecker(mainWindow.menu.viewMarkLanguageCheckerCheckBoxMenuItem.isSelected());
     }
 
     public void viewMarkFontFallbackCheckBoxMenuItemActionPerformed() {
-        Core.getEditor().getSettings()
+        DependOnMainWindow.getEditor().getSettings()
                 .setDoFontFallback(mainWindow.menu.viewMarkFontFallbackCheckBoxMenuItem.isSelected());
     }
 
     public void viewDisplayModificationInfoNoneRadioButtonMenuItemActionPerformed() {
-        Core.getEditor().getSettings()
+        DependOnMainWindow.getEditor().getSettings()
                 .setDisplayModificationInfo(EditorSettings.DISPLAY_MODIFICATION_INFO_NONE);
     }
 
     public void viewDisplayModificationInfoSelectedRadioButtonMenuItemActionPerformed() {
-        Core.getEditor().getSettings()
+        DependOnMainWindow.getEditor().getSettings()
                 .setDisplayModificationInfo(EditorSettings.DISPLAY_MODIFICATION_INFO_SELECTED);
     }
 
     public void viewDisplayModificationInfoAllRadioButtonMenuItemActionPerformed() {
-        Core.getEditor().getSettings()
+        DependOnMainWindow.getEditor().getSettings()
                 .setDisplayModificationInfo(EditorSettings.DISPLAY_MODIFICATION_INFO_ALL);
     }
 
@@ -846,7 +846,7 @@ public final class MainWindowMenuHandler {
     }
 
     public void toolsCheckIssuesCurrentFileMenuItemActionPerformed() {
-        DependOnMainWindow.getIssues().showForFiles(Pattern.quote(Core.getEditor().getCurrentFile()));
+        DependOnMainWindow.getIssues().showForFiles(Pattern.quote(DependOnMainWindow.getEditor().getCurrentFile()));
     }
 
     /**
@@ -855,7 +855,7 @@ public final class MainWindowMenuHandler {
     public void editTagPainterMenuItemActionPerformed() {
         // insert tags
         for (Tag tag : TagUtil.getAllTagsMissingFromTarget()) {
-            Core.getEditor().insertTag(tag.tag);
+            DependOnMainWindow.getEditor().insertTag(tag.tag);
         }
     }
 
@@ -865,7 +865,7 @@ public final class MainWindowMenuHandler {
         if (tags.isEmpty()) {
             return;
         }
-        Core.getEditor().insertTag(tags.get(0).tag);
+        DependOnMainWindow.getEditor().insertTag(tags.get(0).tag);
     }
 
     public void toolsShowStatisticsStandardMenuItemActionPerformed() {
@@ -887,7 +887,7 @@ public final class MainWindowMenuHandler {
         AlignFilePickerController picker = new AlignFilePickerController();
         if (Core.getProject().isProjectLoaded()) {
             String srcRoot = Core.getProject().getProjectProperties().getSourceRoot();
-            String curFile = Core.getEditor().getCurrentFile();
+            String curFile = DependOnMainWindow.getEditor().getCurrentFile();
             if (curFile != null) {
                 picker.setSourceFile(srcRoot + curFile);
             }

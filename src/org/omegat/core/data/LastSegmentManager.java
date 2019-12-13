@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
 import java.util.logging.Logger;
+import org.omegat.core.DependOnMainWindow;
 
 import org.omegat.core.Core;
 import org.omegat.core.data.IProject.FileInfo;
@@ -64,7 +65,7 @@ public final class LastSegmentManager {
      */
     public static void saveLastSegment() {
         Properties prop = new Properties();
-        IEditor editor = Core.getEditor();
+        IEditor editor = DependOnMainWindow.getEditor();
 
         int lastEntryNumber = editor.getCurrentEntryNumber();
         String currentFile = editor.getCurrentFile();

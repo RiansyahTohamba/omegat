@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import org.omegat.core.Core;
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.util.StringUtil;
 import org.omegat.util.VarExpansion;
 
@@ -88,7 +89,7 @@ public class CommandVarExpansion extends VarExpansion<ProjectProperties> {
             localTemplate = localTemplate.replace(fixEnvarName(e.getKey()), e.getValue());
         }
 
-        String currentFile = Core.getEditor().getCurrentFile();
+        String currentFile = DependOnMainWindow.getEditor().getCurrentFile();
         if (!StringUtil.isEmpty(currentFile)) {
             String sourceRoot = props.getSourceRoot();
             localTemplate = expandFileName(localTemplate, sourceRoot + currentFile, sourceRoot);

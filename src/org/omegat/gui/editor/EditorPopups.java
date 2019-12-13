@@ -34,7 +34,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
-
+import org.omegat.core.DependOnMainWindow;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
@@ -400,7 +400,7 @@ public final class EditorPopups {
                 JMenuItem item = menu.add(StringUtil.format(OStrings.getString("TF_MENU_EDIT_TAG_INSERT_N"), tag.tag));
                 item.addActionListener(new ActionListener() {
                     public void actionPerformed(ActionEvent e) {
-                        Core.getEditor().insertTag(tag.tag);
+                        DependOnMainWindow.getEditor().insertTag(tag.tag);
                     }
                 });
             }
@@ -431,7 +431,7 @@ public final class EditorPopups {
                 item.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        Core.getEditor().insertText(insertText);
+                        DependOnMainWindow.getEditor().insertText(insertText);
                     }
                 });
                 submenu.add(item);

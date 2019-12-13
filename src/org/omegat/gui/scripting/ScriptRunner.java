@@ -41,6 +41,7 @@ import javax.script.ScriptException;
 import javax.swing.SwingUtilities;
 
 import org.apache.commons.io.FilenameUtils;
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.Core;
 import org.omegat.util.Log;
 import org.omegat.util.OStrings;
@@ -157,7 +158,7 @@ public final class ScriptRunner {
         // engine.getFactory().getEngineName()));
         Bindings bindings = engine.createBindings();
         bindings.put(VAR_PROJECT, Core.getProject());
-        bindings.put(VAR_EDITOR, Core.getEditor());
+        bindings.put(VAR_EDITOR, DependOnMainWindow.getEditor());
         bindings.put(VAR_GLOSSARY, Core.getGlossary());
         bindings.put(VAR_MAINWINDOW, Core.getMainWindow());
         bindings.put(VAR_CORE, Core.class);

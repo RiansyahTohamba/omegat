@@ -36,6 +36,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.omegat.core.Core;
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.data.ProtectedPart;
 import org.omegat.core.data.SourceTextEntry;
 import org.omegat.core.statistics.StatisticsSettings;
@@ -181,14 +182,14 @@ public final class TagUtil {
     public static final char TEXT_REPLACEMENT = '\uE100';
 
     public static List<Tag> getAllTagsInSource() {
-        SourceTextEntry ste = Core.getEditor().getCurrentEntry();
+        SourceTextEntry ste = DependOnMainWindow.getEditor().getCurrentEntry();
         return buildTagList(ste.getSrcText(), ste.getProtectedParts());
     }
 
     public static List<Tag> getAllTagsMissingFromTarget() {
         List<Tag> result = new ArrayList<Tag>();
 
-        StringBuilder target = new StringBuilder(Core.getEditor().getCurrentTranslation());
+        StringBuilder target = new StringBuilder(DependOnMainWindow.getEditor().getCurrentTranslation());
 
         for (Tag tag : getAllTagsInSource()) {
             int pos = -1;

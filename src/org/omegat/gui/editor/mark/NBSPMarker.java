@@ -24,7 +24,7 @@
  **************************************************************************/
 
 package org.omegat.gui.editor.mark;
-
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.Core;
 import org.omegat.util.OStrings;
 import org.omegat.util.gui.Styles;
@@ -41,6 +41,6 @@ public class NBSPMarker extends AbstractMarker {
         patternChar = '\u00a0';
     }
     protected boolean isEnabled() {
-        return Core.getEditor().getSettings().isMarkNBSP();
+        return DependOnMainWindow.getEditor().getSettings().isMarkNBSP();
     }
 }

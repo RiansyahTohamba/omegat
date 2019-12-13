@@ -40,6 +40,7 @@ import java.util.regex.Pattern;
 
 import org.omegat.core.Core;
 import org.omegat.core.data.ExternalTMFactory;
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.data.ProjectProperties;
 import org.omegat.core.data.SourceTextEntry;
 import org.omegat.core.matching.DiffDriver;
@@ -126,7 +127,7 @@ public class MatchesVarExpansion extends VarExpansion<NearString> {
     private static final Replacer DIFF_REPLACER = new Replacer() {
         public void replace(Result r, NearString match) {
             int diffPos = r.text.indexOf(VAR_DIFF);
-            SourceTextEntry ste = Core.getEditor().getCurrentEntry();
+            SourceTextEntry ste = DependOnMainWindow.getEditor().getCurrentEntry();
             if (diffPos != -1 && ste != null) {
                 Render diffRender = DiffDriver.render(match.source, ste.getSrcText(), true);
                 r.diffInfo.put(diffPos, diffRender.formatting);
@@ -138,7 +139,7 @@ public class MatchesVarExpansion extends VarExpansion<NearString> {
     private static final Replacer DIFF_REVERSED_REPLACER = new Replacer() {
         public void replace(Result r, NearString match) {
             int diffPos = r.text.indexOf(VAR_DIFF_REVERSED);
-            SourceTextEntry ste = Core.getEditor().getCurrentEntry();
+            SourceTextEntry ste = DependOnMainWindow.getEditor().getCurrentEntry();
             if (diffPos != -1 && ste != null) {
                 Render diffRender = DiffDriver.render(ste.getSrcText(), match.source, true);
                 r.diffInfo.put(diffPos, diffRender.formatting);

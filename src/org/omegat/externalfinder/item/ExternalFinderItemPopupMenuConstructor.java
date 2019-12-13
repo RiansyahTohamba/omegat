@@ -30,6 +30,7 @@ import java.util.List;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.text.JTextComponent;
+import org.omegat.core.DependOnMainWindow;
 
 import org.omegat.core.Core;
 import org.omegat.gui.editor.IPopupMenuConstructor;
@@ -40,7 +41,7 @@ public class ExternalFinderItemPopupMenuConstructor implements IPopupMenuConstru
 
     public void addItems(JPopupMenu menu, JTextComponent comp, int mousepos,
             boolean isInActiveEntry, boolean isInActiveTranslation, SegmentBuilder sb) {
-        final String selection = Core.getEditor().getSelectedText();
+        final String selection = DependOnMainWindow.getEditor().getSelectedText();
         if (selection == null) {
             return;
         }

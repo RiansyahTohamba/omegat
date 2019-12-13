@@ -27,7 +27,7 @@ package org.omegat.gui.preferences.view;
 
 import java.awt.Desktop;
 import java.io.File;
-
+import org.omegat.core.DependOnMainWindow;
 import javax.swing.JComponent;
 
 import org.omegat.core.Core;
@@ -83,7 +83,7 @@ public class GeneralOptionsController extends BasePreferencesController {
 
     @Override
     protected void initFromPrefs() {
-        panel.tabAdvanceCheckBox.setSelected(Core.getEditor().getSettings().isUseTabForAdvance());
+        panel.tabAdvanceCheckBox.setSelected(DependOnMainWindow.getEditor().getSettings().isUseTabForAdvance());
         panel.confirmQuitCheckBox.setSelected(Preferences.isPreference(Preferences.ALWAYS_CONFIRM_QUIT));
     }
 
@@ -95,7 +95,7 @@ public class GeneralOptionsController extends BasePreferencesController {
 
     @Override
     public void persist() {
-        Core.getEditor().getSettings().setUseTabForAdvance(panel.tabAdvanceCheckBox.isSelected());
+        DependOnMainWindow.getEditor().getSettings().setUseTabForAdvance(panel.tabAdvanceCheckBox.isSelected());
         Preferences.setPreference(Preferences.ALWAYS_CONFIRM_QUIT, panel.confirmQuitCheckBox.isSelected());
     }
 }

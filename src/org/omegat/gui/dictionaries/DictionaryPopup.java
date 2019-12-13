@@ -30,7 +30,7 @@ import org.omegat.core.data.SourceTextEntry;
 import org.omegat.gui.editor.IPopupMenuConstructor;
 import org.omegat.gui.editor.SegmentBuilder;
 import org.omegat.util.OStrings;
-
+import org.omegat.core.DependOnMainWindow;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.text.JTextComponent;
@@ -40,10 +40,10 @@ public class DictionaryPopup implements IPopupMenuConstructor {
     @Override
     public void addItems(JPopupMenu menu, JTextComponent comp, int mousepos, boolean isInActiveEntry, boolean isInActiveTranslation, SegmentBuilder sb) {
 
-        String selection = Core.getEditor().getSelectedText();
+        String selection = DependOnMainWindow.getEditor().getSelectedText();
         final String searchedText;
         if (selection == null) {
-            SourceTextEntry ste = Core.getEditor().getCurrentEntry();
+            SourceTextEntry ste = DependOnMainWindow.getEditor().getCurrentEntry();
             searchedText = ste.getSrcText();
         } else {
             searchedText = selection;

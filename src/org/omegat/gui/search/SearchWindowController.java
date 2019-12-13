@@ -32,7 +32,6 @@
  **************************************************************************/
 
 package org.omegat.gui.search;
-
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.event.ActionEvent;
@@ -61,6 +60,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.text.BadLocationException;
 import javax.swing.undo.UndoManager;
 
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.Core;
 import org.omegat.core.data.SourceTextEntry;
 import org.omegat.core.search.SearchExpression;
@@ -114,8 +114,8 @@ public class SearchWindowController {
         form = new SearchWindowForm();
         form.setJMenuBar(new SearchWindowMenu(this));
         this.mode = mode;
-        initialEntry = Core.getEditor().getCurrentEntryNumber();
-        initialCaret = getCurrentPositionInEntryTranslationInEditor(Core.getEditor());
+        initialEntry = DependOnMainWindow.getEditor().getCurrentEntryNumber();
+        initialCaret = getCurrentPositionInEntryTranslationInEditor(DependOnMainWindow.getEditor());
 
         if (Platform.isMacOSX()) {
             OSXIntegration.enableFullScreen(form);
@@ -305,15 +305,15 @@ public class SearchWindowController {
                 }
 
                 // back to the initial segment
-                int currentEntry = Core.getEditor().getCurrentEntryNumber();
+                int currentEntry = DependOnMainWindow.getEditor().getCurrentEntryNumber();
                 if (initialEntry > 0 && form.m_backToInitialSegment.isSelected() && initialEntry != currentEntry) {
                     boolean isSegDisplayed = isSegmentDisplayed(initialEntry);
                     if (isSegDisplayed) {
                         // Restore caretPosition too
-                        ((EditorController) Core.getEditor()).gotoEntry(initialEntry, initialCaret);
+                        ((EditorController) DependOnMainWindow.getEditor()).gotoEntry(initialEntry, initialCaret);
                     } else {
                         // The segment is not displayed (maybe filter on). Ignore caretPosition.
-                        Core.getEditor().gotoEntry(initialEntry);
+                        DependOnMainWindow.getEditor().gotoEntry(initialEntry);
                     }
                 }
             }
@@ -691,8 +691,8 @@ public class SearchWindowController {
 
     private void doFilter() {
         EntryListPane viewer = (EntryListPane) form.m_viewer;
-        Core.getEditor().commitAndLeave(); // Otherwise, the current segment being edited is lost
-        Core.getEditor().setFilter(new SearchFilter(viewer.getEntryList()));
+        DependOnMainWindow.getEditor().commitAndLeave(); // Otherwise, the current segment being edited is lost
+        DependOnMainWindow.getEditor().setFilter(new SearchFilter(viewer.getEntryList()));
     }
 
     private void doReplace() {
@@ -702,8 +702,8 @@ public class SearchWindowController {
         form.m_replaceField.setModel(new DefaultComboBoxModel<>(HistoryManager.getReplaceItems()));
 
         EntryListPane viewer = (EntryListPane) form.m_viewer;
-        Core.getEditor().commitAndLeave(); // Otherwise, the current segment being edited is lost
-        Core.getEditor()
+        DependOnMainWindow.getEditor().commitAndLeave(); // Otherwise, the current segment being edited is lost
+        DependOnMainWindow.getEditor()
                 .setFilter(new ReplaceFilter(viewer.getEntryList(), viewer.getSearcher()));
     }
 
@@ -714,7 +714,7 @@ public class SearchWindowController {
         form.m_replaceField.setModel(new DefaultComboBoxModel<>(HistoryManager.getReplaceItems()));
 
         EntryListPane viewer = (EntryListPane) form.m_viewer;
-        Core.getEditor().commitAndDeactivate(); // Otherwise, the current segment being edited is lost
+        DependOnMainWindow.getEditor().commitAndDeactivate(); // Otherwise, the current segment being edited is lost
         int count = viewer.getEntryList().size();
         String msg = MessageFormat.format(OStrings.getString("SW_REPLACE_ALL_CONFIRM"), count);
         int r = JOptionPane.showConfirmDialog(form, msg, OStrings.getString("CONFIRM_DIALOG_TITLE"),
@@ -722,7 +722,7 @@ public class SearchWindowController {
         if (r == JOptionPane.YES_OPTION) {
             new ReplaceFilter(viewer.getEntryList(), viewer.getSearcher()).replaceAll();
         }
-        Core.getEditor().activateEntry();
+        DependOnMainWindow.getEditor().activateEntry();
         form.m_replaceButton.setEnabled(false);
         form.m_replaceAllButton.setEnabled(false);
     }
@@ -885,7 +885,7 @@ public class SearchWindowController {
     }
 
     private boolean isSegmentDisplayed(int entry) {
-        IEditorFilter filter = Core.getEditor().getFilter();
+        IEditorFilter filter = DependOnMainWindow.getEditor().getFilter();
         if (filter == null) {
             return true;
         } else {

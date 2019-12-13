@@ -48,7 +48,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.UIManager;
 import javax.swing.border.Border;
-
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.Core;
 import org.omegat.core.CoreEvents;
 import org.omegat.core.events.IApplicationEventListener;
@@ -228,7 +228,7 @@ public final class MainWindowUI {
                 }
 
                 if (Core.getProject().isProjectLoaded()) {
-                    ((EditorController) Core.getEditor()).showStat();
+                    ((EditorController) DependOnMainWindow.getEditor()).showStat();
                 } else {
                     Core.getMainWindow().showProgressMessage(statusText);
                 }

@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
 
 import javax.swing.text.AttributeSet;
 import javax.swing.text.Highlighter.HighlightPainter;
-
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.Core;
 import org.omegat.core.data.SourceTextEntry;
 
@@ -78,7 +78,7 @@ public abstract class AbstractMarker implements IMarker {
 
         List<Mark> r = new ArrayList<Mark>();
         Matcher match;
-        if (isActive || Core.getEditor().getSettings().isDisplaySegmentSources() || translationText == null) { // TODO
+        if (isActive || DependOnMainWindow.getEditor().getSettings().isDisplaySegmentSources() || translationText == null) { // TODO
             initDrawers(true, isActive);
             if (pattern != null) {
                 match = pattern.matcher(sourceText);

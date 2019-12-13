@@ -25,6 +25,7 @@
 
 package org.omegat.gui.stat;
 
+import org.omegat.core.DependOnMainWindow;
 import java.awt.BorderLayout;
 import java.awt.Cursor;
 import java.awt.event.MouseAdapter;
@@ -138,8 +139,8 @@ public class StatisticsPanel extends BaseStatisticsPanel {
         Cursor oldCursor = getCursor();
         setCursor(hourglassCursor);
         try {
-            Core.getEditor().gotoFile(fileIndex);
-            Core.getEditor().requestFocus();
+            DependOnMainWindow.getEditor().gotoFile(fileIndex);
+            DependOnMainWindow.getEditor().requestFocus();
         } finally {
             setCursor(oldCursor);
         }

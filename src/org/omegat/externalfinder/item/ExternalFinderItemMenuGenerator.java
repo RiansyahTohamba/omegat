@@ -36,6 +36,7 @@ import java.util.logging.Logger;
 
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import org.omegat.core.DependOnMainWindow;
 
 import org.omegat.core.Core;
 import org.omegat.externalfinder.ExternalFinder;
@@ -102,7 +103,7 @@ public class ExternalFinderItemMenuGenerator implements IExternalFinderItemMenuG
         }
 
         public void actionPerformed(ActionEvent e) {
-            final String selection = Core.getEditor().getSelectedText();
+            final String selection = DependOnMainWindow.getEditor().getSelectedText();
             if (selection == null) {
                 return;
             }

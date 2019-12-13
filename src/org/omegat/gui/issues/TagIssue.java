@@ -46,7 +46,7 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
-
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.Core;
 import org.omegat.core.data.TMXEntry;
 import org.omegat.core.tagvalidation.ErrorReport;
@@ -213,8 +213,8 @@ public class TagIssue implements IIssue {
         }
 
         // Put modified translation back into project.
-        Core.getEditor().gotoEntry(report.entryNum);
-        Core.getEditor().replaceEditTextAndMark(fixed);
+        DependOnMainWindow.getEditor().gotoEntry(report.entryNum);
+        DependOnMainWindow.getEditor().replaceEditTextAndMark(fixed);
 
         return true;
     }

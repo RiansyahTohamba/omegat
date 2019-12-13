@@ -31,7 +31,7 @@ package org.omegat.gui.preferences.view;
 
 import java.io.File;
 import java.util.List;
-
+import org.omegat.core.DependOnMainWindow;
 import javax.swing.DefaultListModel;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
@@ -321,6 +321,6 @@ public class SpellcheckerConfigurationController extends BasePreferencesControll
             sc.destroy();
             sc.initialize();
         }
-        SwingUtilities.invokeLater(() -> Core.getEditor().getSettings().setAutoSpellChecking(isNeedToSpell));
+        SwingUtilities.invokeLater(() -> DependOnMainWindow.getEditor().getSettings().setAutoSpellChecking(isNeedToSpell));
     }
 }

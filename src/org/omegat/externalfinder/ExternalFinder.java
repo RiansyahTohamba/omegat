@@ -40,6 +40,7 @@ import java.util.logging.Logger;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
+import org.omegat.core.DependOnMainWindow;
 
 import org.omegat.core.Core;
 import org.omegat.core.CoreEvents;
@@ -152,7 +153,7 @@ public final class ExternalFinder {
 
             @Override
             public void onApplicationStartup() {
-                Core.getEditor().registerPopupMenuConstructors(getGlobalConfig().getPriority(),
+                DependOnMainWindow.getEditor().registerPopupMenuConstructors(getGlobalConfig().getPriority(),
                         new ExternalFinderItemPopupMenuConstructor());
             }
 

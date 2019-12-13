@@ -60,7 +60,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.Caret;
 import javax.swing.text.StyledDocument;
-
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.Core;
 import org.omegat.core.data.SourceTextEntry;
 import org.omegat.core.data.StringData;
@@ -385,7 +385,7 @@ public class MatchesTextArea extends EntryInfoThreadPane<List<NearString>> imple
                     Preferences.BEST_MATCH_MINIMAL_SIMILARITY_DEFAULT);
             NearString thebest = matches.get(0);
             if (thebest.scores[0].score >= percentage) {
-                SourceTextEntry currentEntry = Core.getEditor().getCurrentEntry();
+                SourceTextEntry currentEntry = DependOnMainWindow.getEditor().getCurrentEntry();
                 TMXEntry te = Core.getProject().getTranslationInfo(currentEntry);
                 if (!te.isTranslated()) {
                     String prefix = "";
@@ -400,7 +400,7 @@ public class MatchesTextArea extends EntryInfoThreadPane<List<NearString>> imple
                         translation =
                             substituteNumbers(currentEntry.getSrcText(), thebest.source, thebest.translation);
                     }
-                    Core.getEditor().replaceEditText(prefix + translation);
+                    DependOnMainWindow.getEditor().replaceEditText(prefix + translation);
                 }
             }
         }
@@ -633,7 +633,7 @@ public class MatchesTextArea extends EntryInfoThreadPane<List<NearString>> imple
                 item.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        Core.getEditor().gotoEntry(ns.source, ns.key);
+                        DependOnMainWindow.getEditor().gotoEntry(ns.source, ns.key);
                     }
                 });
             } else {

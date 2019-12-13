@@ -31,7 +31,7 @@ import java.awt.event.ActionListener;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.Core;
 import org.omegat.core.data.SourceTextEntry;
 import org.omegat.gui.editor.IEditorFilter;
@@ -50,8 +50,8 @@ public class SearchFilter implements IEditorFilter {
         controlComponent = new FilterBarSearch();
         controlComponent.btnRemoveFilter.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                Core.getEditor().commitAndDeactivate(); // Make sure that any change done in the current segment is not lost
-                Core.getEditor().removeFilter();
+                DependOnMainWindow.getEditor().commitAndDeactivate(); // Make sure that any change done in the current segment is not lost
+                DependOnMainWindow.getEditor().removeFilter();
             }
         });
     }

@@ -25,6 +25,7 @@
 
 package org.omegat.gui.search;
 
+import org.omegat.core.DependOnMainWindow;
 import java.awt.event.KeyEvent;
 
 import javax.swing.JMenu;
@@ -82,13 +83,13 @@ public class SearchWindowMenu extends JMenuBar {
         Mnemonics.setLocalizedText(item, OStrings.getString("TF_MENU_EDIT_SOURCE_INSERT"));
         item.setActionCommand("editInsertSourceMenuItem");
         item.addActionListener(
-                e -> controller.insertIntoActiveField(Core.getEditor().getCurrentEntry().getSrcText()));
+                e -> controller.insertIntoActiveField(DependOnMainWindow.getEditor().getCurrentEntry().getSrcText()));
 
         item = editMenu.add(new JMenuItem());
         Mnemonics.setLocalizedText(item, OStrings.getString("TF_MENU_EDIT_SOURCE_OVERWRITE"));
         item.setActionCommand("editOverwriteSourceMenuItem");
         item.addActionListener(
-                e -> controller.replaceCurrentFieldText(Core.getEditor().getCurrentEntry().getSrcText()));
+                e -> controller.replaceCurrentFieldText(DependOnMainWindow.getEditor().getCurrentEntry().getSrcText()));
 
         editMenu.addSeparator();
 

@@ -62,6 +62,7 @@ import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 
 import org.omegat.CLIParameters;
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.Core;
 import org.omegat.core.CoreEvents;
 import org.omegat.core.events.IApplicationEventListener;
@@ -272,10 +273,10 @@ public class MainWindowMenu implements ActionListener, MenuListener, IMainMenu {
             @Override
             public void menuSelected(MenuEvent e) {
                 if (Core.getProject().isProjectLoaded()) {
-                    String sourcePath = Core.getEditor().getCurrentFile();
+                    String sourcePath = DependOnMainWindow.getEditor().getCurrentFile();
                     projectAccessCurrentSourceDocumentMenuItem.setEnabled(!StringUtil.isEmpty(sourcePath)
                             && new File(Core.getProject().getProjectProperties().getSourceRoot(), sourcePath).isFile());
-                    String targetPath = Core.getEditor().getCurrentTargetFile();
+                    String targetPath = DependOnMainWindow.getEditor().getCurrentTargetFile();
                     projectAccessCurrentTargetDocumentMenuItem.setEnabled(!StringUtil.isEmpty(targetPath)
                             && new File(Core.getProject().getProjectProperties().getTargetRoot(), targetPath).isFile());
                     String glossaryPath = Core.getProject().getProjectProperties().getWriteableGlossary();
@@ -514,39 +515,39 @@ public class MainWindowMenu implements ActionListener, MenuListener, IMainMenu {
 
     /** Updates menu checkboxes from preferences on start */
     private void updateCheckboxesOnStart() {
-        viewMarkTranslatedSegmentsCheckBoxMenuItem.setSelected(Core.getEditor().getSettings()
+        viewMarkTranslatedSegmentsCheckBoxMenuItem.setSelected(DependOnMainWindow.getEditor().getSettings()
                 .isMarkTranslated());
-        viewMarkUntranslatedSegmentsCheckBoxMenuItem.setSelected(Core.getEditor().getSettings()
+        viewMarkUntranslatedSegmentsCheckBoxMenuItem.setSelected(DependOnMainWindow.getEditor().getSettings()
                 .isMarkUntranslated());
-        viewMarkParagraphStartCheckBoxMenuItem.setSelected(Core.getEditor().getSettings()
+        viewMarkParagraphStartCheckBoxMenuItem.setSelected(DependOnMainWindow.getEditor().getSettings()
                 .isMarkParagraphDelimitations());
-        viewDisplaySegmentSourceCheckBoxMenuItem.setSelected(Core.getEditor().getSettings()
+        viewDisplaySegmentSourceCheckBoxMenuItem.setSelected(DependOnMainWindow.getEditor().getSettings()
                 .isDisplaySegmentSources());
-        viewMarkNonUniqueSegmentsCheckBoxMenuItem.setSelected(Core.getEditor().getSettings()
+        viewMarkNonUniqueSegmentsCheckBoxMenuItem.setSelected(DependOnMainWindow.getEditor().getSettings()
                 .isMarkNonUniqueSegments());
-        viewMarkNotedSegmentsCheckBoxMenuItem.setSelected(Core.getEditor().getSettings()
+        viewMarkNotedSegmentsCheckBoxMenuItem.setSelected(DependOnMainWindow.getEditor().getSettings()
                 .isMarkNotedSegments());
-        viewMarkNBSPCheckBoxMenuItem.setSelected(Core.getEditor().getSettings()
+        viewMarkNBSPCheckBoxMenuItem.setSelected(DependOnMainWindow.getEditor().getSettings()
                 .isMarkNBSP());
-        viewMarkWhitespaceCheckBoxMenuItem.setSelected(Core.getEditor().getSettings()
+        viewMarkWhitespaceCheckBoxMenuItem.setSelected(DependOnMainWindow.getEditor().getSettings()
                 .isMarkWhitespace());
-        viewMarkBidiCheckBoxMenuItem.setSelected(Core.getEditor().getSettings()
+        viewMarkBidiCheckBoxMenuItem.setSelected(DependOnMainWindow.getEditor().getSettings()
                 .isMarkBidi());
-        viewMarkAutoPopulatedCheckBoxMenuItem.setSelected(Core.getEditor().getSettings()
+        viewMarkAutoPopulatedCheckBoxMenuItem.setSelected(DependOnMainWindow.getEditor().getSettings()
                 .isMarkAutoPopulated());
-        viewMarkGlossaryMatchesCheckBoxMenuItem.setSelected(Core.getEditor().getSettings().isMarkGlossaryMatches());
-        viewMarkLanguageCheckerCheckBoxMenuItem.setSelected(Core.getEditor().getSettings().isMarkLanguageChecker());
-        viewMarkFontFallbackCheckBoxMenuItem.setSelected(Core.getEditor().getSettings()
+        viewMarkGlossaryMatchesCheckBoxMenuItem.setSelected(DependOnMainWindow.getEditor().getSettings().isMarkGlossaryMatches());
+        viewMarkLanguageCheckerCheckBoxMenuItem.setSelected(DependOnMainWindow.getEditor().getSettings().isMarkLanguageChecker());
+        viewMarkFontFallbackCheckBoxMenuItem.setSelected(DependOnMainWindow.getEditor().getSettings()
                 .isDoFontFallback());
 
         viewDisplayModificationInfoNoneRadioButtonMenuItem
-                .setSelected(EditorSettings.DISPLAY_MODIFICATION_INFO_NONE.equals(Core.getEditor()
+                .setSelected(EditorSettings.DISPLAY_MODIFICATION_INFO_NONE.equals(DependOnMainWindow.getEditor()
                         .getSettings().getDisplayModificationInfo()));
         viewDisplayModificationInfoSelectedRadioButtonMenuItem
-                .setSelected(EditorSettings.DISPLAY_MODIFICATION_INFO_SELECTED.equals(Core.getEditor()
+                .setSelected(EditorSettings.DISPLAY_MODIFICATION_INFO_SELECTED.equals(DependOnMainWindow.getEditor()
                         .getSettings().getDisplayModificationInfo()));
         viewDisplayModificationInfoAllRadioButtonMenuItem
-                .setSelected(EditorSettings.DISPLAY_MODIFICATION_INFO_ALL.equals(Core.getEditor()
+                .setSelected(EditorSettings.DISPLAY_MODIFICATION_INFO_ALL.equals(DependOnMainWindow.getEditor()
                         .getSettings().getDisplayModificationInfo()));
 
         optionsAutoCompleteShowAutomaticallyItem.setSelected(Preferences.isPreferenceDefault(

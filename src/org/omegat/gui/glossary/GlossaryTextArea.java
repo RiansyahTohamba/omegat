@@ -62,7 +62,7 @@ import javax.swing.text.Caret;
 import javax.swing.text.Element;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.StyledDocument;
-
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.Core;
 import org.omegat.core.data.ProjectProperties;
 import org.omegat.core.data.SourceTextEntry;
@@ -136,7 +136,7 @@ public class GlossaryTextArea extends EntryInfoThreadPane<List<GlossaryEntry>>
 
         addMouseListener(mouseListener);
 
-        Core.getEditor().registerPopupMenuConstructors(300, new TransTipsPopup());
+        DependOnMainWindow.getEditor().registerPopupMenuConstructors(300, new TransTipsPopup());
 
         if (!GraphicsEnvironment.isHeadless()) {
             DragTargetOverlay.apply(this, new FileDropInfo(false) {
@@ -193,7 +193,7 @@ public class GlossaryTextArea extends EntryInfoThreadPane<List<GlossaryEntry>>
      * Refresh content on glossary file changed.
      */
     public void refresh() {
-        SourceTextEntry ste = Core.getEditor().getCurrentEntry();
+        SourceTextEntry ste = DependOnMainWindow.getEditor().getCurrentEntry();
         if (ste != null) {
             startSearchThread(ste);
         }
@@ -226,8 +226,8 @@ public class GlossaryTextArea extends EntryInfoThreadPane<List<GlossaryEntry>>
         nowEntries = entries;
 
         // If the TransTips is enabled then underline all the matched glossary entries
-        if (Core.getEditor().getSettings().isMarkGlossaryMatches()) {
-            Core.getEditor().remarkOneMarker(TransTipsMarker.class.getName());
+        if (DependOnMainWindow.getEditor().getSettings().isMarkGlossaryMatches()) {
+            DependOnMainWindow.getEditor().remarkOneMarker(TransTipsMarker.class.getName());
         }
 
         for (GlossaryEntry entry : entries) {
@@ -294,7 +294,7 @@ public class GlossaryTextArea extends EntryInfoThreadPane<List<GlossaryEntry>>
         item.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                Core.getEditor().insertText(selection);
+                DependOnMainWindow.getEditor().insertText(selection);
             }
         });
         item = popup.add(OStrings.getString("GUI_GLOSSARYWINDOW_addentry"));

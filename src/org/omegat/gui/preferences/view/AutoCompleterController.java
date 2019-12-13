@@ -29,7 +29,7 @@ import java.awt.event.KeyEvent;
 
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
-
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.Core;
 import org.omegat.gui.preferences.BasePreferencesController;
 import org.omegat.util.Java8Compat;
@@ -84,6 +84,6 @@ public class AutoCompleterController extends BasePreferencesController {
     public void persist() {
         Preferences.setPreference(Preferences.AC_SHOW_SUGGESTIONS_AUTOMATICALLY, panel.automaticCheckBox.isSelected());
         Preferences.setPreference(Preferences.AC_SWITCH_VIEWS_WITH_LR, panel.switchWithLRCheckBox.isSelected());
-        Core.getEditor().getAutoCompleter().resetKeys();
+        DependOnMainWindow.getEditor().getAutoCompleter().resetKeys();
     }
 }

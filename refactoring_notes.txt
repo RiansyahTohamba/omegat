@@ -8,6 +8,14 @@ LIHAT git merge !!!
 
         return saveThread;
     }
+--------------------
+BERES
+Core.getEditor() ditemukan di 49 files, mungkin saja files itu classes
+, di kelas-kelas ini juga nanti ditambahkan import org.omegat.core.DependOnMainWindow;
+CommandVarExpansion.java
+LastSegmentManager.java
+...dan lain-lain, lihat saja git merge utk mengetahui 49 kelas tersebut
+--------------------
 
 1. Move Method
 adakah di core.java ?

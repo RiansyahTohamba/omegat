@@ -34,7 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.Core;
 import org.omegat.core.data.PrepareTMXEntry;
 import org.omegat.core.data.SourceTextEntry;
@@ -76,8 +76,8 @@ public class ReplaceFilter implements IEditorFilter {
 
         controlComponent.btnCancel.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                Core.getEditor().commitAndDeactivate(); // Make sure that any change done in the current segment is not lost
-                Core.getEditor().removeFilter();
+                DependOnMainWindow.getEditor().commitAndDeactivate(); // Make sure that any change done in the current segment is not lost
+                DependOnMainWindow.getEditor().removeFilter();
             }
         });
         controlComponent.btnSkip.addActionListener(new ActionListener() {
@@ -124,7 +124,7 @@ public class ReplaceFilter implements IEditorFilter {
                 Core.getProject().setTranslation(ste, prepare, en.defaultTranslation, null);
             }
         }
-        EditorController ec = (EditorController) Core.getEditor();
+        EditorController ec = (EditorController) DependOnMainWindow.getEditor();
         ec.refreshEntries(entries.keySet());
     }
 
@@ -147,7 +147,7 @@ public class ReplaceFilter implements IEditorFilter {
     }
 
     private void skip() {
-        EditorController ec = (EditorController) Core.getEditor();
+        EditorController ec = (EditorController) DependOnMainWindow.getEditor();
 
         // try to find in current entry
         int pos = ec.getCurrentPositionInEntryTranslation();
@@ -213,7 +213,7 @@ public class ReplaceFilter implements IEditorFilter {
     }
 
     private void replace() {
-        EditorController ec = (EditorController) Core.getEditor();
+        EditorController ec = (EditorController) DependOnMainWindow.getEditor();
 
         // is caret inside match ?
         int pos = ec.getCurrentPositionInEntryTranslation();

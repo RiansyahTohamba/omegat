@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 import javax.swing.text.Highlighter.HighlightPainter;
 
 import org.omegat.core.Core;
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.CoreEvents;
 import org.omegat.core.data.SourceTextEntry;
 import org.omegat.core.events.IApplicationEventListener;
@@ -149,7 +150,7 @@ public final class LanguageToolWrapper {
         }
 
         protected boolean isEnabled() {
-            return Core.getEditor().getSettings().isMarkLanguageChecker();
+            return DependOnMainWindow.getEditor().getSettings().isMarkLanguageChecker();
         }
     }
 

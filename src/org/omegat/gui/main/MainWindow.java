@@ -52,7 +52,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.WindowConstants;
 import javax.swing.text.JTextComponent;
-
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.Core;
 import org.omegat.core.CoreEvents;
 import org.omegat.core.events.IApplicationEventListener;
@@ -127,7 +127,7 @@ public class MainWindow extends JFrame implements IMainWindow {
             }
             @Override
             public void windowDeactivated(WindowEvent we) {
-                Core.getEditor().windowDeactivated();
+                DependOnMainWindow.getEditor().windowDeactivated();
             }
         });
 
@@ -236,7 +236,7 @@ public class MainWindow extends JFrame implements IMainWindow {
             if (near != null) {
                 text = near.translation;
                 if (Preferences.isPreference(Preferences.CONVERT_NUMBERS)) {
-                    text = Core.getMatcher().substituteNumbers(Core.getEditor().getCurrentEntry().getSrcText(),
+                    text = Core.getMatcher().substituteNumbers(DependOnMainWindow.getEditor().getCurrentEntry().getSrcText(),
                         near.source, near.translation);
                 }
 
@@ -249,11 +249,11 @@ public class MainWindow extends JFrame implements IMainWindow {
         }
         if (!StringUtil.isEmpty(text)) {
             if (fromMT) {
-                Core.getEditor().insertTextAndMark(text);
+                DependOnMainWindow.getEditor().insertTextAndMark(text);
             } else {
-                Core.getEditor().insertText(text);
+                DependOnMainWindow.getEditor().insertText(text);
             }
-            Core.getEditor().requestFocus();
+            DependOnMainWindow.getEditor().requestFocus();
         }
     }
 
@@ -265,8 +265,8 @@ public class MainWindow extends JFrame implements IMainWindow {
 
         String selection = getSelectedTextInMatcher();
         if (!StringUtil.isEmpty(selection)) {
-            Core.getEditor().replaceEditText(selection);
-            Core.getEditor().requestFocus();
+            DependOnMainWindow.getEditor().replaceEditText(selection);
+            DependOnMainWindow.getEditor().requestFocus();
             return;
         }
 
@@ -274,17 +274,17 @@ public class MainWindow extends JFrame implements IMainWindow {
         if (near != null) {
             String translation = near.translation;
             if (Preferences.isPreference(Preferences.CONVERT_NUMBERS)) {
-                translation = Core.getMatcher().substituteNumbers(Core.getEditor().getCurrentEntry().getSrcText(),
+                translation = Core.getMatcher().substituteNumbers(DependOnMainWindow.getEditor().getCurrentEntry().getSrcText(),
                         near.source, near.translation);
             }
             if (near.comesFrom == NearString.MATCH_SOURCE.TM
                     && FileUtil.isInPath(new File(Core.getProject().getProjectProperties().getTMRoot(), "mt"),
                             new File(near.projs[0]))) {
-                Core.getEditor().replaceEditTextAndMark(translation);
+                DependOnMainWindow.getEditor().replaceEditTextAndMark(translation);
             } else {
-                Core.getEditor().replaceEditText(translation);
+                DependOnMainWindow.getEditor().replaceEditText(translation);
             }
-            Core.getEditor().requestFocus();
+            DependOnMainWindow.getEditor().requestFocus();
         }
     }
 

@@ -56,7 +56,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-
+import org.omegat.core.DependOnMainWindow;
 import javax.swing.AbstractAction;
 import javax.swing.AbstractListModel;
 import javax.swing.DefaultListModel;
@@ -404,7 +404,7 @@ public class IssuesPanelController implements IIssues {
 
     void jumpToSelectedIssue() {
         getSelectedIssue().map(IIssue::getSegmentNumber).ifPresent(i -> {
-            Core.getEditor().gotoEntry(i);
+            DependOnMainWindow.getEditor().gotoEntry(i);
             JFrame mwf = Core.getMainWindow().getApplicationFrame();
             mwf.setState(JFrame.NORMAL);
             mwf.toFront();

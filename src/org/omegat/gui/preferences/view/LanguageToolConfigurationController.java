@@ -26,7 +26,7 @@
 package org.omegat.gui.preferences.view;
 
 import static org.omegat.languagetools.LanguageToolNativeBridge.getLTLanguage;
-
+import org.omegat.core.DependOnMainWindow;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
@@ -499,7 +499,7 @@ public class LanguageToolConfigurationController extends BasePreferencesControll
         }
         SwingUtilities.invokeLater(() -> {
             if (Core.getProject().isProjectLoaded()) {
-                Core.getEditor().refreshView(true);
+                DependOnMainWindow.getEditor().refreshView(true);
             }
         });
     }

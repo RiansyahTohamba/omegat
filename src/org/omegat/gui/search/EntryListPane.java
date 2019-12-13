@@ -59,6 +59,7 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
 import org.omegat.core.Core;
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.data.SourceTextEntry;
 import org.omegat.core.search.SearchMatch;
 import org.omegat.core.search.SearchResultEntry;
@@ -169,7 +170,7 @@ class EntryListPane extends JTextPane {
         addFocusListener(new FocusAdapter() {
             @Override
             public void focusGained(FocusEvent e) {
-                boolean useTabForAdvance = Core.getEditor().getSettings().isUseTabForAdvance();
+                boolean useTabForAdvance = DependOnMainWindow.getEditor().getSettings().isUseTabForAdvance();
                 if (EntryListPane.this.useTabForAdvance != useTabForAdvance) {
                     EntryListPane.this.useTabForAdvance = useTabForAdvance;
                     initInputMap(useTabForAdvance);
@@ -189,7 +190,7 @@ class EntryListPane extends JTextPane {
         getDocument().addDocumentListener(new FontFallbackListener(EntryListPane.this));
 
         initActions();
-        useTabForAdvance = Core.getEditor().getSettings().isUseTabForAdvance();
+        useTabForAdvance = DependOnMainWindow.getEditor().getSettings().isUseTabForAdvance();
         autoSyncWithEditor = Preferences.isPreferenceDefault(Preferences.SEARCHWINDOW_AUTO_SYNC, false);
         initInputMap(useTabForAdvance);
         setEditable(false);
@@ -586,7 +587,7 @@ class EntryListPane extends JTextPane {
 
             final int entry = entryList.get(index);
             if (entry > 0) {
-                final IEditor editor = Core.getEditor();
+                final IEditor editor = DependOnMainWindow.getEditor();
                 int currEntryInEditor = editor.getCurrentEntryNumber();
                 if (currEntryInEditor != 0 && entry != currEntryInEditor) {
                     final boolean isSegDisplayed = isSegmentDisplayed(entry);
@@ -604,7 +605,7 @@ class EntryListPane extends JTextPane {
         }
 
         private boolean isSegmentDisplayed(int entry) {
-            IEditorFilter filter = Core.getEditor().getFilter();
+            IEditorFilter filter = DependOnMainWindow.getEditor().getFilter();
             if (filter == null) {
                 return true;
             } else {

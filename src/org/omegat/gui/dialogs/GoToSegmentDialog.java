@@ -35,6 +35,7 @@ import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import org.omegat.core.DependOnMainWindow;
 
 import org.omegat.core.Core;
 import org.omegat.gui.editor.AlphabeticalMarkers;
@@ -91,7 +92,7 @@ public class GoToSegmentDialog extends javax.swing.JDialog {
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowOpened(WindowEvent e) {
-                alphabeticalMarkers = ((EditorController) Core.getEditor()).getAlphabeticalMarkers();
+                alphabeticalMarkers = ((EditorController) DependOnMainWindow.getEditor()).getAlphabeticalMarkers();
                 alphabeticalMarkers.showMarkers();
             }
         });

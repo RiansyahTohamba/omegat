@@ -43,7 +43,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 import javax.swing.text.Caret;
 import javax.swing.text.JTextComponent;
-
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.Core;
 import org.omegat.core.data.SourceTextEntry;
 import org.omegat.gui.common.EntryInfoThreadPane;
@@ -88,7 +88,7 @@ public class MultipleTransPane extends EntryInfoThreadPane<List<MultipleTransFou
         setText(EXPLANATION);
         setMinimumSize(new Dimension(100, 50));
 
-        Core.getEditor().registerPopupMenuConstructors(600, new IPopupMenuConstructor() {
+        DependOnMainWindow.getEditor().registerPopupMenuConstructors(600, new IPopupMenuConstructor() {
             public void addItems(JPopupMenu menu, JTextComponent comp, int mousepos, boolean isInActiveEntry,
                     boolean isInActiveTranslation, final SegmentBuilder sb) {
                 if (isInActiveEntry
@@ -100,13 +100,13 @@ public class MultipleTransPane extends EntryInfoThreadPane<List<MultipleTransFou
 
                     miDefault.addActionListener(new ActionListener() {
                         public void actionPerformed(ActionEvent e) {
-                            Core.getEditor().setAlternateTranslationForCurrentEntry(false);
-                            Core.getEditor().commitAndLeave();
+                            DependOnMainWindow.getEditor().setAlternateTranslationForCurrentEntry(false);
+                            DependOnMainWindow.getEditor().commitAndLeave();
                         }
                     });
                     miMultiple.addActionListener(new ActionListener() {
                         public void actionPerformed(ActionEvent e) {
-                            Core.getEditor().setAlternateTranslationForCurrentEntry(true);
+                            DependOnMainWindow.getEditor().setAlternateTranslationForCurrentEntry(true);
                         }
                     });
                 }
@@ -236,22 +236,22 @@ public class MultipleTransPane extends EntryInfoThreadPane<List<MultipleTransFou
         item.setEnabled(de != null && de.entry.key != null);
         if (de != null && de.entry.key != null) {
             item.addActionListener(e -> {
-                Core.getEditor().replaceEditText(de.entry.entry.translation);
-                Core.getEditor().setAlternateTranslationForCurrentEntry(false);
-                Core.getEditor().commitAndLeave();
+                DependOnMainWindow.getEditor().replaceEditText(de.entry.entry.translation);
+                DependOnMainWindow.getEditor().setAlternateTranslationForCurrentEntry(false);
+                DependOnMainWindow.getEditor().commitAndLeave();
             });
         }
         // non-default translation
         item = popup.add(OStrings.getString("MULT_POPUP_REPLACE"));
         item.setEnabled(de != null);
         if (de != null) {
-            item.addActionListener(e -> Core.getEditor().replaceEditText(de.entry.entry.translation));
+            item.addActionListener(e -> DependOnMainWindow.getEditor().replaceEditText(de.entry.entry.translation));
         }
 
         item = popup.add(OStrings.getString("MULT_POPUP_GOTO"));
         item.setEnabled(de != null);
         if (de != null) {
-            item.addActionListener(e -> Core.getEditor().gotoEntry(de.entry.sourceText, de.entry.key));
+            item.addActionListener(e -> DependOnMainWindow.getEditor().gotoEntry(de.entry.sourceText, de.entry.key));
         }
     }
 

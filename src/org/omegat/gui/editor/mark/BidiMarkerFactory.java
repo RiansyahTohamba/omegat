@@ -25,7 +25,7 @@
  **************************************************************************/
 
 package org.omegat.gui.editor.mark;
-
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.Core;
 import org.omegat.util.gui.Styles;
 
@@ -47,7 +47,7 @@ public class BidiMarkerFactory {
             patternChar = '\u200F';
         }
         protected boolean isEnabled() {
-            return Core.getEditor().getSettings().isMarkBidi();
+            return DependOnMainWindow.getEditor().getSettings().isMarkBidi();
         }
     }
     /**
@@ -61,7 +61,7 @@ public class BidiMarkerFactory {
             patternChar = '\u200E';
         }
         protected boolean isEnabled() {
-            return Core.getEditor().getSettings().isMarkBidi();
+            return DependOnMainWindow.getEditor().getSettings().isMarkBidi();
         }
     }
     /**
@@ -75,7 +75,7 @@ public class BidiMarkerFactory {
             patternChar = '\u202A';
         }
         protected boolean isEnabled() {
-            return Core.getEditor().getSettings().isMarkBidi();
+            return DependOnMainWindow.getEditor().getSettings().isMarkBidi();
         }
     }
     /**
@@ -89,7 +89,7 @@ public class BidiMarkerFactory {
             patternChar = '\u202B';
         }
         protected boolean isEnabled() {
-            return Core.getEditor().getSettings().isMarkBidi();
+            return DependOnMainWindow.getEditor().getSettings().isMarkBidi();
         }
     }
     /**
@@ -103,7 +103,7 @@ public class BidiMarkerFactory {
             patternChar = '\u202C';
         }
         protected boolean isEnabled() {
-            return Core.getEditor().getSettings().isMarkBidi();
+            return DependOnMainWindow.getEditor().getSettings().isMarkBidi();
         }
     }
     /**
@@ -117,7 +117,7 @@ public class BidiMarkerFactory {
             patternChar = '\u202D';
         }
         protected boolean isEnabled() {
-            return Core.getEditor().getSettings().isMarkBidi();
+            return DependOnMainWindow.getEditor().getSettings().isMarkBidi();
         }
     }
     /**
@@ -131,7 +131,7 @@ public class BidiMarkerFactory {
             patternChar = '\u202E';
         }
         protected boolean isEnabled() {
-            return Core.getEditor().getSettings().isMarkBidi();
+            return DependOnMainWindow.getEditor().getSettings().isMarkBidi();
         }
     }
 }

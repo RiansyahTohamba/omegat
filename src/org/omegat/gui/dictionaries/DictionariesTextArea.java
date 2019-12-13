@@ -51,7 +51,7 @@ import javax.swing.text.Document;
 import javax.swing.text.Element;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.StyleSheet;
-
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.Core;
 import org.omegat.core.CoreEvents;
 import org.omegat.core.data.IProject;
@@ -121,7 +121,7 @@ public class DictionariesTextArea extends EntryInfoThreadPane<List<DictionaryEnt
             }
         });
 
-        Core.getEditor().registerPopupMenuConstructors(750, new DictionaryPopup());
+        DependOnMainWindow.getEditor().registerPopupMenuConstructors(750, new DictionaryPopup());
 
         Preferences.addPropertyChangeListener(Preferences.DICTIONARY_FUZZY_MATCHING, e -> refresh());
         Preferences.addPropertyChangeListener(Preferences.DICTIONARY_AUTO_SEARCH, e -> refresh());
@@ -221,7 +221,7 @@ public class DictionariesTextArea extends EntryInfoThreadPane<List<DictionaryEnt
      * Refresh content on dictionary file changed.
      */
     public void refresh() {
-        SourceTextEntry ste = Core.getEditor().getCurrentEntry();
+        SourceTextEntry ste = DependOnMainWindow.getEditor().getCurrentEntry();
         if (ste != null) {
             startSearchThread(ste);
         }

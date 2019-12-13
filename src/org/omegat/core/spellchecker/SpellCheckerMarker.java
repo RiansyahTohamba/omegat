@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.swing.text.Highlighter.HighlightPainter;
+import org.omegat.core.DependOnMainWindow;
 
 import org.omegat.core.Core;
 import org.omegat.core.data.SourceTextEntry;
@@ -53,7 +54,7 @@ public class SpellCheckerMarker implements IMarker {
             // translation not displayed
             return null;
         }
-        if (!Core.getEditor().getSettings().isAutoSpellChecking()) {
+        if (!DependOnMainWindow.getEditor().getSettings().isAutoSpellChecking()) {
             // spell checker disabled
             return null;
         }

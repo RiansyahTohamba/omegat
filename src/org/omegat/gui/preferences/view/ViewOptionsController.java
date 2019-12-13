@@ -33,7 +33,7 @@ import java.util.Vector;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
-
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.Core;
 import org.omegat.gui.editor.ModificationInfoManager;
 import org.omegat.gui.preferences.BasePreferencesController;
@@ -152,6 +152,6 @@ public class ViewOptionsController extends BasePreferencesController {
         Preferences.setPreference(Preferences.VIEW_OPTION_MOD_INFO_TEMPLATE, panel.modInfoTemplate.getText());
         Preferences.setPreference(Preferences.VIEW_OPTION_MOD_INFO_TEMPLATE_WO_DATE, panel.modInfoTemplateND.getText());
         ModificationInfoManager.reset();
-        SwingUtilities.invokeLater(Core.getEditor().getSettings()::updateViewPreferences);
+        SwingUtilities.invokeLater(DependOnMainWindow.getEditor().getSettings()::updateViewPreferences);
     }
 }

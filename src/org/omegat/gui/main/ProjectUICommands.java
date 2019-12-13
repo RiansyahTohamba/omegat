@@ -51,6 +51,7 @@ import javax.swing.SwingWorker;
 import org.apache.commons.io.FileUtils;
 import org.omegat.CLIParameters;
 import org.omegat.convert.ConvertProject;
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.Core;
 import org.omegat.core.CoreEvents;
 import org.omegat.core.KnownException;
@@ -212,7 +213,7 @@ public final class ProjectUICommands {
             protected void done() {
                 try {
                     get();
-                    SwingUtilities.invokeLater(Core.getEditor()::requestFocus);
+                    SwingUtilities.invokeLater(DependOnMainWindow.getEditor()::requestFocus);
                 } catch (Exception ex) {
                     Log.logErrorRB(ex, "PP_ERROR_UNABLE_TO_READ_PROJECT_FILE");
                     Core.getMainWindow().displayErrorRB(ex, "PP_ERROR_UNABLE_TO_READ_PROJECT_FILE");
@@ -229,7 +230,7 @@ public final class ProjectUICommands {
         }
 
         // commit the current entry first
-        Core.getEditor().commitAndLeave();
+        DependOnMainWindow.getEditor().commitAndLeave();
 
         // ask for new MED file
         ChooseMedProject ndm = new ChooseMedProject();
@@ -284,7 +285,7 @@ public final class ProjectUICommands {
             protected void done() {
                 try {
                     get();
-                    SwingUtilities.invokeLater(Core.getEditor()::requestFocus);
+                    SwingUtilities.invokeLater(DependOnMainWindow.getEditor()::requestFocus);
                 } catch (Exception ex) {
                     Log.logErrorRB(ex, "PP_ERROR_UNABLE_TO_READ_PROJECT_FILE");
                     Core.getMainWindow().displayErrorRB(ex, "PP_ERROR_UNABLE_TO_READ_PROJECT_FILE");
@@ -377,7 +378,7 @@ public final class ProjectUICommands {
                     if (projectRoot != null) {
                         // don't ask open if user cancelled previous dialog
                         SwingUtilities.invokeLater(() -> {
-                            Core.getEditor().requestFocus();
+                            DependOnMainWindow.getEditor().requestFocus();
                             projectOpen(projectRoot);
                         });
 
@@ -552,7 +553,7 @@ public final class ProjectUICommands {
             protected void done() {
                 try {
                     get();
-                    SwingUtilities.invokeLater(Core.getEditor()::requestFocus);
+                    SwingUtilities.invokeLater(DependOnMainWindow.getEditor()::requestFocus);
                 } catch (Exception ex) {
                     Log.logErrorRB(ex, "PP_ERROR_UNABLE_TO_READ_PROJECT_FILE");
                     Core.getMainWindow().displayErrorRB(ex, "PP_ERROR_UNABLE_TO_READ_PROJECT_FILE");
@@ -585,12 +586,12 @@ public final class ProjectUICommands {
         }
 
         // commit the current entry first
-        Core.getEditor().commitAndLeave();
+        DependOnMainWindow.getEditor().commitAndLeave();
 
         final ProjectProperties props = Core.getProject().getProjectProperties();
 
         new SwingWorker<Void, Void>() {
-            int previousCurEntryNum = Core.getEditor().getCurrentEntryNumber();
+            int previousCurEntryNum = DependOnMainWindow.getEditor().getCurrentEntryNumber();
 
             protected Void doInBackground() throws Exception {
                 IMainWindow mainWindow = Core.getMainWindow();
@@ -613,8 +614,8 @@ public final class ProjectUICommands {
                     get();
                     SwingUtilities.invokeLater(() -> {
                         // activate entry later - after project will be loaded
-                        Core.getEditor().gotoEntry(previousCurEntryNum);
-                        Core.getEditor().requestFocus();
+                        DependOnMainWindow.getEditor().gotoEntry(previousCurEntryNum);
+                        DependOnMainWindow.getEditor().requestFocus();
                     });
                 } catch (Exception ex) {
                     processSwingWorkerException(ex, "PP_ERROR_UNABLE_TO_READ_PROJECT_FILE");
@@ -631,7 +632,7 @@ public final class ProjectUICommands {
         }
 
         // commit the current entry first
-        Core.getEditor().commitAndLeave();
+        DependOnMainWindow.getEditor().commitAndLeave();
 
         new SwingWorker<Void, Void>() {
             protected Void doInBackground() throws Exception {
@@ -667,7 +668,7 @@ public final class ProjectUICommands {
         }
 
         // commit the current entry first
-        Core.getEditor().commitAndLeave();
+        DependOnMainWindow.getEditor().commitAndLeave();
 
         new SwingWorker<Void, Void>() {
             protected Void doInBackground() throws Exception {
@@ -719,7 +720,7 @@ public final class ProjectUICommands {
         }
 
         // commit the current entry first
-        Core.getEditor().commitAndLeave();
+        DependOnMainWindow.getEditor().commitAndLeave();
 
         // displaying the dialog to change paths and other properties
         ProjectPropertiesDialog prj = new ProjectPropertiesDialog(Core.getMainWindow().getApplicationFrame(),
@@ -741,7 +742,7 @@ public final class ProjectUICommands {
         }
 
         new SwingWorker<Void, Void>() {
-            int previousCurEntryNum = Core.getEditor().getCurrentEntryNumber();
+            int previousCurEntryNum = DependOnMainWindow.getEditor().getCurrentEntryNumber();
 
             protected Void doInBackground() throws Exception {
                 Core.executeExclusively(true, () -> {
@@ -759,8 +760,8 @@ public final class ProjectUICommands {
                     // Make sure to update Editor title
                     SwingUtilities.invokeLater(() -> {
                         // activate entry later - after project will be loaded
-                        Core.getEditor().gotoEntry(previousCurEntryNum);
-                        Core.getEditor().requestFocus();
+                        DependOnMainWindow.getEditor().gotoEntry(previousCurEntryNum);
+                        DependOnMainWindow.getEditor().requestFocus();
                     });
                 } catch (Exception ex) {
                     processSwingWorkerException(ex, "PP_ERROR_UNABLE_TO_READ_PROJECT_FILE");
@@ -777,7 +778,7 @@ public final class ProjectUICommands {
         }
 
         // commit the current entry first
-        Core.getEditor().commitAndLeave();
+        DependOnMainWindow.getEditor().commitAndLeave();
 
         new SwingWorker<Void, Void>() {
             protected Void doInBackground() throws Exception {
@@ -810,7 +811,7 @@ public final class ProjectUICommands {
         }
 
         // commit the current entry first
-        Core.getEditor().commitAndLeave();
+        DependOnMainWindow.getEditor().commitAndLeave();
 
         new SwingWorker<Void, Void>() {
             @Override
@@ -845,7 +846,7 @@ public final class ProjectUICommands {
         }
 
         // commit the current entry first
-        Core.getEditor().commitAndLeave();
+        DependOnMainWindow.getEditor().commitAndLeave();
 
         new SwingWorker<Void, Void>() {
             protected Void doInBackground() throws Exception {
@@ -878,7 +879,7 @@ public final class ProjectUICommands {
         }
 
         // Commit the current entry first
-        Core.getEditor().commitAndLeave();
+        DependOnMainWindow.getEditor().commitAndLeave();
 
         new SwingWorker<Void, Void>() {
             @Override
@@ -956,7 +957,7 @@ public final class ProjectUICommands {
         }
 
         // commit the current entry first
-        Core.getEditor().commitAndLeave();
+        DependOnMainWindow.getEditor().commitAndLeave();
 
         try {
             FileUtil.copyFilesTo(new File(destination), toImport, new CollisionCallback());

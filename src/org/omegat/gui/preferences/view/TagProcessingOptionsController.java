@@ -30,7 +30,7 @@ package org.omegat.gui.preferences.view;
 
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-
+import org.omegat.core.DependOnMainWindow;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
@@ -172,6 +172,6 @@ public class TagProcessingOptionsController extends BasePreferencesController {
         PatternConsts.updatePlaceholderPattern();
         PatternConsts.updateRemovePattern();
         PatternConsts.updateCustomTagPattern();
-        SwingUtilities.invokeLater(() -> Core.getEditor().getSettings().updateTagValidationPreferences());
+        SwingUtilities.invokeLater(() -> DependOnMainWindow.getEditor().getSettings().updateTagValidationPreferences());
     }
 }

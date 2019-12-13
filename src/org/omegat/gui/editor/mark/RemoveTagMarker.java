@@ -29,7 +29,7 @@ package org.omegat.gui.editor.mark;
 
 import javax.swing.text.AttributeSet;
 import javax.swing.text.Highlighter.HighlightPainter;
-
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.Core;
 import org.omegat.core.CoreEvents;
 import org.omegat.gui.editor.Document3;
@@ -67,7 +67,7 @@ public class RemoveTagMarker extends AbstractMarker {
 
     @Override
     protected void initDrawers(boolean isSource, boolean isActive) {
-        if (((EditorController) Core.getEditor()).getOrientation() == Document3.ORIENTATION.ALL_LTR) {
+        if (((EditorController) DependOnMainWindow.getEditor()).getOrientation() == Document3.ORIENTATION.ALL_LTR) {
             attributes = isSource ? attributesLtrSource : attributesLtrTranslation;
             painter = null;
         } else {

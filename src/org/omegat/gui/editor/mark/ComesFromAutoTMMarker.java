@@ -30,7 +30,7 @@ import java.util.Collections;
 import java.util.List;
 
 import javax.swing.text.Highlighter.HighlightPainter;
-
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.Core;
 import org.omegat.core.data.SourceTextEntry;
 import org.omegat.core.data.TMXEntry;
@@ -54,7 +54,7 @@ public class ComesFromAutoTMMarker implements IMarker {
     @Override
     public synchronized List<Mark> getMarksForEntry(SourceTextEntry ste, String sourceText,
             String translationText, boolean isActive) {
-        if (!Core.getEditor().getSettings().isMarkAutoPopulated()) {
+        if (!DependOnMainWindow.getEditor().getSettings().isMarkAutoPopulated()) {
             return null;
         }
         TMXEntry e = Core.getProject().getTranslationInfo(ste);
