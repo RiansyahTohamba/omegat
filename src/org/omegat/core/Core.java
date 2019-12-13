@@ -127,7 +127,6 @@ public final class Core {
     private static final List<String> PLUGINS_LOADING_ERRORS = Collections
             .synchronizedList(new ArrayList<String>());
 
-    private static final List<IMarker> MARKERS = new ArrayList<IMarker>();
 
     /** Get project instance. */
     public static IProject getProject() {
@@ -221,22 +220,7 @@ public final class Core {
         currentProject = new NotLoadedProject();
 
         // 2. Initialize application frame
-
-        Core.registerMarker(new ProtectedPartsMarker());
-        Core.registerMarker(new RemoveTagMarker());
-        Core.registerMarker(new NBSPMarker());
-        Core.registerMarker(new TransTipsMarker());
-        Core.registerMarker(new WhitespaceMarkerFactory.SpaceMarker());
-        Core.registerMarker(new WhitespaceMarkerFactory.TabMarker());
-        Core.registerMarker(new WhitespaceMarkerFactory.LFMarker());
-        Core.registerMarker(new BidiMarkerFactory.RLMMarker());
-        Core.registerMarker(new BidiMarkerFactory.LRMMarker());
-        Core.registerMarker(new BidiMarkerFactory.PDFMarker());
-        Core.registerMarker(new BidiMarkerFactory.LROMarker());
-        Core.registerMarker(new BidiMarkerFactory.RLOMarker());
-        Core.registerMarker(new ReplaceMarker());
-        Core.registerMarker(new ComesFromAutoTMMarker());
-        Core.registerMarker(new FontFallbackMarker());
+        RegMarker.rgMarker();
 
         LanguageToolWrapper.init();
 
@@ -286,20 +270,6 @@ public final class Core {
      */
     protected static void setCurrentProject(IProject currentProject) {
         Core.currentProject = currentProject;
-    }
-
-    /**
-     * Register class for calculate marks.
-     *
-     * @param marker
-     *            marker implementation
-     */
-    public static void registerMarker(IMarker marker) {
-        MARKERS.add(marker);
-    }
-
-    public static List<IMarker> getMarkers() {
-        return MARKERS;
     }
 
     public static Map<String, String> getParams() {
