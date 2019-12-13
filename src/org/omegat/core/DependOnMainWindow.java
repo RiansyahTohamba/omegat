@@ -13,7 +13,9 @@ import org.omegat.gui.multtrans.MultipleTransPane;
 import org.omegat.gui.notes.NotesTextArea;
 import org.omegat.gui.properties.SegmentPropertiesArea;
 
-public class DependOnMainWindow {
+public final class DependOnMainWindow {
+    private static MachineTranslateTextArea machineTranslatePane;
+
     static void dependOnMainWindow() {
         /*        TODO: how to separate these objects?  */
         MainWindow me = new MainWindow();
@@ -24,7 +26,7 @@ public class DependOnMainWindow {
         Core.matcher = new MatchesTextArea(me);
         Core.notes = new NotesTextArea(me);
         Core.comments = new CommentsTextArea(me);
-        Core.machineTranslatePane = new MachineTranslateTextArea(me);
+        machineTranslatePane = new MachineTranslateTextArea(me);
         Core.dictionaries = new DictionariesTextArea(me);
         Core.multiple = new MultipleTransPane(me);
 
@@ -33,5 +35,8 @@ public class DependOnMainWindow {
         Core.glossaryManager = new GlossaryManager(glossaryArea);
 
         new SegmentPropertiesArea(me);
+    }
+    public static MachineTranslateTextArea getMachineTranslatePane() {
+        return machineTranslatePane;
     }
 }

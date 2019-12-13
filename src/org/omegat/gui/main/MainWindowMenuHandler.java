@@ -48,6 +48,7 @@ import javax.swing.SwingWorker;
 import javax.swing.text.JTextComponent;
 
 import org.omegat.core.Core;
+import org.omegat.core.DependOnMainWindow;
 import org.omegat.core.CoreEvents;
 import org.omegat.core.KnownException;
 import org.omegat.core.data.ProjectFactory;
@@ -461,9 +462,9 @@ public final class MainWindowMenuHandler {
     }
 
     public void editOverwriteMachineTranslationMenuItemActionPerformed() {
-        String tr = Core.getMachineTranslatePane().getDisplayedTranslation();
+        String tr = DependOnMainWindow.getMachineTranslatePane().getDisplayedTranslation();
         if (tr == null) {
-            Core.getMachineTranslatePane().forceLoad();
+            DependOnMainWindow.getMachineTranslatePane().forceLoad();
         } else if (!StringUtil.isEmpty(tr)) {
             Core.getEditor().replaceEditText(tr);
         }

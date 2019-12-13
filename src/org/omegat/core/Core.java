@@ -117,7 +117,6 @@ public final class Core {
 
     protected static IGlossaries glossary;
     private static GlossaryManager glossaryManager;
-    private static MachineTranslateTextArea machineTranslatePane;
     private static DictionariesTextArea dictionaries;
     @SuppressWarnings("unused")
     private static MultipleTransPane multiple;
@@ -265,9 +264,6 @@ public final class Core {
 
 
 
-    public static MachineTranslateTextArea getMachineTranslatePane() {
-        return machineTranslatePane;
-    }
 
     /**
      * Initialize application components.
