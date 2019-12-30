@@ -1,14 +1,9 @@
-
 LIHAT git merge !!!
-  public static IAutoSave getAutoSave() {
-//        TODO: Penggunaannya di kelas ini :
-//        RealProject
-//        ProjectFactory
-//        dipakai buat enable/disable
-//Core.getAutoSave().enable() OR Core.getAutoSave().disable()
-
-        return saveThread;
-    }
+-----------------------
+sampai tahap ini CBO Core dari 53 menjadi 21,skenario yg dilakukan
+Move Method / Extract Class affect Move Field
+When move-method or extract-class dilakukan therefore move-field must be done too
+sisa gimana cara menggunakan HD, RDwI, CBAU ??
 -----------------------
 BERES mindahin object didalam initializeGUI, labour intensive wkwkw
 sesudahnya saya pakai bantuan intelij nikmat banget pindahinnya :D
@@ -25,19 +20,9 @@ LastSegmentManager.java
 ...dan lain-lain, lihat saja git merge utk mengetahui 49 kelas tersebut
 --------------------
 
-1. Move Method
-adakah di core.java ?
 
  ------------------------------------------------------------------------
-2. Move Field
-adakah di core.java ?
-
- ------------------------------------------------------------------------
-3. Change Bidirectional Association to Unidirectional
-adakah di core.java ?
-
-------------------------------------------------------------------------
-4. Extract Class (EC) :
+3. Change Bidirectional Association to Unidirectional (CBAU)
 adakah di core.java ?
 
  ------------------------------------------------------------------------
