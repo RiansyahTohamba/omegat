@@ -342,52 +342,7 @@ public class RealProject implements IProject {
         Log.logInfoRB("LOG_DATAENGINE_CREATE_START");
         UIThreadsUtil.mustNotBeSwingThread();
 
-        try {
-            if (!lockProject()) {
-                throw new KnownException("PROJECT_LOCKED");
-            }
-
-            createDirectory(config.getProjectRoot(), null);
-            createDirectory(config.getProjectInternal(), OConsts.DEFAULT_INTERNAL);
-            createDirectory(config.getSourceRoot(), OConsts.DEFAULT_SOURCE);
-            createDirectory(config.getGlossaryRoot(), OConsts.DEFAULT_GLOSSARY);
-            createDirectory(config.getTMRoot(), OConsts.DEFAULT_TM);
-            createDirectory(config.getTMAutoRoot(), OConsts.AUTO_TM);
-            createDirectory(config.getDictRoot(), OConsts.DEFAULT_DICT);
-            createDirectory(config.getTargetRoot(), OConsts.DEFAULT_TARGET);
-            //createDirectory(m_config.getTMOtherLangRoot(), OConsts.DEFAULT_OTHERLANG);
-
-            saveProjectProperties();
-
-            // Set project specific segmentation rules if they exist, or
-            // defaults otherwise.
-            SRX srx = config.getProjectSRX();
-            Core.setSegmenter(new Segmenter(srx == null ? Preferences.getSRX() : srx));
-
-            loadTranslations();
-            setProjectModified(true);
-            saveProject(false);
-
-            loadSourceFiles();
-
-            allProjectEntries = Collections.unmodifiableList(allProjectEntries);
-            importHandler = new ImportFromAutoTMX(this, allProjectEntries);
-
-            importTranslationsFromSources();
-
-            loadTM();
-
-            loadOtherLanguages();
-
-            loaded = true;
-
-            // clear status message
-            Core.getMainWindow().showStatusMessageRB(null);
-        } catch (Exception e) {
-            // trouble in tinsletown...
-            Log.logErrorRB(e, "CT_ERROR_CREATING_PROJECT");
-            Core.getMainWindow().displayErrorRB(e, "CT_ERROR_CREATING_PROJECT");
-        }
+        creatingProject.create();
         Log.logInfoRB("LOG_DATAENGINE_CREATE_END");
     }
 
@@ -395,107 +350,10 @@ public class RealProject implements IProject {
      * Load exist project in a "big" sense -- loads project's properties, glossaries, tms, source files etc.
      */
     public synchronized void loadProject(boolean onlineMode) {
-        Log.logInfoRB("LOG_DATAENGINE_LOAD_START");
-        UIThreadsUtil.mustNotBeSwingThread();
 
         // load new project
-        try {
-            if (!lockProject()) {
-                throw new KnownException("PROJECT_LOCKED");
-            }
-            isOnlineMode = onlineMode;
 
-            if (RuntimePreferences.isLocationSaveEnabled()) {
-                Preferences.setPreference(Preferences.CURRENT_FOLDER,
-                        new File(config.getProjectRoot()).getAbsoluteFile().getParent());
-                Preferences.save();
-            }
-
-            Core.getMainWindow().showStatusMessageRB("CT_LOADING_PROJECT");
-
-            if (remoteRepositoryProvider != null) {
-                try {
-                    tmxPrepared = null;
-                    glossaryPrepared = null;
-
-                    remoteRepositoryProvider.switchAllToLatest();
-                } catch (IRemoteRepository2.NetworkException e) {
-                    Log.logErrorRB("TEAM_NETWORK_ERROR", e.getCause());
-                    setOfflineMode();
-                }
-
-                remoteRepositoryProvider.copyFilesFromRepoToProject("", '/' + RemoteRepositoryProvider.REPO_SUBDIR,
-                        '/' + RemoteRepositoryProvider.REPO_GIT_SUBDIR, '/' + RemoteRepositoryProvider.REPO_SVN_SUBDIR,
-                        '/' + OConsts.FILE_PROJECT,
-                        '/' + config.getProjectInternalRelative() + OConsts.STATUS_EXTENSION,
-                        '/' + config.getWritableGlossaryFile().getUnderRoot(),
-                        '/' + config.getTargetDir().getUnderRoot());
-
-                // After adding filters.xml and segmentation.conf, we must reload them again
-                config.loadProjectFilters();
-                config.loadProjectSRX();
-            }
-
-            loadFilterSettings();
-            loadSegmentationSettings();
-            loadTranslations();
-            loadSourceFiles();
-
-            // This MUST happen after calling loadTranslations()
-            if (remoteRepositoryProvider != null && isOnlineMode) {
-                Core.getMainWindow().showStatusMessageRB("TEAM_REBASE_AND_COMMIT");
-                rebaseAndCommitProject(true);
-            }
-
-            allProjectEntries = Collections.unmodifiableList(allProjectEntries);
-            importHandler = new ImportFromAutoTMX(this, allProjectEntries);
-
-            importTranslationsFromSources();
-
-            loadTM();
-
-            loadOtherLanguages();
-
-            // build word count
-            String stat = CalcStandardStatistics.buildProjectStats(this, hotStat);
-            String fn = config.getProjectInternal() + OConsts.STATS_FILENAME;
-            Statistics.writeStat(fn, stat);
-
-            loaded = true;
-
-            // Project Loaded...
-            Core.getMainWindow().showStatusMessageRB(null);
-
-            setProjectModified(false);
-        } catch (Exception e) {
-            Log.logErrorRB(e, "TF_LOAD_ERROR");
-            Core.getMainWindow().displayErrorRB(e, "TF_LOAD_ERROR");
-            if (!loaded) {
-                unlockProject();
-            }
-        } catch (OutOfMemoryError oome) {
-            // Fix for bug 1571944 @author Henry Pijffers
-            // (henry.pijffers@saxnot.com)
-
-            // Oh shit, we're all out of storage space!
-            // Of course we should've cleaned up after ourselves earlier,
-            // but since we didn't, do a bit of cleaning up now, otherwise
-            // we can't even inform the user about our slacking off.
-            allProjectEntries.clear();
-            projectFilesList.clear();
-            transMemories.clear();
-            projectTMX = null;
-
-            // There, that should do it, now inform the user
-            long memory = Runtime.getRuntime().maxMemory() / 1024 / 1024;
-            Log.logErrorRB("OUT_OF_MEMORY", memory);
-            Log.log(oome);
-            Core.getMainWindow().showErrorDialogRB("TF_ERROR", "OUT_OF_MEMORY", memory);
-            // Just quit, we can't help it anyway
-            System.exit(0);
-        }
-
-        Log.logInfoRB("LOG_DATAENGINE_LOAD_END");
+        bigLoad.loadProject(onlineMode);
     }
 
     /**
