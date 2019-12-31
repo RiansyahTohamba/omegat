@@ -935,49 +935,10 @@ public class RealProject implements IProject {
      */
     private void loadSourceFiles() throws Exception {
         long st = System.currentTimeMillis();
-        FilterMaster fm = Core.getFilterMaster();
-
-        File root = new File(config.getSourceRoot());
-        List<String> srcPathList = FileUtil
-                .buildRelativeFilesList(root, Collections.emptyList(), config.getSourceRootExcludes()).stream()
-                .sorted(StreamUtil.comparatorByList(getSourceFilesOrder())).collect(Collectors.toList());
-
-        for (String filepath : srcPathList) {
-            Core.getMainWindow().showStatusMessageRB("CT_LOAD_FILE_MX", filepath);
-
-            LoadFilesCallback loadFilesCallback = new LoadFilesCallback(existSource, existKeys, transMemories);
-
-            FileInfo fi = new FileInfo();
-            fi.filePath = filepath;
-
-            loadFilesCallback.setCurrentFile(fi);
-
-            IFilter filter = fm.loadFile(config.getSourceRoot() + filepath, new FilterContext(config),
-                    loadFilesCallback);
-
-            loadFilesCallback.fileFinished();
-
-            if (filter != null && !fi.entries.isEmpty()) {
-                fi.filterClass = filter.getClass(); //Don't store the instance, because every file gets an instance and
-                                                    // then we consume a lot of memory for all instances.
-                                                    //See also IFilter "TODO: each filter should be stateless"
-                fi.filterFileFormatName = filter.getFileFormatName();
-                try {
-                    fi.fileEncoding = filter.getInEncodingLastParsedFile();
-                } catch (Error e) { // In case a filter doesn't have getInEncodingLastParsedFile() (e.g., Okapi plugin)
-                    fi.fileEncoding = "";
-                }
-                projectFilesList.add(fi);
-            }
-        }
-
-        findNonUniqueSegments();
-
-        Core.getMainWindow().showStatusMessageRB("CT_LOAD_SRC_COMPLETE");
+        loadingProject.load();
         long en = System.currentTimeMillis();
         Log.log("Load project source files: " + (en - st) + "ms");
     }
-
     protected void findNonUniqueSegments() {
         Map<String, SourceTextEntry> exists = new HashMap<String, SourceTextEntry>(16384);
 
