@@ -1,4 +1,10 @@
 LIHAT git merge !!!
+cari kelas lain yg punya cbo tinggi, yakni :
+----
+EditorController, jangan GUI deh
+-----------------------
+gen.core.tbx.ObjectFactory coupling dengan class
+package gen itu berisi code hasil generator, ga usah direfactor wkwkw
 -----------------------
 sampai tahap ini CBO Core dari 53 menjadi 21,skenario yg dilakukan
 Move Method / Extract Class affect Move Field
