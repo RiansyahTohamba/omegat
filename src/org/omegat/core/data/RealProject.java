@@ -611,55 +611,7 @@ public class RealProject implements IProject {
         Log.logInfoRB("LOG_DATAENGINE_SAVE_START");
         UIThreadsUtil.mustNotBeSwingThread();
 
-        Core.getAutoSave().disable();
-        try {
-
-            Core.getMainWindow().getMainMenu().getProjectMenu().setEnabled(false);
-            try {
-                Preferences.save();
-
-                try {
-                    saveProjectProperties();
-
-                    projectTMX.save(config, config.getProjectInternal() + OConsts.STATUS_EXTENSION,
-                            isProjectModified());
-
-                    if (remoteRepositoryProvider != null && doTeamSync) {
-                        tmxPrepared = null;
-                        glossaryPrepared = null;
-                        remoteRepositoryProvider.cleanPrepared();
-                        Core.getMainWindow().showStatusMessageRB("TEAM_SYNCHRONIZE");
-                        rebaseAndCommitProject(true);
-                        setOnlineMode();
-                    }
-
-                    setProjectModified(false);
-                } catch (KnownException ex) {
-                    throw ex;
-                } catch (IRemoteRepository2.NetworkException e) {
-                    if (isOnlineMode) {
-                        Log.logErrorRB("TEAM_NETWORK_ERROR", e.getCause());
-                        setOfflineMode();
-                    }
-                } catch (Exception e) {
-                    Log.logErrorRB(e, "CT_ERROR_SAVING_PROJ");
-                    Core.getMainWindow().displayErrorRB(e, "CT_ERROR_SAVING_PROJ");
-                }
-
-                LastSegmentManager.saveLastSegment();
-
-                // update statistics
-                String stat = CalcStandardStatistics.buildProjectStats(this, hotStat);
-                String fn = config.getProjectInternal() + OConsts.STATS_FILENAME;
-                Statistics.writeStat(fn, stat);
-            } finally {
-                Core.getMainWindow().getMainMenu().getProjectMenu().setEnabled(true);
-            }
-
-            CoreEvents.fireProjectChange(IProjectEventListener.PROJECT_CHANGE_TYPE.SAVE);
-        } finally {
-            Core.getAutoSave().enable();
-        }
+        savingProject.save(doTeamSync);
         Log.logInfoRB("LOG_DATAENGINE_SAVE_END");
 
         isSaving = false;
