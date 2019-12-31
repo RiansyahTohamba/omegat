@@ -122,6 +122,91 @@ public class RealProject implements IProject {
 
     protected final ProjectProperties config;
     protected final RemoteRepositoryProvider remoteRepositoryProvider;
+    private final BigLoad bigLoad = new BigLoad(this);
+    private final BuildTMX buildTMX = new BuildTMX(this);
+    private final SavingProject savingProject = new SavingProject(this);
+    private final CreatingProject creatingProject = new CreatingProject(this);
+    private final LoadingProject loadingProject = new LoadingProject(this);
+
+    public List<FileInfo> getProjectFilesList() {
+        return projectFilesList;
+    }
+
+    public List<SourceTextEntry> getAllProjectEntries() {
+        return allProjectEntries;
+    }
+
+    public StatisticsInfo getHotStat() {
+        return hotStat;
+    }
+
+    public boolean isOnlineMode() {
+        return isOnlineMode;
+    }
+
+    public RebaseAndCommit.Prepared getGlossaryPrepared() {
+        return glossaryPrepared;
+    }
+
+    public RebaseAndCommit.Prepared getTmxPrepared() {
+        return tmxPrepared;
+    }
+
+    public boolean isLoaded() {
+        return loaded;
+    }
+
+    public ImportFromAutoTMX getImportHandler() {
+        return importHandler;
+    }
+
+    public ProjectTMX getProjectTMX() {
+        return projectTMX;
+    }
+
+    public ProjectProperties getConfig() {
+        return config;
+    }
+
+    public RemoteRepositoryProvider getRemoteRepositoryProvider() {
+        return remoteRepositoryProvider;
+    }
+
+    public void setAllProjectEntries(List<SourceTextEntry> allProjectEntries) {
+        this.allProjectEntries = allProjectEntries;
+    }
+
+    public void setOnlineMode(boolean onlineMode) {
+        isOnlineMode = onlineMode;
+    }
+
+    public void setGlossaryPrepared(RebaseAndCommit.Prepared glossaryPrepared) {
+        this.glossaryPrepared = glossaryPrepared;
+    }
+
+    public void setTmxPrepared(RebaseAndCommit.Prepared tmxPrepared) {
+        this.tmxPrepared = tmxPrepared;
+    }
+
+    public void setLoaded(boolean loaded) {
+        this.loaded = loaded;
+    }
+
+    public void setImportHandler(ImportFromAutoTMX importHandler) {
+        this.importHandler = importHandler;
+    }
+
+    public void setProjectTMX(ProjectTMX projectTMX) {
+        this.projectTMX = projectTMX;
+    }
+
+    public Set<EntryKey> getExistKeys() {
+        return existKeys;
+    }
+
+    public Set<String> getExistSource() {
+        return existSource;
+    }
 
     enum PreparedStatus {
         NONE, PREPARED, PREPARED2, REBASED
