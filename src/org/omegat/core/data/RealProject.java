@@ -301,6 +301,15 @@ public class RealProject implements IProject {
      */
     public RealProject(final ProjectProperties props) {
         config = props;
+        remoteRepositoryProvider = getRemoteRepoProvider(props);
+        ProjectTokenizer pt = new ProjectTokenizer();
+        sourceTokenizer = pt.getSource(props);
+        targetTokenizer = pt.getTarget(props);
+    }
+
+
+    public RemoteRepositoryProvider getRemoteRepoProvider(ProjectProperties config) {
+        RemoteRepositoryProvider remoteRepositoryProvider;
         if (config.getRepositories() != null && !Core.getParams().containsKey(CLIParameters.NO_TEAM)) {
             try {
                 remoteRepositoryProvider = new RemoteRepositoryProvider(config.getProjectRootDir(),
@@ -312,13 +321,7 @@ public class RealProject implements IProject {
         } else {
             remoteRepositoryProvider = null;
         }
-
-        sourceTokenizer = createTokenizer(Core.getParams().get(CLIParameters.TOKENIZER_SOURCE),
-                props.getSourceTokenizer());
-        Log.log("Source tokenizer: " + sourceTokenizer.getClass().getName());
-        targetTokenizer = createTokenizer(Core.getParams().get(CLIParameters.TOKENIZER_TARGET),
-                props.getTargetTokenizer());
-        Log.log("Target tokenizer: " + targetTokenizer.getClass().getName());
+        return remoteRepositoryProvider;
     }
 
     public void saveProjectProperties() throws Exception {
