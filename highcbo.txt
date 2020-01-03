@@ -1,0 +1,21 @@
+mergeTMX( ProjectTMX, ProjectTMX, StringBuilder ): void 21
+rebaseAndCommitProject( boolean ): void 24
+loadTranslations( ): void 15
+setTranslation( SourceTextEntry, PrepareTMXEntry, boolean, ExternalLinked ): void 13
+commitSourceFiles( ): void 18
+doExternalCommand( String ): void  18
+align( ProjectProperties, File ): Map   6
+setTranslation( SourceTextEntry, PrepareTMXEntry, boolean, ExternalLinked, AllTranslations ): void 13
+ compileProjectAndCommit( String, boolean, boolean ): void 10
+
+---------belum ---
+RealProject( ProjectProperties ): void 17
+saveProjectProperties( ): void 15
+teamSyncPrepare( ): void 11
+
+importTranslationsFromSources( ): void 6
+getTargetPathForSourceFile( String ): String 5
+loadFilterSettings( ): void 5
+loadSegmentationSettings( ): void 5
+teamSync( ): void 7
+
