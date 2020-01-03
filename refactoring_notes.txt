@@ -1,12 +1,53 @@
 LIHAT git merge !!!
+setiap yg ada kata new harus di extract
+Selanjutnya kelas filters3.xml.handler.java
+
+CBO filters3.xml/ handler.java dari xx menjadi yy
+-------
+CBO RealProject.java dari 58 menjadi 43 (lihat di 2jan-realproject.mdl)
+
+------------------------
 cari kelas lain yg punya cbo tinggi, yakni :
+RealRroject
+RealProject dipakai di kelas Main
+RealProject cuman 1 X saja diisi oleh new RealProject();
+private static RealProject selectProjectConsoleMode(boolean loadProject) {
+    ...
+    RealProject p = new selectProjectConsoleMode(true);
+    ...
+}
+5 assigment lainnya adalah :
+RealProject p = selectProjectConsoleMode(true);
+Dilihat dari kodenya, RealProject dijalankan pada 3 mode ini :
+
+case CONSOLE_TRANSLATE:
+                result = runConsoleTranslate();
+                PluginUtils.unloadPlugins();
+                break;
+case CONSOLE_CREATEPSEUDOTRANSLATETMX:
+                result = runCreatePseudoTranslateTMX();
+                PluginUtils.unloadPlugins();
+                break;
+case CONSOLE_ALIGN:
+                result = runConsoleAlign();
+                PluginUtils.unloadPlugins();
+                break;
+
+Dikarenakan ia berada 3 method yg diassign di variable result
+RealProject tdk dijalankan di mode GUI
+Method yg CBO nya tinggi
+
+compileProjectAndCommit
+createProject
+
 ----
 EditorController, jangan GUI deh
 -----------------------
 gen.core.tbx.ObjectFactory coupling dengan class
 package gen itu berisi code hasil generator, ga usah direfactor wkwkw
 -----------------------
-sampai tahap ini CBO Core dari 53 menjadi 21,skenario yg dilakukan
+sampai tahap ini CBO Core.java dari 53 menjadi 21,
+3 skenario yg sering dilakukan
 Move Method / Extract Class affect Move Field
 When move-method or extract-class dilakukan therefore move-field must be done too
 sisa gimana cara menggunakan HD, RDwI, CBAU ??
