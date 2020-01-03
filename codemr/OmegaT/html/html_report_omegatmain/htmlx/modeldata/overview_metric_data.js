@@ -1,0 +1,1 @@
+var CodeMR_ProjectMetrics = {"Project Name":"OmegaT working set: {OmegaT.main}", "Number of Highly Problematic Classes":8, "Number of Entities":940, "Number of Problematic Classes":62, "Class Lines of Code":60033, "Number of External Packages":168, "Number of Packages":105, "Number of External Entities":799}
