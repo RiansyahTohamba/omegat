@@ -1,5 +1,6 @@
 package org.omegat.core.data;
 
+import org.jetbrains.annotations.NotNull;
 import org.madlonkay.supertmxmerge.StmProperties;
 import org.madlonkay.supertmxmerge.SuperTmxMerge;
 import org.omegat.core.Core;
@@ -24,11 +25,31 @@ public class VersioningProject {
         this.realProject = realProject;
     }
 
-    public RemoteRepositoryProvider getRemoteRepositoryProvider() {
-        return realProject.getRemoteRepositoryProvider();
+
+    @NotNull
+    public IProject.AllTranslations getAllTranslationsRealProject(SourceTextEntry ste) {
+        IProject.AllTranslations r = new IProject.AllTranslations();
+        synchronized (projectTMX) {
+            r.defaultTranslation = projectTMX.getDefaultTranslation(ste.getSrcText());
+            r.alternativeTranslation = projectTMX.getMultipleTranslation(ste.getKey());
+            if (r.alternativeTranslation != null) {
+                r.currentTranslation = r.alternativeTranslation;
+            } else if (r.defaultTranslation != null) {
+                r.currentTranslation = r.defaultTranslation;
+            } else {
+                r.currentTranslation = EMPTY_TRANSLATION;
+            }
+            if (r.defaultTranslation == null) {
+                r.defaultTranslation = EMPTY_TRANSLATION;
+            }
+            if (r.alternativeTranslation == null) {
+                r.alternativeTranslation = EMPTY_TRANSLATION;
+            }
+        }
+        return r;
     }
     public void syncSetTranslation(SourceTextEntry entry, PrepareTMXEntry trans, boolean defaultTranslation, TMXEntry.ExternalLinked externalLinked, IProject.AllTranslations previous) throws IProject.OptimisticLockingFail {
-        IProject.AllTranslations current = getAllTranslations(entry);
+        IProject.AllTranslations current = getAllTranslationsRealProject(entry);
         boolean wasAlternative = current.alternativeTranslation.isTranslated();
         if (defaultTranslation) {
             if (!current.defaultTranslation.equals(previous.defaultTranslation)) {

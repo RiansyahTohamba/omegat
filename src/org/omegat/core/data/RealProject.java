@@ -52,6 +52,7 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.TreeMap;
 
+import org.jetbrains.annotations.NotNull;
 import org.omegat.CLIParameters;
 import org.omegat.core.Core;
 import org.omegat.core.CoreEvents;
@@ -600,26 +601,10 @@ public class RealProject implements IProject {
     }
 
     public AllTranslations getAllTranslations(SourceTextEntry ste) {
-        AllTranslations r = new AllTranslations();
-        synchronized (projectTMX) {
-            r.defaultTranslation = projectTMX.getDefaultTranslation(ste.getSrcText());
-            r.alternativeTranslation = projectTMX.getMultipleTranslation(ste.getKey());
-            if (r.alternativeTranslation != null) {
-                r.currentTranslation = r.alternativeTranslation;
-            } else if (r.defaultTranslation != null) {
-                r.currentTranslation = r.defaultTranslation;
-            } else {
-                r.currentTranslation = EMPTY_TRANSLATION;
-            }
-            if (r.defaultTranslation == null) {
-                r.defaultTranslation = EMPTY_TRANSLATION;
-            }
-            if (r.alternativeTranslation == null) {
-                r.alternativeTranslation = EMPTY_TRANSLATION;
-            }
-        }
-        return r;
+        return versioningProject.getAllTranslationsRealProject(ste);
     }
+
+
 
     /**
      * Returns the active Project's Properties.
