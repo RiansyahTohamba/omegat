@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-public class ExternalEntityHandler {
+public class EntityHandler {
 
     /** Finds external entity by publicId and systemId. */
     private Entity findExternalEntity(String publicId, String systemId) {
