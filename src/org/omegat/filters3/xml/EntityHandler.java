@@ -2,18 +2,38 @@ package org.omegat.filters3.xml;
 
 import org.omegat.filters2.TranslationException;
 import org.omegat.util.StringUtil;
+import org.w3c.dom.DocumentType;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class EntityHandler {
+    private static final String START_JARSCHEMA = "jar:";
+    /** Internal entity just started. */
+    private Entity internalEntityStarted = null;
+
+
+    /**
+     * Is called when the entity starts. Tries to find out whether it's an
+     * internal entity, and if so, turns on the trigger to queue entity, and not
+     * the text it represents, in {@link #characters(char[],int,int)}.
+     */
+    public void doStartEntity(String name) {
+        if (inDTD) {
+            return;
+        }
+        internalEntityStarted = internalEntities.get(name);
+    }
 
     /** Finds external entity by publicId and systemId. */
-    private Entity findExternalEntity(String publicId, String systemId) {
+    public Entity findExternalEntity(String publicId, String systemId) {
         if (publicId == null && systemId == null) {
             return null;
         }
@@ -29,12 +49,35 @@ public class EntityHandler {
         return null;
     }
 
+    /** Whether the file with given systemId is in source folder. */
+    private boolean isInSource(String systemId) throws URISyntaxException, MalformedURLException {
+        if (systemId.startsWith(START_FILESCHEMA)) {
+            File thisOutFile = new File(new URI(systemId));
+            if (thisOutFile.getAbsolutePath().startsWith(getSourceFolderAbsolutePath())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns external files this handler has processed, because they were
+     * included into main file. Each entry is {@link File}.
+     */
+    public List<File> getProcessedFiles() {
+        return processedFiles.isEmpty() ? null : processedFiles;
+    }
+    /**
+     * External files this handler has processed, because they were included
+     * into main file. Each entry is of type {@link File}.
+     */
+    private List<File> processedFiles = new ArrayList<File>();
     /**
      * Is called when the entity is ended. Tries to find out whether it's an
      * external entity we created a writer for, and if so, closes the writer and
      * nulls the entity.
      */
-    private void doEndEntity(String name) throws SAXException, TranslationException, IOException {
+    public void doEndEntity(String name, DTD dtd) throws SAXException, TranslationException, IOException {
         if (inDTD || extEntity == null) {
             return;
         }
@@ -45,6 +88,7 @@ public class EntityHandler {
                 Entity entity = new Entity(name);
                 dtd.addEntity(entity);
             } else {
+                EntryHandler entryHandler = new EntryHandler();
                 if (parameterEntity) {
                     entryHandler.currEntry().add(new XMLText(name + ';', inCDATA));
                 } else {

@@ -37,7 +37,7 @@ public class TranslateableTag {
             translatableTagName.pop(); // Remove it
         }
     }
-    private boolean isTranslatableTag() {
+    public boolean isTranslatableTag() {
         return !translatableTagName.empty();
     }
 }

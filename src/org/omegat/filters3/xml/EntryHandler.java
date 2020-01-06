@@ -5,7 +5,9 @@ import org.omegat.filters3.Entry;
 import java.util.Stack;
 
 public class EntryHandler {
+    public EntryHandler(){
 
+    }
     /** Current entry that collects normal text. */
     Entry entry;
 
@@ -19,7 +21,7 @@ public class EntryHandler {
     /** Stack of entries that collect out-of-turn text. */
     Stack<Entry> outofturnEntries = new Stack<Entry>();
 
-    private boolean collectingIntactText() {
+    public boolean collectingIntactText() {
         return intacttagEntry != null;
     }
 

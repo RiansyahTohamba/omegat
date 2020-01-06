@@ -31,9 +31,6 @@ public class TranslationHandler {
     /** Keep the attributes of an intact tag. */
     org.omegat.filters3.Attributes intacttagAttributes = null;
 
-
-
-
     /**
      * One of the main methods of the XML filter: it collects all the data,
      * adjusts it, and sends for translation.
@@ -41,28 +38,29 @@ public class TranslationHandler {
      * @see #translateAndFlush()
      */
     void translateButDontFlash() throws TranslationException {
-        if (currEntry().isEmpty()) {
+        TranslateableTag transtag = new TranslateableTag();
+        if (entryHandler.currEntry().isEmpty()) {
             return;
         }
 
         List<ProtectedPart> shortcutDetails = new ArrayList<ProtectedPart>();
-        boolean tagsAggregation = handler.isTagsAggregationEnabled();
-        String src = currEntry().sourceToShortcut(tagsAggregation, handler.getDialect(), shortcutDetails);
-        Element lead = currEntry().get(0);
+        boolean tagsAggregation = isTagsAggregationEnabled();
+        String src = entryHandler.currEntry().sourceToShortcut(tagsAggregation, handler.getDialect(), shortcutDetails);
+        Element lead = entryHandler.currEntry().get(0);
         String translation = src;
         if ((lead instanceof Tag)
                 && (handler.isPreformattingTag(((Tag) lead).getTag(), ((Tag) lead).getAttributes())
-                || handler.isSpacePreservingTag())
-                && isTranslatableTag()
+                || isSpacePreservingTag())
+                && transtag.isTranslatableTag()
                 && !StringUtil.isEmpty(src)) {
-            handler.resetSpacePreservingTag();
+            resetSpacePreservingTag();
             translation = handler.getTranslator().translate(src, shortcutDetails);
         } else {
             String compressed = src;
             if (Core.getFilterMaster().getConfig().isRemoveSpacesNonseg()) {
                 compressed = StringUtil.compressSpaces(src);
             }
-            if (isTranslatableTag()) {
+            if (transtag.isTranslatableTag()) {
                 translation = handler.getTranslator().translate(compressed, shortcutDetails);
             }
             // untranslated is written out uncompressed
@@ -71,7 +69,10 @@ public class TranslationHandler {
             }
         }
 
-        currEntry().setTranslation(translation, handler.getDialect(), new ArrayList<ProtectedPart>());
+        entryHandler.currEntry().setTranslation(translation, handler.getDialect(), new ArrayList<ProtectedPart>());
+    }
+    private boolean isTagsAggregationEnabled() {
+        return handler.getDialect().getTagsAggregationEnabled();
     }
 
     /**
@@ -84,11 +85,11 @@ public class TranslationHandler {
     void translateAndFlush() throws SAXException, TranslationException {
         translateButDontFlash();
         try {
-            handler.currWriter().write(currEntry().translationToOriginal());
+            handler.currWriter().write(entryHandler.currEntry().translationToOriginal());
         } catch (IOException e) {
             throw new SAXException(e);
         }
-        currEntry().clear();
+        entryHandler.currEntry().clear();
     }
 
     private String constructCurrentPath() {
@@ -116,6 +117,30 @@ public class TranslationHandler {
     }
 
     /**
+     * Checks whether the xml:space="preserve" attribute is present
+     * @param currentAttributes The current Attributes
+     * @return true or false
+     */
+    private boolean isSpacePreservingSet(org.omegat.filters3.Attributes currentAttributes) {
+
+        if (dialect.getForceSpacePreserving()) {
+            return true;
+        }
+
+        boolean preserve = false;
+
+        for (int i = 0; i < currentAttributes.size(); i++) {
+            Attribute oneAttribute = currentAttributes.get(i);
+            if ((oneAttribute.getName().equalsIgnoreCase("xml:space")
+                    && oneAttribute.getValue().equalsIgnoreCase("preserve"))) {
+                preserve = true;
+            }
+        }
+
+        return preserve;
+    }
+
+    /**
      * Queue tag that should be ignored by editor, including content and all subtags.
      */
     private void queueIgnoredTag(String tag, Attributes attributes) {
@@ -127,22 +152,22 @@ public class TranslationHandler {
             xmlTagName.push(xmltag.getTag());
             xmlTagAttributes.push(xmltag.getAttributes());
         }
-        currEntry().add(xmltag);
+        entryHandler.currEntry().add(xmltag);
     }
 
     private void queueComment(String comment) {
         if (!translator.isInIgnored()) {
             translator.comment(comment);
         }
-        currEntry().add(new Comment(comment));
+        entryHandler.currEntry().add(new Comment(comment));
     }
 
     private void queueProcessingInstruction(String data, String target) {
-        currEntry().add(new ProcessingInstruction(data, target));
+        entryHandler.currEntry().add(new ProcessingInstruction(data, target));
     }
 
     private void queueDTD(DTD dtd) {
-        currEntry().add(dtd);
+        entryHandler.currEntry().add(dtd);
     }
 
 
@@ -154,22 +179,22 @@ public class TranslationHandler {
         // TODO: ideally, xml:space=preserved would be handled at this level, but that would suppose
         // knowing here whether we're inside a preformatted tag, etc.
         if (internalEntityStarted != null && s.equals(internalEntityStarted.getValue())) {
-            currEntry().add(new XMLEntityText(internalEntityStarted));
+            entryHandler.currEntry().add(new XMLEntityText(internalEntityStarted));
         } else {
             boolean added = false;
-            if (!currEntry().isEmpty()) {
-                Element elem = currEntry().get(currEntry().size() - 1);
+            if (!entryHandler.currEntry().isEmpty()) {
+                Element elem = entryHandler.currEntry().get(entryHandler.currEntry().size() - 1);
                 if (elem instanceof XMLText) {
                     XMLText text = (XMLText) elem;
                     if (text.isInCDATA() == inCDATA) {
-                        currEntry().resetTagDetected();
+                        entryHandler.currEntry().resetTagDetected();
                         text.append(s);
                         added = true;
                     }
                 }
             }
             if (!added) {
-                currEntry().add(new XMLText(s, inCDATA));
+                entryHandler.currEntry().add(new XMLText(s, inCDATA));
             }
         }
     }
@@ -182,7 +207,7 @@ public class TranslationHandler {
      * @return <code>true</code> or <code>false</false>
      */
     private boolean isContentBasedTag(String tag, org.omegat.filters3.Attributes atts) {
-        if (dialect.getContentBasedTags() != null && dialect.getContentBasedTags().containsKey(tag)) {
+        if (handler.getDialect().getContentBasedTags() != null && handler.getDialect().getContentBasedTags().containsKey(tag)) {
             return true;
         } else {
             if (atts == null) {
@@ -190,7 +215,7 @@ public class TranslationHandler {
                     atts = intacttagAttributes; // Restore attributes
                 }
             }
-            return dialect.validateContentBasedTag(tag, atts);
+            return handler.getDialect().validateContentBasedTag(tag, atts);
         }
     }
 
@@ -200,7 +225,7 @@ public class TranslationHandler {
      * translate.
      */
     private boolean isIntactTag(String tag, org.omegat.filters3.Attributes atts) {
-        if (dialect.getIntactTags() != null && dialect.getIntactTags().contains(tag)) {
+        if (handler.getDialect().getIntactTags() != null && handler.getDialect().getIntactTags().contains(tag)) {
             return true;
         } else {
             if (atts == null) {
@@ -209,7 +234,7 @@ public class TranslationHandler {
                 }
             }
 
-            return dialect.validateIntactTag(tag, atts);
+            return handler.getDialect().validateIntactTag(tag, atts);
         }
     }
 
