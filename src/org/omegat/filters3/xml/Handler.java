@@ -81,40 +81,8 @@ public class Handler extends DefaultHandler implements LexicalHandler, DeclHandl
     /** Current writer for an external included file. */
     private BufferedWriter extWriter = null;
 
-    /** Current path in XML. */
-    private final Stack<String> currentTagPath = new Stack<String>();
-
-    /**
-     * Returns current writer we should write into. If we're in main file,
-     * returns {@link #mainWriter}, else (if we're writing external file)
-     * returns {@link #extWriter}.
-     */
-    private BufferedWriter currWriter() {
-        if (extWriter != null) {
-            return extWriter;
-        } else {
-            return mainWriter;
-        }
-    }
-
     /** Currently parsed external entity that has its own writer. */
     private Entity extEntity = null;
-
-    /** Keep the attributes of paragraph tags. */
-    Stack<org.omegat.filters3.Attributes> paragraphTagAttributes = new Stack<org.omegat.filters3.Attributes>();
-    /** Keep the attributes of preformat tags. */
-    Stack<org.omegat.filters3.Attributes> preformatTagAttributes = new Stack<org.omegat.filters3.Attributes>();
-    /** Keep the attributes of xml tags. */
-    Stack<org.omegat.filters3.Attributes> xmlTagAttributes = new Stack<org.omegat.filters3.Attributes>();
-
-    /** Names of possible paragraph tags. */
-    Stack<String> paragraphTagName = new Stack<String>();
-    /** Names of possible preformat tags. */
-    Stack<String> preformatTagName = new Stack<String>();
-
-    /** Names of xml tags. */
-    Stack<String> xmlTagName = new Stack<String>();
-
 
     /**
      * External entities declared in source file. Each entry is of type
