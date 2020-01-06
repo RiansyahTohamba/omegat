@@ -244,7 +244,7 @@ public class Handler extends DefaultHandler implements LexicalHandler, DeclHandl
     public void startElement(String uri, String localName, String qName, Attributes attributes)
             throws SAXException {
         try {
-            new TagHandler().start(qName, attributes,this);
+            tagHandler.start(qName, attributes);
         } catch (TranslationException e) {
             throw new SAXException(e);
         }
@@ -254,7 +254,7 @@ public class Handler extends DefaultHandler implements LexicalHandler, DeclHandl
     @Override
     public void endElement(String uri, String localName, String qName) throws SAXException {
         try {
-            translationHandler.end(qName);
+            tagHandler.end(qName);
         } catch (TranslationException e) {
             throw new SAXException(e);
         }
