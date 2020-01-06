@@ -41,15 +41,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Stack;
 
-import org.omegat.core.Core;
 import org.omegat.filters2.FilterContext;
 import org.omegat.filters2.TranslationException;
-import org.omegat.filters3.Attribute;
-import org.omegat.filters3.Element;
-import org.omegat.filters3.Entry;
-import org.omegat.filters3.Tag;
 import org.omegat.util.OStrings;
 import org.omegat.util.StringUtil;
 import org.xml.sax.Attributes;
