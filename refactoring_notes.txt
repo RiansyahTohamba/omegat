@@ -2,9 +2,14 @@ LIHAT git merge !!!
 setiap yg ada kata new harus di extract
 Selanjutnya kelas filters3.xml.handler.java
 
-CBO filters3.xml/ handler.java dari xx menjadi yy
+
 -------
-CBO RealProject.java dari 58 menjadi 43 (lihat di 2jan-realproject.mdl)
+hasil terkini perubahan CBO
+[61,53,32] -> [43,21,x]
+
+filters3.xml/ handler.java dari 32 menjadi x
+RealProject.java dari 61 menjadi 43 (lihat di 2jan-realproject.mdl)
+Core.java dari 53 menjadi 21
 
 ------------------------
 cari kelas lain yg punya cbo tinggi, yakni :
@@ -46,7 +51,7 @@ EditorController, jangan GUI deh
 gen.core.tbx.ObjectFactory coupling dengan class
 package gen itu berisi code hasil generator, ga usah direfactor wkwkw
 -----------------------
-sampai tahap ini CBO Core.java dari 53 menjadi 21,
+sampai tahap ini
 3 skenario yg sering dilakukan
 Move Method / Extract Class affect Move Field
 When move-method or extract-class dilakukan therefore move-field must be done too
