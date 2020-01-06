@@ -95,14 +95,9 @@ public class Handler extends DefaultHandler implements LexicalHandler, DeclHandl
      * {@link String}/entity name/ to {@link Entity}.
      */
     private Map<String, Entity> internalEntities = new HashMap<String, Entity>();
-    /** Internal entity just started. */
-    private Entity internalEntityStarted = null;
 
     /** Currently collected text is wrapped in CDATA section. */
     private boolean inCDATA = false;
-
-    /** Whether we're curren */
-    // private boolean inPreformattingTag = false;
 
     /**
      * SAX parser encountered DTD declaration, so probably it will parse DTD
@@ -112,19 +107,9 @@ public class Handler extends DefaultHandler implements LexicalHandler, DeclHandl
     /** SAX parser parses DTD -- we don't extract translatable text from there */
     private boolean inDTD = false;
     private EntryHandler entryHandler;
-    /**
-     * External files this handler has processed, because they were included
-     * into main file. Each entry is of type {@link File}.
-     */
-    private List<File> processedFiles = new ArrayList<File>();
 
-    /**
-     * Returns external files this handler has processed, because they were
-     * included into main file. Each entry is {@link File}.
-     */
-    public List<File> getProcessedFiles() {
-        return processedFiles.isEmpty() ? null : processedFiles;
-    }
+    private TagHandler tagHandler;
+
 
     public XMLDialect getDialect() {
         return dialect;
