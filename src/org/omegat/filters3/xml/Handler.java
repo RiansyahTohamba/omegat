@@ -116,10 +116,10 @@ public class Handler extends DefaultHandler implements LexicalHandler, DeclHandl
     Stack<String> paragraphTagName = new Stack<String>();
     /** Names of possible preformat tags. */
     Stack<String> preformatTagName = new Stack<String>();
-    /** Name of the current variable translatable tag */
-    Stack<String> translatableTagName = new Stack<String>();
+
     /** Names of xml tags. */
     Stack<String> xmlTagName = new Stack<String>();
+
 
     /**
      * External entities declared in source file. Each entry is of type
@@ -161,6 +161,14 @@ public class Handler extends DefaultHandler implements LexicalHandler, DeclHandl
      */
     public List<File> getProcessedFiles() {
         return processedFiles.isEmpty() ? null : processedFiles;
+    }
+
+    public XMLDialect getDialect() {
+        return dialect;
+    }
+
+    public Translator getTranslator() {
+        return translator;
     }
 
     /** Throws a nice error message when SAX parser encounders fastal error. */
@@ -405,39 +413,6 @@ public class Handler extends DefaultHandler implements LexicalHandler, DeclHandl
         }
     }
 
-    /**
-     * If we are not inside a translatable tag, and if the dialect says the new
-     * one is translatable, add the new tag to the stack
-     *
-     * @param tag
-     *            The current opening tag
-     * @param atts
-     *            The attributes of the current tag
-     */
-    // TODO: The concept works only perfectly if the first tag with
-    // translatable content inside the translatable tag is a paragraph
-    // tag
-    void setTranslatableTag(String tag, org.omegat.filters3.Attributes atts) {
-
-        if (!translationHandler.isTranslatableTag()) { // If stack is empty
-            if (dialect.validateTranslatableTag(tag, atts)) {
-                translatableTagName.push(tag);
-            }
-        } else {
-            translatableTagName.push(tag);
-        }
-    }
-
-    /**
-     * Remove a tag from the stack of translatable tags
-     */
-    void removeTranslatableTag() {
-        if (translationHandler.isTranslatableTag()) { // If there is something in the stack
-            translatableTagName.pop(); // Remove it
-        }
-    }
-
-
     private boolean isClosingTagRequired() {
         return dialect.getClosingTagRequired();
     }
@@ -509,7 +484,7 @@ public class Handler extends DefaultHandler implements LexicalHandler, DeclHandl
     public void startElement(String uri, String localName, String qName, Attributes attributes)
             throws SAXException {
         try {
-            translationHandler.start(qName, attributes);
+            new TagHandler().start(qName, attributes,this);
         } catch (TranslationException e) {
             throw new SAXException(e);
         }
@@ -721,20 +696,5 @@ public class Handler extends DefaultHandler implements LexicalHandler, DeclHandl
     public void attributeDecl(String eName, String aName, String type, String valueDefault, String value) {
     }
 
-    public Stack<String> getCurrentTagPath() {
-        return currentTagPath;
-    }
-
-    public XMLDialect getDialect() {
-        return dialect;
-    }
-
-    public Stack<String> getTranslatableTagName() {
-        return translatableTagName;
-    }
-
-    public Translator getTranslator() {
-        return translator;
-    }
 
 }
