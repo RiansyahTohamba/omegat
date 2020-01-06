@@ -69,6 +69,7 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 public class Handler extends DefaultHandler implements LexicalHandler, DeclHandler {
     private final TranslationHandler translationHandler = new TranslationHandler(this);
+    private static final String START_FILESCHEMA = "file:";
     private Translator translator;
     private XMLDialect dialect;
     private File inFile;
