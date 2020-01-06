@@ -6,12 +6,12 @@ commitSourceFiles( ): void 18
 doExternalCommand( String ): void  18
 align( ProjectProperties, File ): Map   6
 setTranslation( SourceTextEntry, PrepareTMXEntry, boolean, ExternalLinked, AllTranslations ): void 13
- compileProjectAndCommit( String, boolean, boolean ): void 10
-
----------belum ---
+compileProjectAndCommit( String, boolean, boolean ): void 10
 RealProject( ProjectProperties ): void 17
 saveProjectProperties( ): void 15
 teamSyncPrepare( ): void 11
+
+---------belum ---
 
 importTranslationsFromSources( ): void 6
 getTargetPathForSourceFile( String ): String 5
