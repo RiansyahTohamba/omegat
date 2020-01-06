@@ -119,6 +119,39 @@ public class Handler extends DefaultHandler implements LexicalHandler, DeclHandl
         return translator;
     }
 
+
+    /**
+     * Creates a new instance of Handler
+     */
+    public Handler(Translator translator, XMLDialect dialect, File inFile, File outFile, FilterContext fc)
+            throws IOException {
+        this.translator = translator;
+        this.dialect = dialect;
+        this.inFile = inFile;
+        this.outFile = outFile;
+        this.context = fc;
+        this.mainWriter = translator.createWriter(outFile, fc.getOutEncoding());
+        this.entryHandler = new EntryHandler();
+        this.tagHandler = new TagHandler(dialect,translator);
+    }
+
+    public FilterContext getContext() {
+        return context;
+    }
+
+    /**
+     * Returns current writer we should write into. If we're in main file,
+     * returns {@link #mainWriter}, else (if we're writing external file)
+     * returns {@link #extWriter}.
+     */
+    private BufferedWriter currWriter() {
+        if (extWriter != null) {
+            return extWriter;
+        } else {
+            return mainWriter;
+        }
+    }
+
     /** Throws a nice error message when SAX parser encounders fastal error. */
     private void reportFatalError(SAXParseException e) throws SAXException, MalformedURLException,
             URISyntaxException {
@@ -136,29 +169,9 @@ public class Handler extends DefaultHandler implements LexicalHandler, DeclHandl
         }
         throw new SAXException("\n"
                 + StringUtil.format(e.getMessage() + "\n" + OStrings.getString("XML_FATAL_ERROR"),
-                        filename, linenum));
+                filename, linenum));
     }
 
-    /**
-     * Creates a new instance of Handler
-     */
-    public Handler(Translator translator, XMLDialect dialect, File inFile, File outFile, FilterContext fc)
-            throws IOException {
-        this.translator = translator;
-        this.dialect = dialect;
-        this.inFile = inFile;
-        this.outFile = outFile;
-        this.context = fc;
-        this.mainWriter = translator.createWriter(outFile, fc.getOutEncoding());
-        this.entryHandler = new EntryHandler();
-    }
-
-    public FilterContext getContext() {
-        return context;
-    }
-
-    private static final String START_JARSCHEMA = "jar:";
-    private static final String START_FILESCHEMA = "file:";
 
     // ////////////////////////////////////////////////////////////////////////
     // Utility methods
