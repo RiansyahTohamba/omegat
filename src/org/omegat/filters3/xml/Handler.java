@@ -44,7 +44,6 @@ import java.util.Map;
 import java.util.Stack;
 
 import org.omegat.core.Core;
-import org.omegat.core.data.ProtectedPart;
 import org.omegat.filters2.FilterContext;
 import org.omegat.filters2.TranslationException;
 import org.omegat.filters3.Attribute;
@@ -75,6 +74,7 @@ import org.xml.sax.helpers.DefaultHandler;
  * @author Alex Buloichik (alex73mail@gmail.com)
  */
 public class Handler extends DefaultHandler implements LexicalHandler, DeclHandler {
+    private final TranslationHandler translationHandler = new TranslationHandler(this);
     private Translator translator;
     private XMLDialect dialect;
     private File inFile;
@@ -105,14 +105,6 @@ public class Handler extends DefaultHandler implements LexicalHandler, DeclHandl
     /** Currently parsed external entity that has its own writer. */
     private Entity extEntity = null;
 
-    /** Current entry that collects normal text. */
-    Entry entry;
-    /** Stack of entries that collect out-of-turn text. */
-    Stack<Entry> outofturnEntries = new Stack<Entry>();
-    /** Current entry that collects the text surrounded by intact tag. */
-    Entry intacttagEntry = null;
-    /** Keep the attributes of an intact tag. */
-    org.omegat.filters3.Attributes intacttagAttributes = null;
     /** Keep the attributes of paragraph tags. */
     Stack<org.omegat.filters3.Attributes> paragraphTagAttributes = new Stack<org.omegat.filters3.Attributes>();
     /** Keep the attributes of preformat tags. */
@@ -120,8 +112,6 @@ public class Handler extends DefaultHandler implements LexicalHandler, DeclHandl
     /** Keep the attributes of xml tags. */
     Stack<org.omegat.filters3.Attributes> xmlTagAttributes = new Stack<org.omegat.filters3.Attributes>();
 
-    /** Current entry that collects the text surrounded by intact tag. */
-    String intacttagName = null;
     /** Names of possible paragraph tags. */
     Stack<String> paragraphTagName = new Stack<String>();
     /** Names of possible preformat tags. */
@@ -130,49 +120,6 @@ public class Handler extends DefaultHandler implements LexicalHandler, DeclHandl
     Stack<String> translatableTagName = new Stack<String>();
     /** Names of xml tags. */
     Stack<String> xmlTagName = new Stack<String>();
-    /** Status of the xml:space="preserve" flag */
-    private boolean spacePreserve = false;
-
-    /** Now we collect out-of-turn entry. */
-    private boolean collectingOutOfTurnText() {
-        return !outofturnEntries.empty();
-    }
-
-    /** Now we collect intact text. */
-    private boolean collectingIntactText() {
-        return intacttagEntry != null;
-    }
-
-    private boolean isTranslatableTag() {
-        return !translatableTagName.empty();
-    }
-
-    private boolean isSpacePreservingTag() {
-        if (Core.getFilterMaster().getConfig().isPreserveSpaces()) { // Preserve spaces for all tags
-            return true;
-        } else {
-            return spacePreserve;
-        }
-    }
-
-    private void resetSpacePreservingTag() {
-        spacePreserve = false;
-    }
-
-    /**
-     * Returns current entry we collect text into. If we collect normal text,
-     * returns {@link #entry}, else returns the last of
-     * {@link #outofturnEntries}.
-     */
-    private Entry currEntry() {
-        if (collectingIntactText()) {
-            return intacttagEntry;
-        } else if (collectingOutOfTurnText()) {
-            return outofturnEntries.peek();
-        } else {
-            return entry;
-        }
-    }
 
     /**
      * External entities declared in source file. Each entry is of type
@@ -201,7 +148,7 @@ public class Handler extends DefaultHandler implements LexicalHandler, DeclHandl
     private DTD dtd = null;
     /** SAX parser parses DTD -- we don't extract translatable text from there */
     private boolean inDTD = false;
-
+    private EntryHandler entryHandler;
     /**
      * External files this handler has processed, because they were included
      * into main file. Each entry is of type {@link File}.
@@ -247,6 +194,7 @@ public class Handler extends DefaultHandler implements LexicalHandler, DeclHandl
         this.outFile = outFile;
         this.context = fc;
         this.mainWriter = translator.createWriter(outFile, fc.getOutEncoding());
+        this.entryHandler = new EntryHandler();
     }
 
     public FilterContext getContext() {
@@ -354,13 +302,13 @@ public class Handler extends DefaultHandler implements LexicalHandler, DeclHandl
                 dtd.addEntity(entity);
             } else {
                 if (parameterEntity) {
-                    currEntry().add(new XMLText(name + ';', inCDATA));
+                    entryHandler.currEntry().add(new XMLText(name + ';', inCDATA));
                 } else {
-                    currEntry().add(new XMLText('&' + name + ';', inCDATA));
+                    entryHandler.currEntry().add(new XMLText('&' + name + ';', inCDATA));
                 }
             }
             if (extWriter != null) {
-                translateAndFlush();
+                translationHandler.translateAndFlush();
                 extWriter.close();
                 extWriter = null;
             }
@@ -400,7 +348,7 @@ public class Handler extends DefaultHandler implements LexicalHandler, DeclHandl
                         // 3. it's not during project load
                         // then it's an external file, and we need to
                         // write it as an external file
-                        translateAndFlush();
+                        translationHandler.translateAndFlush();
                         File extFile = new File(outFile.getParentFile(), localizeSystemId(systemId));
                         processedFiles.add(new File(inFile.getParent(), localizeSystemId(systemId)));
                         extWriter = translator.createWriter(extFile, context.getOutEncoding());
@@ -421,303 +369,10 @@ public class Handler extends DefaultHandler implements LexicalHandler, DeclHandl
         }
     }
 
-    private void queueText(String s) {
-        if (!translator.isInIgnored()) {
-            translator.text(s);
-        }
-
-        // TODO: ideally, xml:space=preserved would be handled at this level, but that would suppose
-        // knowing here whether we're inside a preformatted tag, etc.
-        if (internalEntityStarted != null && s.equals(internalEntityStarted.getValue())) {
-            currEntry().add(new XMLEntityText(internalEntityStarted));
-        } else {
-            boolean added = false;
-            if (!currEntry().isEmpty()) {
-                Element elem = currEntry().get(currEntry().size() - 1);
-                if (elem instanceof XMLText) {
-                    XMLText text = (XMLText) elem;
-                    if (text.isInCDATA() == inCDATA) {
-                        currEntry().resetTagDetected();
-                        text.append(s);
-                        added = true;
-                    }
-                }
-            }
-            if (!added) {
-                currEntry().add(new XMLText(s, inCDATA));
-            }
-        }
-    }
-
-    private void queueTag(String tag, Attributes attributes) {
-        Tag xmltag = null;
-        XMLIntactTag intacttag = null;
-        setTranslatableTag(tag, XMLUtils.convertAttributes(attributes));
-        setSpacePreservingTag(XMLUtils.convertAttributes(attributes));
-        if (!collectingIntactText()) {
-            if (isContentBasedTag(tag, XMLUtils.convertAttributes(attributes))) {
-                intacttag = new XMLContentBasedTag(dialect, this, tag, getShortcut(tag), dialect
-                        .getContentBasedTags().get(tag), attributes);
-                xmltag = intacttag;
-                intacttagName = tag;
-                intacttagAttributes = XMLUtils.convertAttributes(attributes);
-            } else if (isIntactTag(tag, XMLUtils.convertAttributes(attributes))) {
-                intacttag = new XMLIntactTag(dialect, this, tag, getShortcut(tag), attributes);
-                xmltag = intacttag;
-                intacttagName = tag;
-                intacttagAttributes = XMLUtils.convertAttributes(attributes);
-            }
-        }
-        if (xmltag == null) {
-            xmltag = new XMLTag(tag, getShortcut(tag), Tag.Type.BEGIN, attributes, this.translator.getTargetLanguage());
-            xmlTagName.push(xmltag.getTag());
-            xmlTagAttributes.push(xmltag.getAttributes());
-        }
-        currEntry().add(xmltag);
-
-        if (intacttag != null) {
-            intacttagEntry = intacttag.getIntactContents();
-        }
-
-        if (!collectingIntactText()) {
-            for (int i = 0; i < xmltag.getAttributes().size(); i++) {
-                Attribute attr = xmltag.getAttributes().get(i);
-                if ((dialect.getTranslatableAttributes().contains(attr.getName()) || dialect
-                        .getTranslatableTagAttributes().containsPair(tag, attr.getName()))
-                        && dialect.validateTranslatableTagAttribute(tag, attr.getName(),
-                                xmltag.getAttributes())) {
-                    attr.setValue(StringUtil.makeValidXML(
-                            translator.translate(StringUtil.unescapeXMLEntities(attr.getValue()), null)));
-                }
-            }
-        }
-    }
-
-    /**
-     * Queue tag that should be ignored by editor, including content and all subtags.
-     */
-    private void queueIgnoredTag(String tag, Attributes attributes) {
-        Tag xmltag = null;
-        setSpacePreservingTag(XMLUtils.convertAttributes(attributes));
-        if (xmltag == null) {
-            xmltag = new XMLTag(tag, getShortcut(tag), Tag.Type.BEGIN, attributes,
-                    this.translator.getTargetLanguage());
-            xmlTagName.push(xmltag.getTag());
-            xmlTagAttributes.push(xmltag.getAttributes());
-        }
-        currEntry().add(xmltag);
-    }
-
-    private void queueEndTag(String tag) {
-        int len = currEntry().size();
-        if (len > 0
-                && (currEntry().get(len - 1) instanceof XMLTag)
-                && (((XMLTag) currEntry().get(len - 1)).getTag().equals(tag) && ((XMLTag) currEntry().get(
-                        len - 1)).getType() == Tag.Type.BEGIN) && !isClosingTagRequired()) {
-            if (((XMLTag) currEntry().get(len - 1)).getTag().equals(xmlTagName.lastElement())) {
-                xmlTagName.pop();
-                xmlTagAttributes.pop();
-            }
-            ((XMLTag) currEntry().get(len - 1)).setType(Tag.Type.ALONE);
-        } else {
-            XMLTag xmltag = new XMLTag(tag, getShortcut(tag), Tag.Type.END, null, this.translator.getTargetLanguage());
-            if (xmltag.getTag().equals(xmlTagName.lastElement())) {
-                xmlTagName.pop();
-                xmltag.setStartAttributes(xmlTagAttributes.pop()); // Restore attributes
-            }
-            currEntry().add(xmltag);
-        }
-    }
-
-    private void queueComment(String comment) {
-        if (!translator.isInIgnored()) {
-            translator.comment(comment);
-        }
-        currEntry().add(new Comment(comment));
-    }
-
-    private void queueProcessingInstruction(String data, String target) {
-        currEntry().add(new ProcessingInstruction(data, target));
-    }
-
-    private void queueDTD(DTD dtd) {
-        currEntry().add(dtd);
-    }
-
-    /** Is called when the tag is started. */
-    private void start(String tag, Attributes attributes) throws SAXException, TranslationException {
-        boolean prevIgnored = translator.isInIgnored();
-        translatorTagStart(tag, attributes);
-
-        if (!translator.isInIgnored()) {
-            if (isOutOfTurnTag(tag)) {
-                XMLOutOfTurnTag ootTag = new XMLOutOfTurnTag(dialect, this, tag, getShortcut(tag), attributes);
-                currEntry().add(ootTag);
-                outofturnEntries.push(ootTag.getEntry());
-            } else {
-                if (isParagraphTag(tag, XMLUtils.convertAttributes(attributes)) && !collectingOutOfTurnText()
-                        && !collectingIntactText()) {
-                    translateAndFlush();
-                }
-                queueTag(tag, attributes);
-            }
-        } else {
-            if (!prevIgnored) {
-                // start ignored from this tags - need to flush translation
-                translateAndFlush();
-            }
-            queueIgnoredTag(tag, attributes);
-        }
-    }
-
-    /** Is called when the tag is ended. */
-    private void end(String tag) throws SAXException, TranslationException {
-        boolean prevIgnored = translator.isInIgnored();
-        if (!translator.isInIgnored()) {
-            if (collectingIntactText() && tag.equals(intacttagName)
-                    && (isIntactTag(tag, null) || isContentBasedTag(tag, null))) {
-                intacttagEntry = null;
-                intacttagName = null;
-                intacttagAttributes = null;
-                removeTranslatableTag();
-            } else if (collectingOutOfTurnText() && isOutOfTurnTag(tag)) {
-                translateButDontFlash();
-                outofturnEntries.pop();
-            } else {
-                queueEndTag(tag);
-                // TODO: If a file doesn't contain any paragraph tag,
-                // the translatable content will be lost
-                if (isParagraphTag(tag) && !collectingOutOfTurnText() && !collectingIntactText()) {
-                    translateAndFlush();
-                }
-                removeTranslatableTag();
-            }
-        } else {
-            queueEndTag(tag);
-        }
-
-        translatorTagEnd(tag);
-        if (!translator.isInIgnored() && prevIgnored) {
-            // stop ignored from this tag - need to flush without translate
-            flushButDontTranslate();
-        }
-    }
-
-    /**
-     * One of the main methods of the XML filter: it collects all the data,
-     * adjusts it, and sends for translation.
-     *
-     * @see #translateAndFlush()
-     */
-    private void translateButDontFlash() throws TranslationException {
-        if (currEntry().isEmpty()) {
-            return;
-        }
-
-        List<ProtectedPart> shortcutDetails = new ArrayList<ProtectedPart>();
-        boolean tagsAggregation = isTagsAggregationEnabled();
-        String src = currEntry().sourceToShortcut(tagsAggregation, dialect, shortcutDetails);
-        Element lead = currEntry().get(0);
-        String translation = src;
-        if ((lead instanceof Tag)
-             && (isPreformattingTag(((Tag) lead).getTag(), ((Tag) lead).getAttributes())
-                 || isSpacePreservingTag())
-             && isTranslatableTag()
-             && !StringUtil.isEmpty(src)) {
-            resetSpacePreservingTag();
-            translation = translator.translate(src, shortcutDetails);
-        } else {
-            String compressed = src;
-            if (Core.getFilterMaster().getConfig().isRemoveSpacesNonseg()) {
-                compressed = StringUtil.compressSpaces(src);
-            }
-            if (isTranslatableTag()) {
-                translation = translator.translate(compressed, shortcutDetails);
-            }
-            // untranslated is written out uncompressed
-            if (compressed.equals(translation)) {
-                translation = src;
-            }
-        }
-
-        currEntry().setTranslation(translation, dialect, new ArrayList<ProtectedPart>());
-    }
-
-    /**
-     * One of the main methods of the XML filter: it collects all the data,
-     * adjusts it, sends for translation, writes out the translated data and
-     * clears the entry.
-     *
-     * @see #translateButDontFlash()
-     */
-    private void translateAndFlush() throws SAXException, TranslationException {
-        translateButDontFlash();
-        try {
-            currWriter().write(currEntry().translationToOriginal());
-        } catch (IOException e) {
-            throw new SAXException(e);
-        }
-        currEntry().clear();
-    }
-
-    /**
-     * Write tag's content without translation. Used for ignored tags.
-     */
-    private void flushButDontTranslate() throws SAXException, TranslationException {
-        try {
-            currWriter().write(currEntry().translationToOriginal());
-        } catch (IOException e) {
-            throw new SAXException(e);
-        }
-        currEntry().clear();
-    }
 
     // /////////////////////////////////////////////////////////////////////////
     // Dialect Helper methods
     // /////////////////////////////////////////////////////////////////////////
-
-    /**
-     * Returns whether the tag starts a new paragraph. Preformatting tags are
-     * also considered to start a new paragraph, so if
-     * {@link #isPreformattingTag(String)} returns true, this method will also
-     * return true.
-     */
-    private boolean isParagraphTag(String tag, org.omegat.filters3.Attributes atts) {
-        paragraphTagName.push(tag);
-        paragraphTagAttributes.push(atts);
-        preformatTagName.push(tag);
-        preformatTagAttributes.push(atts);
-
-        if ((dialect.getParagraphTags() != null && dialect.getParagraphTags().contains(tag))
-                || isPreformattingTag(tag, atts)) {
-            return true;
-        } else {
-            return dialect.validateParagraphTag(tag, atts);
-        }
-    }
-
-    /**
-     * Returns whether the tag starts a new paragraph. It is called at the end
-     * of an element (&lt;/mrk&gt;), and thus doesn't provide attributes. Those
-     * are restored from the paragraphTagAttributes stack.
-     *
-     * @param tag
-     *            A tag
-     * @return <code>true</code> or <code>false</false>
-     */
-    private boolean isParagraphTag(String tag) {
-        if ((dialect.getParagraphTags() != null && dialect.getParagraphTags().contains(tag))
-                || isPreformattingTag(tag)) {
-            return true;
-        } else {
-            org.omegat.filters3.Attributes atts = null;
-            if (tag.equals(paragraphTagName.lastElement())) {
-                paragraphTagName.pop();
-                atts = paragraphTagAttributes.pop(); // Restore attributes
-            }
-            return dialect.validateParagraphTag(tag, atts);
-        }
-    }
 
     /**
      * Returns whether the tag starts a new paragraph.
@@ -734,25 +389,6 @@ public class Handler extends DefaultHandler implements LexicalHandler, DeclHandl
         }
     }
 
-    /**
-     * Returns whether the tag is content based.
-     *
-     * @param tag
-     *            A tag
-     * @return <code>true</code> or <code>false</false>
-     */
-    private boolean isContentBasedTag(String tag, org.omegat.filters3.Attributes atts) {
-        if (dialect.getContentBasedTags() != null && dialect.getContentBasedTags().containsKey(tag)) {
-            return true;
-        } else {
-            if (atts == null) {
-                if (tag.equals(intacttagName)) {
-                    atts = intacttagAttributes; // Restore attributes
-                }
-            }
-            return dialect.validateContentBasedTag(tag, atts);
-        }
-    }
 
     /**
      * Returns whether the tag surrounds preformatted block of text.
@@ -770,46 +406,6 @@ public class Handler extends DefaultHandler implements LexicalHandler, DeclHandl
     }
 
     /**
-     * Returns whether the tag surrounds preformatted block of text. It is
-     * called at the end of an element (&lt;/mrk&gt;), and thus doesn't provide
-     * attributes. Those are restored from the preformatTagAttributes stack.
-     *
-     * @param tag
-     *            A tag
-     * @return <code>true</code> or <code>false</false>
-     */
-    private boolean isPreformattingTag(String tag) {
-        if (dialect.getPreformatTags() != null && dialect.getPreformatTags().contains(tag)) {
-            return true;
-        } else {
-            org.omegat.filters3.Attributes atts = null;
-            if (tag.equals(preformatTagName.lastElement())) {
-                preformatTagName.pop();
-                atts = preformatTagAttributes.pop(); // Restore attributes
-            }
-            return dialect.validatePreformatTag(tag, atts);
-        }
-    }
-
-    /**
-     * Returns whether the tag surrounds intact block of text which we shouldn't
-     * translate.
-     */
-    private boolean isIntactTag(String tag, org.omegat.filters3.Attributes atts) {
-        if (dialect.getIntactTags() != null && dialect.getIntactTags().contains(tag)) {
-            return true;
-        } else {
-            if (atts == null) {
-                if (tag.equals(intacttagName)) {
-                    atts = intacttagAttributes; // Restore attributes
-                }
-            }
-
-            return dialect.validateIntactTag(tag, atts);
-        }
-    }
-
-    /**
      * If we are not inside a translatable tag, and if the dialect says the new
      * one is translatable, add the new tag to the stack
      *
@@ -823,7 +419,7 @@ public class Handler extends DefaultHandler implements LexicalHandler, DeclHandl
     // tag
     void setTranslatableTag(String tag, org.omegat.filters3.Attributes atts) {
 
-        if (!isTranslatableTag()) { // If stack is empty
+        if (!translationHandler.isTranslatableTag()) { // If stack is empty
             if (dialect.validateTranslatableTag(tag, atts)) {
                 translatableTagName.push(tag);
             }
@@ -836,42 +432,11 @@ public class Handler extends DefaultHandler implements LexicalHandler, DeclHandl
      * Remove a tag from the stack of translatable tags
      */
     void removeTranslatableTag() {
-        if (isTranslatableTag()) { // If there is something in the stack
+        if (translationHandler.isTranslatableTag()) { // If there is something in the stack
             translatableTagName.pop(); // Remove it
         }
     }
 
-    private void translatorTagStart(String tag, Attributes atts) {
-        currentTagPath.push(tag);
-        translator.tagStart(constructCurrentPath(), atts);
-    }
-
-    private void translatorTagEnd(String tag) {
-        translator.tagEnd(constructCurrentPath());
-        while (!currentTagPath.pop().equals(tag)) {
-        }
-    }
-
-    private String constructCurrentPath() {
-        StringBuilder path = new StringBuilder(256);
-        for (String t : currentTagPath) {
-            path.append('/').append(t);
-        }
-        return path.toString();
-    }
-
-    /**
-     * If the space-preserving flag is not set, and the attributes say it is one, set it
-     *
-     * @param atts
-     *            The attributes of the current tag
-     */
-    private void setSpacePreservingTag(org.omegat.filters3.Attributes atts) {
-
-        if (isSpacePreservingSet(atts)) {
-            spacePreserve = true;
-        }
-    }
 
     private boolean isClosingTagRequired() {
         return dialect.getClosingTagRequired();
@@ -944,7 +509,7 @@ public class Handler extends DefaultHandler implements LexicalHandler, DeclHandl
     public void startElement(String uri, String localName, String qName, Attributes attributes)
             throws SAXException {
         try {
-            start(qName, attributes);
+            translationHandler.start(qName, attributes);
         } catch (TranslationException e) {
             throw new SAXException(e);
         }
@@ -954,7 +519,7 @@ public class Handler extends DefaultHandler implements LexicalHandler, DeclHandl
     @Override
     public void endElement(String uri, String localName, String qName) throws SAXException {
         try {
-            end(qName);
+            translationHandler.end(qName);
         } catch (TranslationException e) {
             throw new SAXException(e);
         }
@@ -1007,19 +572,21 @@ public class Handler extends DefaultHandler implements LexicalHandler, DeclHandl
             throw new SAXException(e);
         }
 
-        entry = new Entry(dialect, this);
+        entryHandler.initEntry(dialect,this);
     }
+
+
 
     /** Receive notification of the end of the document. */
     @Override
     public void endDocument() throws SAXException {
         try {
-            translateAndFlush();
+            translationHandler.translateAndFlush();
             if (extWriter != null) {
                 extWriter.close();
                 extWriter = null;
             }
-            translateAndFlush();
+            translationHandler.translateAndFlush();
             currWriter().close();
         } catch (TranslationException e) {
             throw new SAXException(e);
@@ -1153,4 +720,21 @@ public class Handler extends DefaultHandler implements LexicalHandler, DeclHandl
     /** Not used: An attribute type declaration. */
     public void attributeDecl(String eName, String aName, String type, String valueDefault, String value) {
     }
+
+    public Stack<String> getCurrentTagPath() {
+        return currentTagPath;
+    }
+
+    public XMLDialect getDialect() {
+        return dialect;
+    }
+
+    public Stack<String> getTranslatableTagName() {
+        return translatableTagName;
+    }
+
+    public Translator getTranslator() {
+        return translator;
+    }
+
 }
