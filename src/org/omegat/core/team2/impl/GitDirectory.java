@@ -27,6 +27,30 @@ public class GitDirectory {
         }
     }
 
+    private void configRepo() throws IOException {
+        StoredConfig config = GITRemoteRepository2.getRepository().getConfig();
+
+        // Deal with line endings. A normalized repo has LF line endings.
+        // OmegaT uses line endings of OS for storing tmx files.
+        // To do auto converting, we need to change a setting:
+        if ("\r\n".equals(System.lineSeparator())) {
+            // on windows machines, convert text files to CRLF
+            config.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOCRLF, true);
+        } else {
+            // on Linux/Mac machines (using LF), don't convert text files
+            // but use input format, unchanged.
+            // NB: I don't know correct setting for OS'es like MacOS <= 9,
+            // which uses CR. Git manual only speaks about converting from/to
+            // CRLF, so for CR, you probably don't want conversion either.
+            config.setEnum(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOCRLF, CoreConfig.AutoCRLF.INPUT);
+        }
+
+        // Perform GC synchronously to avoid locking issues
+        config.setBoolean(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTODETACH, false);
+
+        config.save();
+    }
+
     public void notAlreadyCloned() throws GitAPIException, IRemoteRepository2.BadRepositoryException, IOException {
         Log.logInfoRB("GIT_START", "clone");
         CloneCommand c = Git.cloneRepository();
@@ -53,13 +77,13 @@ public class GitDirectory {
             git.submoduleInit().call();
             git.submoduleUpdate().setTimeout(org.omegat.core.team2.impl.GITRemoteRepository2.TIMEOUT).call();
         }
-        GITRemoteRepository2.configRepo();
+        configRepo();
         Log.logInfoRB("GIT_FINISH", "clone");
     }
 
     public void alreadyCloned() throws IOException, GitAPIException {
         GITRemoteRepository2.setRepository(Git.open(GITRemoteRepository2.getLocalDirectory()).getRepository());
-        GITRemoteRepository2.configRepo();
+        configRepo();
         try (Git git = new Git(GITRemoteRepository2.getRepository())) {
             git.submoduleInit().call();
             git.submoduleUpdate().setTimeout(org.omegat.core.team2.impl.GITRemoteRepository2.TIMEOUT).call();
