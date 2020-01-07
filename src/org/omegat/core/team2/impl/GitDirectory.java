@@ -5,6 +5,9 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.errors.NoRemoteRepositoryException;
+import org.eclipse.jgit.lib.ConfigConstants;
+import org.eclipse.jgit.lib.CoreConfig;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.omegat.core.team2.IRemoteRepository2;
 import org.omegat.util.Log;
 
@@ -12,9 +15,9 @@ import java.io.File;
 import java.io.IOException;
 
 public class GitDirectory {
-    private final org.omegat.core.team2.impl.GITRemoteRepository2 GITRemoteRepository2;
+    private GITRemoteRepository2 GITRemoteRepository2;
 
-    public GitDirectory(org.omegat.core.team2.impl.GITRemoteRepository2 GITRemoteRepository2) {
+    public GitDirectory(GITRemoteRepository2 GITRemoteRepository2) {
         this.GITRemoteRepository2 = GITRemoteRepository2;
     }
 
