@@ -1,17 +1,38 @@
 LIHAT git merge !!!
 setiap yg ada kata new harus di extract
-Selanjutnya kelas filters3.xml.handler.java
+Selanjutnya
 
+"gui.EditorController",58,0
+"FindMatches",21,0
+"ConvertProject26to37team",24,0
+"core.search.Searcher",23,0
+"SVNAuthenticationManager",23,0
+"gui.ProjectUICommands",23,0
+"gui.MainWindowMenu",21,0
+"GITRemoteRepository2",41,17
+"gui.GlossaryTextArea",26,0
+"gui.GlossaryReaderTBX",21,0
+"gui.ProjectFilesListController,21,0
+"gui.SearchWindowController",32,0
+"gui.PreferencesWindowController",42,0
 
--------
-hasil terkini perubahan CBO
-[61,53,32] -> [43,21,x]
-
-filters3.xml/ handler.java dari 32 menjadi x
-RealProject.java dari 61 menjadi 43 (lihat di 2jan-realproject.mdl)
-Core.java dari 53 menjadi 21
+----------------------------------------------------
+QualifiedName	Name	Complexity	Coupling	Size	Lack of Cohesion	CBO
+switchToVersion( String ): 	9
+static prepareTreeParser( Repository, ObjectId ): 8
+indexIsEmpty( DirCache ) : 7
+init( RepositoryDefinition, File, ProjectTeamSettings ): void	low	medium-high	low	low	7
+: String	getCurrentVersion( ): String	low	low-medium	low	low	4
+String ): boolean	static isGitRepository( String ): boolean	low	low-medium	low	low	4
 
 ------------------------
+IRemoteRepository2 punya banyak alternatif :
+1.GITRemoteRepository2
+2. SVNRemoteRepository2
+3 ...
+IRemoteRepository2 menerapkan factory sehingga bisa banyak alternatif
+------------------------
+
 cari kelas lain yg punya cbo tinggi, yakni :
 RealRroject
 RealProject dipakai di kelas Main
