@@ -22,8 +22,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 public class GitOperation {
     private static final Logger LOGGER = Logger.getLogger(GITRemoteRepository2.class.getName());
@@ -80,7 +78,6 @@ public class GitOperation {
         try (Git git = new Git(repository)) {
             RevCommit commit = git.commit().setMessage(comment).call();
             Iterable<PushResult> results = git.push().setTimeout(TIMEOUT).setRemote(REMOTE).add(LOCAL_BRANCH).call();
-            List<RemoteRefUpdate.Status> statuses = StreamSupport.stream(results.spliterator(), false).flatMap(r -> r.getRemoteUpdates().stream()).map(RemoteRefUpdate::getStatus).collect(Collectors.toList());
             String result;
             if (statuses.isEmpty() || statuses.stream().anyMatch(s -> s != RemoteRefUpdate.Status.OK)) {
                 Log.logWarningRB("GIT_CONFLICT");
