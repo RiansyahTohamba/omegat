@@ -1,0 +1,7 @@
+di core ada instance variable
+
+yg terhubung di pakai pada
+initializeGUI
+
+getter-nya : ITagValidation getTagValidation() dipakai di
+
