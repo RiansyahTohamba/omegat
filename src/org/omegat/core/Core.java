@@ -48,19 +48,10 @@ import org.omegat.core.threads.VersionCheckThread;
 import org.omegat.filters2.IFilter;
 import org.omegat.filters2.master.FilterMaster;
 import org.omegat.filters2.master.PluginUtils;
-import org.omegat.gui.comments.IComments;
-import org.omegat.gui.dictionaries.DictionariesTextArea;
-import org.omegat.gui.dictionaries.IDictionaries;
-import org.omegat.gui.editor.mark.IMarker;
 import org.omegat.gui.exttrans.IMachineTranslation;
-import org.omegat.gui.glossary.GlossaryManager;
-import org.omegat.gui.glossary.IGlossaries;
 import org.omegat.gui.main.ConsoleWindow;
 import org.omegat.gui.main.IMainWindow;
 import org.omegat.gui.main.MainWindow;
-import org.omegat.gui.matches.IMatcher;
-import org.omegat.gui.multtrans.MultipleTransPane;
-import org.omegat.gui.notes.INotes;
 import org.omegat.languagetools.LanguageToolWrapper;
 import org.omegat.tokenizer.ITokenizer;
 import org.omegat.util.Preferences;
@@ -220,10 +211,6 @@ public final class Core {
 
     public static void registerMachineTranslationClass(Class<? extends IMachineTranslation> clazz) {
         PluginUtils.getMachineTranslationClasses().add(clazz);
-    }
-
-    public static void registerMarkerClass(Class<? extends IMarker> clazz) {
-        PluginUtils.getMarkerClasses().add(clazz);
     }
 
     public static void registerTokenizerClass(Class<? extends ITokenizer> clazz) {
