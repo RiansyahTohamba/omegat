@@ -41,7 +41,7 @@ public final class TestCoreInitializer {
     }
 
     public static void initEditor(IEditor editor) {
-        Core.editor = editor;
+        DependOnMainWindow.editor = editor;
     }
 
     public static void initAutoSave(IAutoSave autoSave) {
