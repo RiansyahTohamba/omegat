@@ -125,6 +125,10 @@ public class EditorTextArea3 extends JEditorPane {
     /** Undo Manager to store edits */
     protected final TranslationUndoManager undoManager = new TranslationUndoManager(this);
 
+    public void resetUndoMgr() {
+        undoManager.reset();
+    }
+
     protected final EditorController controller;
 
     protected final List<PopupMenuConstructorInfo> popupConstructors = new ArrayList<PopupMenuConstructorInfo>();

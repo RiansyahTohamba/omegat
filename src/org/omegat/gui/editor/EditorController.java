@@ -774,7 +774,7 @@ public class EditorController implements IEditor {
         editor.setDocument(doc);
 
         doc.addUndoableEditListener(editor.undoManager);
-        editor.undoManager.reset();
+        editor.resetUndoMgr();
 
         doc.addDocumentListener(new DocumentListener() {
             //we cannot edit the document here, only other stuff.
@@ -828,20 +828,7 @@ public class EditorController implements IEditor {
      */
     public void activateEntry(CaretPosition pos) {
         UIThreadsUtil.mustBeSwingThread();
-
-        SourceTextEntry ste = getCurrentEntry();
-        if (ste == null) {
-            return;
-        }
-
-        if (scrollPane.getViewport().getView() != editor) {
-            // editor not displayed
-            return;
-        }
-
-        if (!Core.getProject().isProjectLoaded()) {
-            return;
-        }
+        if (exitActivateEntry()) return;
 
         SegmentBuilder builder = m_docSegList[displayedEntryIndex];
 
@@ -855,18 +842,24 @@ public class EditorController implements IEditor {
             return;
         }
 
+        SourceTextEntry ste = getCurrentEntry();
+
         previousTranslations = Core.getProject().getAllTranslations(ste);
+
         TMXEntry currentTranslation = previousTranslations.getCurrentTranslation();
-        // forget about old marks
+        //builder <- currentTranslation
+        //currentTranslation <- previousTranslations
+        //previousTranslations <- ste atau getCurrentEntry()
         builder.createSegmentElement(true, currentTranslation);
 
+        //setNoteText butuh currentTranslation
+        //CBO nya 2 nih
         DependOnMainWindow.getNotes().setNoteText(currentTranslation.note);
 
-        // then add new marks
+        //harus urut, then add new marks
         markerController.reprocessImmediately(builder);
-
-        editor.undoManager.reset();
-
+        editor.resetUndoMgr();
+    
         history.insertNew(builder.segmentNumberInProject);
 
         setMenuEnabled();
@@ -908,6 +901,17 @@ public class EditorController implements IEditor {
 
         // fire event about new segment activated
         CoreEvents.fireEntryActivated(ste);
+    }
+
+    private boolean exitActivateEntry() {
+        if (
+                getCurrentEntry() == null ||
+                scrollPane.getViewport().getView() != editor ||
+                !Core.getProject().isProjectLoaded()
+        ) {
+            return true;
+        }
+        return false;
     }
 
     private void setMenuEnabled() {
@@ -1244,7 +1248,7 @@ public class EditorController implements IEditor {
         // then add new marks
         markerController.reprocessImmediately(m_docSegList[displayedEntryIndex]);
 
-        editor.undoManager.reset();
+        editor.resetUndoMgr();
 
         // validate tags if required
         if (entry != null && Preferences.isPreference(Preferences.TAG_VALIDATE_ON_LEAVE)) {
