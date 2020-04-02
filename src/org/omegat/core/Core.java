@@ -97,6 +97,13 @@ public final class Core {
         return currentProject;
     }
 
+    public static IProject.FileInfo getProjectFile(int indexFile){
+        return getProject().getProjectFiles().get(indexFile);
+    }
+
+    public static String getProjectFilePath(int indexFile){
+        return getProjectFile(indexFile).filePath;
+    }
     /** Set new current project. */
     public static void setProject(final IProject newCurrentProject) {
         currentProject = newCurrentProject;

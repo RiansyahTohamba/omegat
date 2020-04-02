@@ -27,13 +27,13 @@ String ): boolean	static isGitRepository( String ): boolean	low	low-medium	low	l
 
 ------------------------
 IRemoteRepository2 punya banyak alternatif :
-1.GITRemoteRepository2
+1. GITRemoteRepository2
 2. SVNRemoteRepository2
 3 ...
 IRemoteRepository2 menerapkan factory sehingga bisa banyak alternatif
 ------------------------
 
-cari kelas lain yg punya cbo tinggi, yakni :
+cari kelas lain yg punya CBO tinggi, yakni :
 RealRroject
 RealProject dipakai di kelas Main
 RealProject cuman 1 X saja diisi oleh new RealProject();

@@ -231,36 +231,7 @@ public class EditorController implements IEditor {
 
         settings = new EditorSettings(this);
 
-        CoreEvents.registerProjectChangeListener(eventType -> {
-            SHOW_TYPE showType;
-            switch (eventType) {
-            case CREATE:
-            case LOAD:
-                history.clear();
-                removeFilter();
-                if (!Core.getProject().getAllEntries().isEmpty()) {
-                    showType = SHOW_TYPE.FIRST_ENTRY;
-                } else {
-                    showType = SHOW_TYPE.EMPTY_PROJECT;
-                }
-                markerController.removeAll();
-                setInitialOrientation();
-                break;
-            case CLOSE:
-                m_docSegList = null;
-                history.clear();
-                removeFilter();
-                markerController.removeAll();
-                showType = SHOW_TYPE.INTRO;
-                deactivateWithoutCommit();
-                break;
-            default:
-                showType = SHOW_TYPE.NO_CHANGE;
-            }
-            if (showType != SHOW_TYPE.NO_CHANGE) {
-                updateState(showType);
-            }
-        });
+        registerProjectChange();
 
         // register entry changes callback
         CoreEvents.registerEntryEventListener(new IEntryEventListener() {
@@ -333,6 +304,39 @@ public class EditorController implements IEditor {
                 //   newMax = curMax + loadCount * unitsPerSeg
                 double loadCount = (bar.getValue() / (1 - PAGE_LOAD_THRESHOLD) - bar.getMaximum()) / unitsPerSeg;
                 loadDown((int) Math.ceil(loadCount));
+            }
+        });
+    }
+
+    private void registerProjectChange() {
+        CoreEvents.registerProjectChangeListener(eventType -> {
+            SHOW_TYPE showType;
+            switch (eventType) {
+            case CREATE:
+            case LOAD:
+                history.clear();
+                removeFilter();
+                if (!Core.getProject().getAllEntries().isEmpty()) {
+                    showType = SHOW_TYPE.FIRST_ENTRY;
+                } else {
+                    showType = SHOW_TYPE.EMPTY_PROJECT;
+                }
+                markerController.removeAll();
+                setInitialOrientation();
+                break;
+            case CLOSE:
+                m_docSegList = null;
+                history.clear();
+                removeFilter();
+                markerController.removeAll();
+                showType = SHOW_TYPE.INTRO;
+                deactivateWithoutCommit();
+                break;
+            default:
+                showType = SHOW_TYPE.NO_CHANGE;
+            }
+            if (showType != SHOW_TYPE.NO_CHANGE) {
+                updateState(showType);
             }
         });
     }
@@ -715,10 +719,10 @@ public class EditorController implements IEditor {
         // Currently displayed file
         IProject.FileInfo file;
         try {
-            file = Core.getProject().getProjectFiles().get(displayedFileIndex);
+            file = Core.getProjectFile(displayedFileIndex);
         } catch (IndexOutOfBoundsException ex) {
             // there is no displayedFileIndex file in project - load first file
-            file = Core.getProject().getProjectFiles().get(0);
+            file = Core.getProjectFile(0);
         }
 
         // remove old segments
@@ -827,51 +831,50 @@ public class EditorController implements IEditor {
      * Also moves document focus to current entry, and makes sure fuzzy info displayed if available.
      */
     public void activateEntry(CaretPosition pos) {
+        //LOGGING
         UIThreadsUtil.mustBeSwingThread();
-        if (exitActivateEntry()) return;
-
         SegmentBuilder builder = m_docSegList[displayedEntryIndex];
+        if (exitActivateEntry(builder,pos)) return;
+        setCurrentTrans(builder);
+        setMenuEnabled();
+        showStat();
+        showLengthMessage();
+        if (Preferences.isPreference(Preferences.EXPORT_CURRENT_SEGMENT)) {
+            segmentExportImport.exportCurrentSegment(getCurrentEntry());
+        }
+        navigateEntry(pos);
+        scrollForDisplayNearestSegments(pos);
+        fireEvent();
+    }
 
-        // If the builder has not been created then we are trying to jump to a
-        // segment that is in the current document but not yet loaded. To avoid
-        // loading large swaths of the document at once, we then re-load the
-        // document centered at the destination segment.
-        if (!builder.hasBeenCreated()) {
-            loadDocument();
-            activateEntry(pos);
-            return;
+    private void fireEvent() {
+        // check if file was changed
+        if (previousDisplayedFileIndex != displayedFileIndex) {
+            previousDisplayedFileIndex = displayedFileIndex;
+//            CBO nya 2 = 1 + 2
+            CoreEvents.fireEntryNewFile(Core.getProjectFilePath(displayedFileIndex));
         }
 
-        SourceTextEntry ste = getCurrentEntry();
+        editor.autoCompleter.setVisible(false);
+        editor.repaint();
 
-        previousTranslations = Core.getProject().getAllTranslations(ste);
+        // fire event about new segment activated
+        CoreEvents.fireEntryActivated(getCurrentEntry());
+    }
 
+    private void setCurrentTrans(SegmentBuilder builder) {
+        previousTranslations = Core.getProject().getAllTranslations(getCurrentEntry());
         TMXEntry currentTranslation = previousTranslations.getCurrentTranslation();
-        //builder <- currentTranslation
-        //currentTranslation <- previousTranslations
-        //previousTranslations <- ste atau getCurrentEntry()
         builder.createSegmentElement(true, currentTranslation);
-
-        //setNoteText butuh currentTranslation
-        //CBO nya 2 nih
         DependOnMainWindow.getNotes().setNoteText(currentTranslation.note);
 
-        //harus urut, then add new marks
+        //then add new marks
         markerController.reprocessImmediately(builder);
         editor.resetUndoMgr();
-    
         history.insertNew(builder.segmentNumberInProject);
+    }
 
-        setMenuEnabled();
-
-        showStat();
-
-        showLengthMessage();
-
-        if (Preferences.isPreference(Preferences.EXPORT_CURRENT_SEGMENT)) {
-            segmentExportImport.exportCurrentSegment(ste);
-        }
-
+    private void navigateEntry(CaretPosition pos) {
         int te = editor.getOmDocument().getTranslationEnd();
         int ts = editor.getOmDocument().getTranslationStart();
         //
@@ -889,26 +892,22 @@ public class EditorController implements IEditor {
                 pos.selectionEnd = null;
             }
         }
-        scrollForDisplayNearestSegments(pos);
-        // check if file was changed
-        if (previousDisplayedFileIndex != displayedFileIndex) {
-            previousDisplayedFileIndex = displayedFileIndex;
-            CoreEvents.fireEntryNewFile(Core.getProject().getProjectFiles().get(displayedFileIndex).filePath);
-        }
-
-        editor.autoCompleter.setVisible(false);
-        editor.repaint();
-
-        // fire event about new segment activated
-        CoreEvents.fireEntryActivated(ste);
     }
 
-    private boolean exitActivateEntry() {
+    private boolean exitActivateEntry(SegmentBuilder builder,CaretPosition pos) {
         if (
                 getCurrentEntry() == null ||
                 scrollPane.getViewport().getView() != editor ||
                 !Core.getProject().isProjectLoaded()
         ) {
+            return true;
+        } else if(!builder.hasBeenCreated()) {
+            // If the builder has not been created then we are trying to jump to a
+            // segment that is in the current document but not yet loaded. To avoid
+            // loading large swaths of the document at once, we then re-load the
+            // document centered at the destination segment.
+            loadDocument();
+            activateEntry(pos);
             return true;
         }
         return false;
@@ -1141,56 +1140,62 @@ public class EditorController implements IEditor {
 
         Document3 doc = editor.getOmDocument();
         doc.stopEditMode();
-
         // segment was active
         SegmentBuilder sb = m_docSegList[displayedEntryIndex];
         SourceTextEntry entry = sb.ste;
-
         TMXEntry oldTE = Core.getProject().getTranslationInfo(entry);
-
         PrepareTMXEntry newen = new PrepareTMXEntry();
         newen.source = sb.ste.getSrcText();
         newen.note = DependOnMainWindow.getNotes().getNoteText();
-        if (forceTranslation != null) { // there is force translation
-            switch (forceTranslation) {
-            case UNTRANSLATED:
-                newen.translation = null;
-                break;
-            case EMPTY:
-                newen.translation = "";
-                break;
-            case EQUALS_TO_SOURCE:
-                newen.translation = newen.source;
-                break;
-            }
-        } else { // translation from editor
-            if (newTrans.isEmpty()) { // empty translation
-                if (oldTE.isTranslated() && "".equals(oldTE.translation)) {
-                    // It's an empty translation which should remain empty
-                    newen.translation = "";
-                } else {
-                    newen.translation = null; // will be untranslated
-                }
-            } else if (newTrans.equals(newen.source)) { // equals to source
-                if (Preferences.isPreference(Preferences.ALLOW_TRANS_EQUAL_TO_SRC)) {
-                    // translation can be equals to source
-                    newen.translation = newTrans;
-                } else {
-                    // translation can't be equals to source
-                    if (oldTE.source.equals(oldTE.translation)) {
-                        // but it was equals to source before
-                        newen.translation = oldTE.translation;
-                    } else {
-                        // set untranslated
-                        newen.translation = null;
-                    }
-                }
-            } else {
-                // new translation is not empty and not equals to source - just change
-                newen.translation = newTrans;
-            }
+
+        if (forceTranslation != null) {
+            forceTranslt(forceTranslation, newen);
+        } else {
+            transltFromEditor(newTrans, oldTE, newen);
         }
 
+        transNoteChanged(sb, entry, oldTE, newen);
+
+        m_docSegList[displayedEntryIndex].createSegmentElement(false,
+                Core.getProject().getTranslationInfo(m_docSegList[displayedEntryIndex].ste));
+
+        findIdenticalRedraw(entry);
+
+        DependOnMainWindow.getNotes().clear();
+
+        // then add new marks
+        markerController.reprocessImmediately(m_docSegList[displayedEntryIndex]);
+
+        editor.resetUndoMgr();
+        validateTags(entry);
+
+        // team sync for save thread
+        syncSaveThread();
+    }
+
+    private void validateTags(SourceTextEntry entry) {
+        // validate tags if required
+        if (entry != null && Preferences.isPreference(Preferences.TAG_VALIDATE_ON_LEAVE)) {
+            String file = getCurrentFile();
+            new SwingWorker<Boolean, Void>() {
+                protected Boolean doInBackground() throws Exception {
+                    return Core.getTagValidation().checkInvalidTags(entry);
+                }
+                @Override
+                protected void done() {
+                    try {
+                        if (!get()) {
+                            DependOnMainWindow.getIssues().showForFiles(Pattern.quote(file), entry.entryNum());
+                        }
+                    } catch (InterruptedException | ExecutionException e) {
+                        LOGGER.log(Level.SEVERE, "Exception when validating tags on leave", e);
+                    }
+                }
+            }.execute();
+        }
+    }
+
+    private void transNoteChanged(SegmentBuilder sb, SourceTextEntry entry, TMXEntry oldTE, PrepareTMXEntry newen) {
         boolean defaultTranslation = sb.isDefaultTranslation();
         boolean isNewAltTrans = !defaultTranslation && oldTE.defaultTranslation;
         boolean translationChanged = !Objects.equals(oldTE.translation, newen.translation);
@@ -1200,29 +1205,32 @@ public class EditorController implements IEditor {
             // Only note was changed, and we are not making a new alt translation.
             Core.getProject().setNote(entry, oldTE, newen.note);
         } else if (translationChanged || noteChanged) {
-            while (true) {
-                // iterate before optimistic locking will be resolved
-                try {
-                    Core.getProject().setTranslation(entry, newen, defaultTranslation, null,
-                            previousTranslations);
+            IterateBefOptiLocking(entry, newen, defaultTranslation);
+        }
+    }
+
+    private void IterateBefOptiLocking(SourceTextEntry entry, PrepareTMXEntry newen, boolean defaultTranslation) {
+        while (true) {
+            // iterate before optimistic locking will be resolved
+            try {
+                Core.getProject().setTranslation(entry, newen, defaultTranslation, null,
+                        previousTranslations);
+                break;
+            } catch (OptimisticLockingFail ex) {
+                String result = new ConflictDialogController().show(ex.getOldTranslationText(),
+                        ex.getNewTranslationText(), newen.translation);
+                if (result == newen.translation) {
+                    // next iteration
+                    previousTranslations = ex.getPrevious();
+                } else {
+                    // use remote - don't save user's translation
                     break;
-                } catch (OptimisticLockingFail ex) {
-                    String result = new ConflictDialogController().show(ex.getOldTranslationText(),
-                            ex.getNewTranslationText(), newen.translation);
-                    if (result == newen.translation) {
-                        // next iteration
-                        previousTranslations = ex.getPrevious();
-                    } else {
-                        // use remote - don't save user's translation
-                        break;
-                    }
                 }
             }
         }
+    }
 
-        m_docSegList[displayedEntryIndex].createSegmentElement(false,
-                Core.getProject().getTranslationInfo(m_docSegList[displayedEntryIndex].ste));
-
+    private void findIdenticalRedraw(SourceTextEntry entry) {
         // find all identical sources and redraw them
         for (int i = 0; i < m_docSegList.length; i++) {
             if (i == displayedEntryIndex) {
@@ -1242,36 +1250,9 @@ public class EditorController implements IEditor {
                 markerController.reprocessImmediately(builder);
             }
         }
+    }
 
-        DependOnMainWindow.getNotes().clear();
-
-        // then add new marks
-        markerController.reprocessImmediately(m_docSegList[displayedEntryIndex]);
-
-        editor.resetUndoMgr();
-
-        // validate tags if required
-        if (entry != null && Preferences.isPreference(Preferences.TAG_VALIDATE_ON_LEAVE)) {
-            String file = getCurrentFile();
-            new SwingWorker<Boolean, Void>() {
-                protected Boolean doInBackground() throws Exception {
-                    return Core.getTagValidation().checkInvalidTags(entry);
-                }
-
-                @Override
-                protected void done() {
-                    try {
-                        if (!get()) {
-                            DependOnMainWindow.getIssues().showForFiles(Pattern.quote(file), entry.entryNum());
-                        }
-                    } catch (InterruptedException | ExecutionException e) {
-                        LOGGER.log(Level.SEVERE, "Exception when validating tags on leave", e);
-                    }
-                }
-            }.execute();
-        }
-
-        // team sync for save thread
+    private void syncSaveThread() {
         if (Core.getProject().isTeamSyncPrepared()) {
             try {
                 Core.executeExclusively(false, Core.getProject()::teamSync);
@@ -1280,6 +1261,51 @@ public class EditorController implements IEditor {
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }
+        }
+    }
+
+    private void transltFromEditor(String newTrans, TMXEntry oldTE, PrepareTMXEntry newen) {
+        // translation from editor
+        if (newTrans.isEmpty()) {
+            // empty translation
+            if (oldTE.isTranslated() && "".equals(oldTE.translation)) {
+                // It's an empty translation which should remain empty
+                newen.translation = "";
+            } else {
+                newen.translation = null; // will be untranslated
+            }
+        } else if (newTrans.equals(newen.source)) { // equals to source
+            if (Preferences.isPreference(Preferences.ALLOW_TRANS_EQUAL_TO_SRC)) {
+                // translation can be equals to source
+                newen.translation = newTrans;
+            } else {
+                // translation can't be equals to source
+                if (oldTE.source.equals(oldTE.translation)) {
+                    // but it was equals to source before
+                    newen.translation = oldTE.translation;
+                } else {
+                    // set untranslated
+                    newen.translation = null;
+                }
+            }
+        } else {
+            // new translation is not empty and not equals to source - just change
+            newen.translation = newTrans;
+        }
+    }
+
+    private void forceTranslt(ForceTranslation forceTranslation, PrepareTMXEntry newen) {
+        // there is force translation
+        switch (forceTranslation) {
+        case UNTRANSLATED:
+            newen.translation = null;
+            break;
+        case EMPTY:
+            newen.translation = "";
+            break;
+        case EQUALS_TO_SOURCE:
+            newen.translation = newen.source;
+            break;
         }
     }
 
