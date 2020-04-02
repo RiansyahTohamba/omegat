@@ -26,17 +26,12 @@
 
 package org.omegat.core;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.omegat.core.data.EntryKey;
-import org.omegat.core.data.IProject;
-import org.omegat.core.data.NotLoadedProject;
+import org.omegat.core.data.*;
 import org.omegat.core.segmentation.Segmenter;
 import org.omegat.core.spellchecker.ISpellChecker;
 import org.omegat.core.spellchecker.SpellChecker;
@@ -97,6 +92,14 @@ public final class Core {
         return currentProject;
     }
 
+    public static TMXEntry getTranslationInfo(SourceTextEntry entry){
+        return Core.getProject().getTranslationInfo(entry);
+    }
+
+    public static boolean isTranslated(SourceTextEntry entry){
+        return getTranslationInfo(entry).isTranslated();
+    }
+
     public static IProject.FileInfo getProjectFile(int indexFile){
         return getProject().getProjectFiles().get(indexFile);
     }
@@ -148,6 +151,9 @@ public final class Core {
         segmenter = newSegmenter;
     }
 
+    public static Locale getTargetLocale(){
+        return Core.getProject().getProjectProperties().getTargetLanguage().getLocale();
+    }
     /**
      * Initialize application components.
      */

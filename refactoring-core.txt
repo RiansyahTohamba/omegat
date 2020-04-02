@@ -1,7 +1,29 @@
-di core ada instance variable
+Core.getProject()
+Kenapa harus melalui Core ?
+karena disitu ada inisial state dgn setProject
+setProject dilakukan dibanyak tempat ,sehingga untuk mengambil state currentProject cukup ambil lewat core saja.
+---------
+cara buat facade yg benar gimana sih?
+1 client to 1 or many facade
+1 facade to many classes that contain low level methods
+---------
+di core ada instance variable : tagValidation
+pada class core dipakai pada method
+1. initializeGUI
+2. initializeConsole
+3. getTagValidation
 
-yg terhubung di pakai pada
-initializeGUI
+kelas 1 dipakai di kelas
+1.
+2.
 
-getter-nya : ITagValidation getTagValidation() dipakai di
+kelas 2 dipakai di kelas
 
+core ini memang sbg facade bagi kelas-kelas lain
+core punya method
+1. initializeGUI
+2. initializeConsole
+
+yg menjadi tempat kumpul instance variable yg lain, maka kita harus pisah dia dari kelas Core? apakah bisa pakai factory?
+
+Core, RegMarker, DependOnMainWindow

@@ -1,0 +1,23 @@
+----
+Core.getProject() ini yg bikin CBO tinggi
+
+LCOM hampir 1 wkwk, hampir ga kohesif antar method dan variable
+class,CBO,LCOM
+EditorController 59	0.929
+
+
+-------
+semua method sudah dipecah,tapi belum dilakukan extract class
+activateEntry( CaretPosition ): void 20
+commitAndDeactivate( ForceTranslation, String ): void 19
+loadDocument( ): void 17
+showStat( ): void	12
+setFilter( IEditorFilter ): void 9
+---
+extract method IterateBefOptiLocking dari transNoteChanged
+---
+siapa saja yang inherit IEditor ?
+kalau di klik ada 39 usage
+sepertinya tidak perlu  dipecah lagi method-methodnya karena sudah stable
+----
+

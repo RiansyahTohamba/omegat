@@ -408,7 +408,7 @@ public class EditorController implements IEditor {
         for (int i = loadFrom; i <= loadTo; i++) {
             SegmentBuilder builder = m_docSegList[i];
             insertStartParagraphMark(editor.getOmDocument(), builder);
-            builder.createSegmentElement(false, Core.getProject().getTranslationInfo(builder.ste));
+            builder.createSegmentElement(false, Core.getTranslationInfo(builder.ste));
             builder.addSegmentSeparator();
         }
         lastLoaded = loadTo;
@@ -425,7 +425,7 @@ public class EditorController implements IEditor {
         for (int i = loadFrom; i >= loadTo; i--) {
             SegmentBuilder builder = m_docSegList[i];
             builder.prependSegmentSeparator();
-            builder.prependSegmentElement(false, Core.getProject().getTranslationInfo(builder.ste));
+            builder.prependSegmentElement(false, Core.getTranslationInfo(builder.ste));
             // We need to re-mark each segment immediately as it's added or else
             // the marks are placed incorrectly. This probably has to do with
             // offsets changing as content is prepended, but I (AMK) have not
@@ -715,47 +715,27 @@ public class EditorController implements IEditor {
      */
     protected void loadDocument() {
         UIThreadsUtil.mustBeSwingThread();
-
         // Currently displayed file
-        IProject.FileInfo file;
-        try {
-            file = Core.getProjectFile(displayedFileIndex);
-        } catch (IndexOutOfBoundsException ex) {
-            // there is no displayedFileIndex file in project - load first file
-            file = Core.getProjectFile(0);
-        }
-
+        FileInfo file = getFileInfo();
         // remove old segments
         if (m_docSegList != null) {
             markerController.removeAll();
         }
-
-        // check if RTL support required for document
-        boolean hasRTL = sourceLangIsRTL || targetLangIsRTL || EditorUtils.localeIsRTL()
-                || currentOrientation != Document3.ORIENTATION.ALL_LTR;
-        Map<Language, ProjectTMX> otherLanguageTMs = Core.getProject().getOtherTargetLanguageTMs();
-        for (Map.Entry<Language, ProjectTMX> entry : otherLanguageTMs.entrySet()) {
-            hasRTL = hasRTL || EditorUtils.isRTL(entry.getKey().getLanguageCode().toLowerCase(Locale.ENGLISH));
-        }
-
+        boolean hasRTL = isRTLSupport();
         Document3 doc = new Document3(this);
+        setDocSegList(file, hasRTL, doc);
+        clampDisplaySegment(file, doc);
+        addLocTargetLang(doc);
+    }
 
-        // Create all SegmentBuilders now...
-        ArrayList<SegmentBuilder> tmpSegList = new ArrayList<SegmentBuilder>(file.entries.size());
-        for (SourceTextEntry ste : file.entries) {
-            if (entriesFilter == null || entriesFilter.allowed(ste)) {
-                SegmentBuilder sb = new SegmentBuilder(this, doc, settings, ste, ste.entryNum(), hasRTL);
-                tmpSegList.add(sb);
-            }
-        }
-        m_docSegList = tmpSegList.toArray(new SegmentBuilder[tmpSegList.size()]);
-
+    private void clampDisplaySegment(FileInfo file, Document3 doc) {
         // Clamp displayedSegment to actually available entries.
         displayedEntryIndex = Math.max(0, Math.min(m_docSegList.length - 1, displayedEntryIndex));
         // Calculate start, end indices of a span of initialSegCount segments
         // centered around displayedEntryIndex and clamped to [0, m_docSegList.length).
         final int initialSegCount = Preferences.getPreferenceDefault(Preferences.EDITOR_INITIAL_SEGMENT_LOAD_COUNT,
                 Preferences.EDITOR_INITIAL_SEGMENT_LOAD_COUNT_DEFAULT);
+
         firstLoaded = Math.max(0, displayedEntryIndex - initialSegCount / 2);
         lastLoaded = Math.min(file.entries.size() - 1, firstLoaded + initialSegCount - 1);
 
@@ -764,22 +744,19 @@ public class EditorController implements IEditor {
             if (i >= firstLoaded && i <= lastLoaded) {
                 SegmentBuilder sb = m_docSegList[i];
                 insertStartParagraphMark(doc, sb);
-                sb.createSegmentElement(false, Core.getProject().getTranslationInfo(sb.ste));
+                sb.createSegmentElement(false, Core.getTranslationInfo(sb.ste));
                 sb.addSegmentSeparator();
             }
         }
+    }
 
+    private void addLocTargetLang(Document3 doc) {
         doc.setDocumentFilter(new DocumentFilter3());
-
         // add locate for target language to editor
-        Locale targetLocale = Core.getProject().getProjectProperties().getTargetLanguage().getLocale();
-        editor.setLocale(targetLocale);
-
+        editor.setLocale(Core.getTargetLocale());
         editor.setDocument(doc);
-
         doc.addUndoableEditListener(editor.undoManager);
         editor.resetUndoMgr();
-
         doc.addDocumentListener(new DocumentListener() {
             //we cannot edit the document here, only other stuff.
             public void changedUpdate(DocumentEvent e) {
@@ -797,10 +774,42 @@ public class EditorController implements IEditor {
                 onTextChanged();
             }
         });
-
         markerController.process(m_docSegList);
-
         editor.repaint();
+    }
+
+    private void setDocSegList(FileInfo file, boolean hasRTL, Document3 doc) {
+        // Create all SegmentBuilders now...
+        ArrayList<SegmentBuilder> tmpSegList = new ArrayList<SegmentBuilder>(file.entries.size());
+        for (SourceTextEntry ste : file.entries) {
+            if (entriesFilter == null || entriesFilter.allowed(ste)) {
+                SegmentBuilder sb = new SegmentBuilder(this, doc, settings, ste, ste.entryNum(), hasRTL);
+                tmpSegList.add(sb);
+            }
+        }
+        m_docSegList = tmpSegList.toArray(new SegmentBuilder[tmpSegList.size()]);
+    }
+
+    private boolean isRTLSupport() {
+        // check if RTL support required for document
+        boolean hasRTL = sourceLangIsRTL || targetLangIsRTL || EditorUtils.localeIsRTL()
+                || currentOrientation != Document3.ORIENTATION.ALL_LTR;
+        Map<Language, ProjectTMX> otherLanguageTMs = Core.getProject().getOtherTargetLanguageTMs();
+        for (Map.Entry<Language, ProjectTMX> entry : otherLanguageTMs.entrySet()) {
+            hasRTL = hasRTL || EditorUtils.isRTL(entry.getKey().getLanguageCode().toLowerCase(Locale.ENGLISH));
+        }
+        return hasRTL;
+    }
+
+    private FileInfo getFileInfo() {
+        FileInfo file;
+        try {
+            file = Core.getProjectFile(displayedFileIndex);
+        } catch (IndexOutOfBoundsException ex) {
+            // there is no displayedFileIndex file in project - load first file
+            file = Core.getProjectFile(0);
+        }
+        return file;
     }
 
     private void insertStartParagraphMark(Document3 doc, SegmentBuilder sb) {
@@ -851,7 +860,7 @@ public class EditorController implements IEditor {
         // check if file was changed
         if (previousDisplayedFileIndex != displayedFileIndex) {
             previousDisplayedFileIndex = displayedFileIndex;
-//            CBO nya 2 = 1 + 2
+//            CBO nya 2
             CoreEvents.fireEntryNewFile(Core.getProjectFilePath(displayedFileIndex));
         }
 
@@ -1000,18 +1009,16 @@ public class EditorController implements IEditor {
      * Calculate statistic for file, request statistic for project and display in status bar.
      */
     public void showStat() {
-        IProject project = Core.getProject();
-        IProject.FileInfo fi = project.getProjectFiles().get(displayedFileIndex);
         int translatedInFile = 0;
         int translatedUniqueInFile = 0;
         int uniqueInFile = 0;
         boolean isUnique;
-        for (SourceTextEntry ste : fi.entries) {
+        for (SourceTextEntry ste : Core.getProjectFile(displayedFileIndex).entries) {
             isUnique = ste.getDuplicate() != SourceTextEntry.DUPLICATE.NEXT;
             if (isUnique) {
                 uniqueInFile++;
             }
-            if (project.getTranslationInfo(ste).isTranslated()) {
+            if (Core.isTranslated(ste)) {
                 translatedInFile++;
                 if (isUnique) {
                     translatedUniqueInFile++;
@@ -1019,7 +1026,11 @@ public class EditorController implements IEditor {
             }
         }
 
-        StatisticsInfo stat = project.getStatistics();
+        showProgress(translatedInFile, translatedUniqueInFile, uniqueInFile);
+    }
+
+    private void showProgress(int translatedInFile, int translatedUniqueInFile, int uniqueInFile) {
+        StatisticsInfo stat = Core.getProject().getStatistics();
 
         final MainWindowUI.StatusBarMode progressMode =
                 Preferences.getPreferenceEnumDefault(Preferences.SB_PROGRESS_MODE,
@@ -1027,7 +1038,7 @@ public class EditorController implements IEditor {
 
         if (progressMode == MainWindowUI.StatusBarMode.DEFAULT) {
             StringBuilder pMsg = new StringBuilder(1024).append(" ");
-            pMsg.append(translatedInFile).append("/").append(fi.entries.size()).append(" (")
+            pMsg.append(translatedInFile).append("/").append(Core.getProjectFile(displayedFileIndex).entries.size()).append(" (")
                     .append(stat.numberofTranslatedSegments).append("/").append(stat.numberOfUniqueSegments)
                     .append(", ").append(stat.numberOfSegmentsTotal).append(") ");
             mw.showProgressMessage(pMsg.toString());
@@ -1098,7 +1109,7 @@ public class EditorController implements IEditor {
         for (int i = 0; i < m_docSegList.length; i++) {
             if (entryNumbers.contains(m_docSegList[i].ste.entryNum())) {
                 // the same source text - need to update
-                m_docSegList[i].createSegmentElement(false, Core.getProject().getTranslationInfo(m_docSegList[i].ste));
+                m_docSegList[i].createSegmentElement(false, Core.getTranslationInfo(m_docSegList[i].ste));
             }
         }
     }
@@ -1143,7 +1154,7 @@ public class EditorController implements IEditor {
         // segment was active
         SegmentBuilder sb = m_docSegList[displayedEntryIndex];
         SourceTextEntry entry = sb.ste;
-        TMXEntry oldTE = Core.getProject().getTranslationInfo(entry);
+        TMXEntry oldTE = Core.getTranslationInfo(entry);
         PrepareTMXEntry newen = new PrepareTMXEntry();
         newen.source = sb.ste.getSrcText();
         newen.note = DependOnMainWindow.getNotes().getNoteText();
@@ -1157,7 +1168,7 @@ public class EditorController implements IEditor {
         transNoteChanged(sb, entry, oldTE, newen);
 
         m_docSegList[displayedEntryIndex].createSegmentElement(false,
-                Core.getProject().getTranslationInfo(m_docSegList[displayedEntryIndex].ste));
+                Core.getTranslationInfo(m_docSegList[displayedEntryIndex].ste));
 
         findIdenticalRedraw(entry);
 
@@ -1245,7 +1256,7 @@ public class EditorController implements IEditor {
             if (builder.ste.getSrcText().equals(entry.getSrcText())) {
                 // the same source text - need to update
                 builder.createSegmentElement(false,
-                        Core.getProject().getTranslationInfo(builder.ste));
+                        Core.getTranslationInfo(builder.ste));
                 // then add new marks
                 markerController.reprocessImmediately(builder);
             }
@@ -1431,7 +1442,7 @@ public class EditorController implements IEditor {
      */
     private void nextTranslatedEntry(final boolean findTranslated) {
         iterateToEntry(true, ste -> {
-            boolean isTranslated = Core.getProject().getTranslationInfo(ste).isTranslated();
+            boolean isTranslated = Core.isTranslated(ste);
             if (findTranslated && isTranslated) {
                 return true; // translated
             }
@@ -1467,7 +1478,7 @@ public class EditorController implements IEditor {
     }
 
     private void entryWithNote(boolean forward) {
-        iterateToEntry(forward, ste -> Core.getProject().getTranslationInfo(ste).hasNote());
+        iterateToEntry(forward, ste -> Core.getTranslationInfo(ste).hasNote());
     }
 
     /**
@@ -1606,7 +1617,7 @@ public class EditorController implements IEditor {
                 }
             } else {
                 // default translation - multiple shouldn't exist for this entry
-                TMXEntry trans = Core.getProject().getTranslationInfo(entries.get(i));
+                TMXEntry trans = Core.getTranslationInfo(entries.get(i));
                 if (!trans.isTranslated() || !trans.defaultTranslation) {
                     // we need exist alternative translation
                     continue;
@@ -2026,6 +2037,11 @@ public class EditorController implements IEditor {
     }
 
     /**
+     * instance variable
+     * entriesFilterControlComponent
+     * pane
+     * entriesFilter
+     *
      * {@inheritDoc} Document is reloaded to immediately have the filter being
      * effective.
      */
@@ -2041,6 +2057,10 @@ public class EditorController implements IEditor {
         pane.add(entriesFilterControlComponent, BorderLayout.NORTH);
         pane.revalidate();
 
+        preventNullLoad();
+    }
+
+    private void preventNullLoad() {
         SourceTextEntry curEntry = getCurrentEntry();
         Document3 doc = editor.getOmDocument();
         IProject project = Core.getProject();
@@ -2051,21 +2071,28 @@ public class EditorController implements IEditor {
             if (entriesFilter == null || entriesFilter.allowed(curEntry)) {
                 gotoEntry(curEntry.entryNum());
             } else {
-                // Go to next (available) segment. But first, we need to reset
-                // the displayedEntryIndex to the number where the current but
-                // filtered entry could have been if it was not filtered.
-                for (int j = 0; j < m_docSegList.length; j++) {
-                    if (m_docSegList[j].segmentNumberInProject >= curEntryNum) { //
-                        displayedEntryIndex = j - 1;
-                        break;
-                    }
-                }
-                nextEntry();
+                nextSegmentEntry(curEntryNum);
             }
         }
     }
 
+    private void nextSegmentEntry(int curEntryNum) {
+        // Go to next (available) segment. But first, we need to reset
+        // the displayedEntryIndex to the number where the current but
+        // filtered entry could have been if it was not filtered.
+        for (int j = 0; j < m_docSegList.length; j++) {
+            if (m_docSegList[j].segmentNumberInProject >= curEntryNum) { //
+                displayedEntryIndex = j - 1;
+                break;
+            }
+        }
+        nextEntry();
+    }
+
     /**
+     * entriesFilter
+     * entriesFilterControlComponent
+     * pane
      * {@inheritDoc} Document is reloaded if appropriate to immediately remove
      * the filter;
      */
