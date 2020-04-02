@@ -395,24 +395,6 @@ public interface IEditor {
     void remarkOneMarker(String markerClassName);
 
     /**
-     * Gets a filter for this editor, or null if filter doesn't applied.
-     */
-    IEditorFilter getFilter();
-
-    /**
-     * Sets a filter to this editor. The filter causes only the selected entries to be shown in the editor.
-     *
-     * @param filter
-     *            Filter instance
-     */
-    void setFilter(IEditorFilter filter);
-
-    /**
-     * Removes the current filter.
-     */
-    void removeFilter();
-
-    /**
      * Returns current translation or null.
      */
     String getCurrentTranslation();
@@ -421,7 +403,6 @@ public interface IEditor {
      * Perform any necessary actions for window deactivation.
      */
     void windowDeactivated();
-
     /**
      * Register untranslated.
      */

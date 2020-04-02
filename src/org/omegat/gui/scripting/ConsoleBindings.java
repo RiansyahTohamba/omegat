@@ -244,21 +244,6 @@ public class ConsoleBindings implements IGlossaries, IEditor, IScriptLogger {
     }
 
     @Override
-    public final IEditorFilter getFilter() {
-        return null;
-    }
-
-    @Override
-    public void setFilter(IEditorFilter filter) {
-
-    }
-
-    @Override
-    public void removeFilter() {
-
-    }
-
-    @Override
     public final String getCurrentTranslation() {
         return null;
     }
