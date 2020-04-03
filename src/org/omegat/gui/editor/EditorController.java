@@ -153,6 +153,7 @@ public class EditorController implements IEditor {
     private static final Logger LOGGER = Logger.getLogger(EditorController.class.getName());
 
     private static final double PAGE_LOAD_THRESHOLD = 0.25;
+    private final EditorFilter editorFilter = new EditorFilter(this);
 
     /** Some predefined translations that OmegaT can assign by popup. */
     enum ForceTranslation {
@@ -204,8 +205,7 @@ public class EditorController implements IEditor {
     Document3.ORIENTATION currentOrientation;
     protected boolean sourceLangIsRTL, targetLangIsRTL;
 
-    volatile IEditorFilter entriesFilter;
-    private Component entriesFilterControlComponent;
+    private volatile IEditorFilter entriesFilter;
 
     private SegmentExportImport segmentExportImport;
 
@@ -313,7 +313,7 @@ public class EditorController implements IEditor {
             case CREATE:
             case LOAD:
                 history.clear();
-                removeFilter();
+                editorFilter.removeFilter();
                 if (!Core.getProject().getAllEntries().isEmpty()) {
                     showType = SHOW_TYPE.FIRST_ENTRY;
                 } else {
@@ -325,7 +325,7 @@ public class EditorController implements IEditor {
             case CLOSE:
                 m_docSegList = null;
                 history.clear();
-                removeFilter();
+                editorFilter.removeFilter();
                 markerController.removeAll();
                 showType = SHOW_TYPE.INTRO;
                 deactivateWithoutCommit();
@@ -337,6 +337,10 @@ public class EditorController implements IEditor {
                 updateState(showType);
             }
         });
+    }
+
+    public DockablePanel getPane(){
+        return pane;
     }
 
     private void createUI() {

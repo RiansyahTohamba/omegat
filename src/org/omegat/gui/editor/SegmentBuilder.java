@@ -282,7 +282,7 @@ public class SegmentBuilder {
                 translationText = trans.translation;
             } else {
                 boolean insertSource = !Preferences.isPreference(Preferences.DONT_INSERT_SOURCE_TEXT);
-                if (controller.entriesFilter != null && controller.entriesFilter.isSourceAsEmptyTranslation()) {
+                if (controller.getFilter() != null && controller.getFilter().isSourceAsEmptyTranslation()) {
                     insertSource = true;
                 }
                 if (insertSource) {
