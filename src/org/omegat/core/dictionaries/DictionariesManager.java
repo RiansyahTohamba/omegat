@@ -219,7 +219,7 @@ public class DictionariesManager implements DirectoryMonitor.Callback {
         synchronized (this) {
             dicts = new ArrayList<IDictionary>(dictionaries.values());
         }
-        return words.stream().filter(word -> !isIgnoreWord(word)).flatMap(word -> {
+        return (List<DictionaryEntry>)(List)words.stream().filter(word -> !isIgnoreWord(word)).flatMap(word -> {
             return dicts.stream().flatMap(dict -> doLookUp(dict, word).stream());
         }).collect(Collectors.toList());
     }

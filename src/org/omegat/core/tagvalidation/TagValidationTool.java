@@ -99,16 +99,20 @@ public class TagValidationTool implements ITagValidation {
      */
     @Override
     public List<ErrorReport> listInvalidTags(String sourcePattern) {
-        return Core.getProject().getProjectFiles().stream()
-                .filter(StreamUtil.patternFilter(sourcePattern, fi -> fi.filePath))
-                .flatMap(fi -> fi.entries.stream().map(ste -> {
-                    TMXEntry te = Core.getProject().getTranslationInfo(ste);
-                    if (sourcePattern.equals(ALL_FILES_PATTERN) && DataUtils.isDuplicate(ste, te)) {
-                        return null;
-                    } else {
-                        return checkEntry(fi, ste, te);
-                    }
-                })).filter(report -> report != null && !report.isEmpty()).collect(Collectors.toList());
+        return null;
+//        return (List<ErrorReport>)(List) Core.getProject().getProjectFiles()
+//                .stream()
+//                .filter(StreamUtil.patternFilter(sourcePattern, fi -> fi.filePath))
+//                .flatMap(fi -> fi.entries.stream().map(ste -> {
+//                    TMXEntry te = Core.getProject().getTranslationInfo(ste);
+//                    if (sourcePattern.equals(ALL_FILES_PATTERN) && DataUtils.isDuplicate(ste, te)) {
+//                        return null;
+//                    } else {
+//                        return checkEntry(fi, ste, te);
+//                    }
+//                }))
+//                .filter(report ->  (report != null && ! report.isEmpty()) )
+//                .collect(Collectors.toList());
     }
 
     @Override
