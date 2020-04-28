@@ -1,9 +1,10 @@
 package org.omegat.core.data;
 
-import org.jetbrains.annotations.NotNull;
 import org.madlonkay.supertmxmerge.StmProperties;
 import org.madlonkay.supertmxmerge.SuperTmxMerge;
+import org.omegat.CLIParameters;
 import org.omegat.core.Core;
+import org.omegat.core.team2.IRemoteRepository2;
 import org.omegat.core.team2.RebaseAndCommit;
 import org.omegat.core.team2.RemoteRepositoryProvider;
 import org.omegat.gui.glossary.GlossaryEntry;
@@ -20,47 +21,104 @@ import java.util.logging.Logger;
 public class VersioningProject {
     private final RealProject realProject;
     private static final Logger LOGGER = Logger.getLogger(RealProject.class.getName());
-
-    public VersioningProject(RealProject realProject) {
+    protected RemoteRepositoryProvider remoteRepositoryProvider;
+    private volatile RebaseAndCommit.Prepared tmxPrepared;
+    private volatile RebaseAndCommit.Prepared glossaryPrepared;
+    
+    public VersioningProject(RealProject realProject,ProjectProperties config) {
         this.realProject = realProject;
+        setRemoteRepo(config);
     }
 
-
-
-    public void syncSetTranslation(SourceTextEntry entry, PrepareTMXEntry trans, boolean defaultTranslation, TMXEntry.ExternalLinked externalLinked, IProject.AllTranslations previous) throws IProject.OptimisticLockingFail {
-        IProject.AllTranslations current = getAllTranslationsRealProject(entry);
-        boolean wasAlternative = current.alternativeTranslation.isTranslated();
-        if (defaultTranslation) {
-            if (!current.defaultTranslation.equals(previous.defaultTranslation)) {
-                throw new IProject.OptimisticLockingFail(previous.getDefaultTranslation().translation,
-                        current.getDefaultTranslation().translation, current);
-            }
-            if (wasAlternative) {
-                // alternative -> default
-                if (!current.alternativeTranslation.equals(previous.alternativeTranslation)) {
-                    throw new IProject.OptimisticLockingFail(previous.getAlternativeTranslation().translation,
-                            current.getAlternativeTranslation().translation, current);
-                }
-                // remove alternative
-                realProject.setTranslation(entry, new PrepareTMXEntry(), false, null);
+    private void setRemoteRepo(ProjectProperties config) {
+        if (config.getRepositories() != null && !Core.getParams().containsKey(CLIParameters.NO_TEAM)) {
+            try {
+                remoteRepositoryProvider = new RemoteRepositoryProvider(config.getProjectRootDir(),
+                        config.getRepositories());
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
             }
         } else {
-            // new is alternative translation
-            if (!current.alternativeTranslation.equals(previous.alternativeTranslation)) {
-                throw new IProject.OptimisticLockingFail(previous.getAlternativeTranslation().translation,
-                        current.getAlternativeTranslation().translation, current);
-            }
+            remoteRepositoryProvider = null;
         }
-        realProject.setTranslation(entry, trans, defaultTranslation, externalLinked);
     }
 
-    public void commitSourceFiles() throws Exception {
-        if (realProject.isRemoteProject() && realProject.getConfig().getSourceDir().isUnderRoot())  {
+    public RemoteRepositoryProvider getRemoteRepositoryProvider() {
+        return remoteRepositoryProvider;
+    }
+
+    public void afterLoadTranslations(boolean isOnlineMode,ProjectProperties config) throws Exception {
+        // This MUST happen after calling loadTranslations()
+        if (remoteRepositoryProvider != null && isOnlineMode) {
+            Core.getMainWindow().showStatusMessageRB("TEAM_REBASE_AND_COMMIT");
+            rebaseAndCommitProject(true,config);
+        }
+    }
+
+    public void saveTeamSync(boolean doTeamSync,ProjectProperties config) throws Exception {
+        if (remoteRepositoryProvider != null && doTeamSync) {
+            tmxPrepared = null;
+            glossaryPrepared = null;
+            remoteRepositoryProvider.cleanPrepared();
+            Core.getMainWindow().showStatusMessageRB("TEAM_SYNCHRONIZE");
+            rebaseAndCommitProject(true,config);
+            realProject.setOnlineMode();
+        }
+    }
+
+    public void configLoad(ProjectProperties config) throws Exception {
+        if (remoteRepositoryProvider != null) {
+            try {
+                tmxPrepared = null;
+                glossaryPrepared = null;
+
+                remoteRepositoryProvider.switchAllToLatest();
+            } catch (IRemoteRepository2.NetworkException e) {
+                Log.logErrorRB("TEAM_NETWORK_ERROR", e.getCause());
+                realProject.setOfflineMode();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            remoteRepositoryProvider.copyFilesFromRepoToProject("", '/' + RemoteRepositoryProvider.REPO_SUBDIR,
+                    '/' + RemoteRepositoryProvider.REPO_GIT_SUBDIR, '/' + RemoteRepositoryProvider.REPO_SVN_SUBDIR,
+                    '/' + OConsts.FILE_PROJECT,
+                    '/' + config.getProjectInternalRelative() + OConsts.STATUS_EXTENSION,
+                    '/' + config.getWritableGlossaryFile().getUnderRoot(),
+                    '/' + config.getTargetDir().getUnderRoot());
+
+            // After adding filters.xml and segmentation.conf, we must reload them again
+            config.loadProjectFilters();
+            config.loadProjectSRX();
+        }
+    }
+    public void commitTarget(boolean commitTargetFiles,boolean isOnlineMode,ProjectProperties config) throws IOException {
+        if (remoteRepositoryProvider != null && config.getTargetDir().isUnderRoot() && commitTargetFiles && isOnlineMode) {
+            tmxPrepared = null;
+            glossaryPrepared = null;
+            // commit translations
+            try {
+                Core.getMainWindow().showStatusMessageRB("TF_COMMIT_TARGET_START");
+                remoteRepositoryProvider.switchAllToLatest();
+                remoteRepositoryProvider.copyFilesFromProjectToRepo(config.getTargetDir().getUnderRoot(), null);
+                remoteRepositoryProvider.commitFiles(config.getTargetDir().getUnderRoot(), "Project translation");
+                Core.getMainWindow().showStatusMessageRB("TF_COMMIT_TARGET_DONE");
+            } catch (Exception e) {
+                Log.logErrorRB("TF_COMMIT_TARGET_ERROR");
+                Log.log(e);
+                throw new IOException(OStrings.getString("TF_COMMIT_TARGET_ERROR") + "\n"
+                        + e.getMessage());
+            }
+        }
+    }
+
+    public void commitSourceFiles(ProjectProperties config) throws Exception {
+        if (realProject.isRemoteProject() && config.getSourceDir().isUnderRoot())  {
             try {
                 Core.getMainWindow().showStatusMessageRB("TF_COMMIT_START");
-                realProject.getRemoteRepositoryProvider().switchAllToLatest();
-                realProject.getRemoteRepositoryProvider().copyFilesFromProjectToRepo(realProject.getConfig().getSourceDir().getUnderRoot(), null);
-                realProject.getRemoteRepositoryProvider().commitFiles(realProject.getConfig().getSourceDir().getUnderRoot(), "Commit source files");
+                remoteRepositoryProvider.switchAllToLatest();
+                remoteRepositoryProvider.copyFilesFromProjectToRepo(config.getSourceDir().getUnderRoot(), null);
+                remoteRepositoryProvider.commitFiles(config.getSourceDir().getUnderRoot(), "Commit source files");
                 Core.getMainWindow().showStatusMessageRB("TF_COMMIT_DONE");
             } catch (Exception e) {
                 Log.logErrorRB("TF_COMMIT_ERROR");
@@ -70,56 +128,30 @@ public class VersioningProject {
             }
         }
     }
-    /**
-     * Do 3-way merge of:
-     *
-     * Base: baseTMX
-     *
-     * File 1: projectTMX (mine)
-     *
-     * File 2: headTMX (theirs)
-     */
-    public void mergeTMX(ProjectTMX baseTMX, ProjectTMX headTMX, StringBuilder commitDetails) {
-        StmProperties props = new StmProperties()
-                .setLanguageResource(OStrings.getResourceBundle())
-                .setParentWindow(Core.getMainWindow().getApplicationFrame())
-                // More than this number of conflicts will trigger List View by default.
-                .setListViewThreshold(5);
-        String srcLang = realProject.getConfig().getSourceLanguage().getLanguage();
-        String trgLang = realProject.getConfig().getTargetLanguage().getLanguage();
-        ProjectTMX mergedTMX = SuperTmxMerge.merge(
-                new SyncTMX(baseTMX, OStrings.getString("TMX_MERGE_BASE"), srcLang, trgLang),
-                new SyncTMX(projectTMX, OStrings.getString("TMX_MERGE_MINE"), srcLang, trgLang),
-                new SyncTMX(headTMX, OStrings.getString("TMX_MERGE_THEIRS"), srcLang, trgLang), props);
-        projectTMX.replaceContent(mergedTMX);
-        Log.logDebug(LOGGER, "Merge report: {0}", props.getReport());
-        commitDetails.append('\n');
-        commitDetails.append(props.getReport().toString());
-    }
+
     /**
      * Prepare for future team sync.
      * <p>
      * This method must be executed in the Core.executeExclusively.
      */
-    @Override
-    public void teamSyncPrepare() throws Exception {
-        if (realProject.getRemoteRepositoryProvider() == null || realProject.getPreparedStatus() != RealProject.PreparedStatus.NONE || !realProject.isOnlineMode()) {
+    public void teamSyncPrepare(boolean isOnlineMode, ProjectProperties config) throws Exception {
+        if (remoteRepositoryProvider == null || realProject.getPreparedStatus() != RealProject.PreparedStatus.NONE || !isOnlineMode) {
             return;
         }
         LOGGER.fine("Prepare team sync");
-        realProject.setTmxPrepared(null);
-        realProject.setGlossaryPrepared(null);
-        realProject.getRemoteRepositoryProvider().cleanPrepared();
+        tmxPrepared = null;
+        glossaryPrepared = null;
+        remoteRepositoryProvider.cleanPrepared();
 
-        String tmxPath = realProject.getConfig().getProjectInternalRelative() + OConsts.STATUS_EXTENSION;
-        if (realProject.getRemoteRepositoryProvider().isUnderMapping(tmxPath)) {
-            realProject.setTmxPrepared(RebaseAndCommit.prepare(realProject.getRemoteRepositoryProvider(), realProject.getConfig().getProjectRootDir(), tmxPath));
+        String tmxPath = config.getProjectInternalRelative() + OConsts.STATUS_EXTENSION;
+        if (remoteRepositoryProvider.isUnderMapping(tmxPath)) {
+            tmxPrepared = RebaseAndCommit.prepare(remoteRepositoryProvider, config.getProjectRootDir(), tmxPath);
         }
 
-        final String glossaryPath = realProject.getConfig().getWritableGlossaryFile().getUnderRoot();
-        if (glossaryPath != null && realProject.getRemoteRepositoryProvider().isUnderMapping(glossaryPath)) {
-            realProject.setGlossaryPrepared(RebaseAndCommit.prepare(realProject.getRemoteRepositoryProvider(), realProject.getConfig().getProjectRootDir(),
-                    glossaryPath));
+        final String glossaryPath = config.getWritableGlossaryFile().getUnderRoot();
+        if (glossaryPath != null && remoteRepositoryProvider.isUnderMapping(glossaryPath)) {
+            glossaryPrepared = RebaseAndCommit.prepare(remoteRepositoryProvider, config.getProjectRootDir(),
+                    glossaryPath);
         }
         realProject.setPreparedStatus(RealProject.PreparedStatus.PREPARED);
     }
@@ -129,18 +161,18 @@ public class VersioningProject {
      * <p>
      * This method must be executed in the Core.executeExclusively.
      */
-    public void teamSync() {
-        if (realProject.getRemoteRepositoryProvider() == null || realProject.getPreparedStatus() != RealProject.PreparedStatus.PREPARED) {
+    public void teamSync(ProjectProperties config) {
+        if (remoteRepositoryProvider == null || realProject.getPreparedStatus() != RealProject.PreparedStatus.PREPARED) {
             return;
         }
         LOGGER.fine("Rebase team sync");
         try {
             realProject.setPreparedStatus(RealProject.PreparedStatus.PREPARED2);
             synchronized (realProject) {
-                realProject.getProjectTMX().save(realProject.getConfig(), realProject.getConfig().getProjectInternal() + OConsts.STATUS_EXTENSION,
+                realProject.getProjectTMX().save(config, config.getProjectInternal() + OConsts.STATUS_EXTENSION,
                         realProject.isProjectModified());
             }
-            rebaseAndCommitProject(realProject.getGlossaryPrepared() != null);
+            rebaseAndCommitProject(glossaryPrepared != null,config);
             realProject.setPreparedStatus(RealProject.PreparedStatus.REBASED);
 
             new Thread(() -> {
@@ -151,16 +183,16 @@ public class VersioningProject {
                         }
                         LOGGER.fine("Commit team sync");
                         try {
-                            String newVersion = RebaseAndCommit.commitPrepared(realProject.getTmxPrepared(), realProject.getRemoteRepositoryProvider(),
+                            String newVersion = RebaseAndCommit.commitPrepared(tmxPrepared, remoteRepositoryProvider,
                                     null);
-                            if (realProject.getGlossaryPrepared() != null) {
-                                RebaseAndCommit.commitPrepared(realProject.getGlossaryPrepared(), realProject.getRemoteRepositoryProvider(), newVersion);
+                            if (glossaryPrepared != null) {
+                                RebaseAndCommit.commitPrepared(glossaryPrepared, remoteRepositoryProvider, newVersion);
                             }
 
-                            realProject.setTmxPrepared(null);
-                            realProject.setGlossaryPrepared(null);
+                            tmxPrepared = null;
+                            glossaryPrepared = null;
 
-                            realProject.getRemoteRepositoryProvider().cleanPrepared();
+                            remoteRepositoryProvider.cleanPrepared();
                         } catch (Exception ex) {
                             Log.logErrorRB(ex, "CT_ERROR_SAVING_PROJ");
                         }
@@ -212,34 +244,34 @@ public class VersioningProject {
      * <li>Upload new revision into repository.
      * </ol>
      */
-    void rebaseAndCommitProject(boolean processGlossary) throws Exception {
+    void rebaseAndCommitProject(boolean processGlossary,ProjectProperties config) throws Exception {
         Log.logInfoRB("TEAM_REBASE_START");
 
         final String author = Preferences.getPreferenceDefault(Preferences.TEAM_AUTHOR,
                 System.getProperty("user.name"));
         final StringBuilder commitDetails = new StringBuilder("Translated by " + author);
-        String tmxPath = realProject.getConfig().getProjectInternalRelative() + OConsts.STATUS_EXTENSION;
-        if (realProject.getRemoteRepositoryProvider().isUnderMapping(tmxPath)) {
-            RebaseAndCommit.rebaseAndCommit(realProject.getTmxPrepared(), realProject.getRemoteRepositoryProvider(), realProject.getConfig().getProjectRootDir(),
+        String tmxPath = config.getProjectInternalRelative() + OConsts.STATUS_EXTENSION;
+        if (remoteRepositoryProvider.isUnderMapping(tmxPath)) {
+            RebaseAndCommit.rebaseAndCommit(tmxPrepared, remoteRepositoryProvider, config.getProjectRootDir(),
                     tmxPath, new RebaseAndCommit.IRebase() {
                         ProjectTMX baseTMX, headTMX;
 
                         @Override
                         public void parseBaseFile(File file) throws Exception {
-                            baseTMX = new ProjectTMX(realProject.getConfig().getSourceLanguage(), realProject.getConfig()
-                                    .getTargetLanguage(), realProject.getConfig().isSentenceSegmentingEnabled(), file, null);
+                            baseTMX = new ProjectTMX(config.getSourceLanguage(), config
+                                    .getTargetLanguage(), config.isSentenceSegmentingEnabled(), file, null);
                         }
 
                         @Override
                         public void parseHeadFile(File file) throws Exception {
-                            headTMX = new ProjectTMX(realProject.getConfig().getSourceLanguage(), realProject.getConfig()
-                                    .getTargetLanguage(), realProject.getConfig().isSentenceSegmentingEnabled(), file, null);
+                            headTMX = new ProjectTMX(config.getSourceLanguage(), config
+                                    .getTargetLanguage(), config.isSentenceSegmentingEnabled(), file, null);
                         }
 
                         @Override
                         public void rebaseAndSave(File out) throws Exception {
-                            mergeTMX(baseTMX, headTMX, commitDetails);
-                            realProject.getProjectTMX().exportTMX(realProject.getConfig(), out, false, false, true);
+                            realProject.mergeTMX(baseTMX, headTMX, commitDetails,LOGGER);
+                            realProject.getProjectTMX().exportTMX(config, out, false, false, true);
                         }
 
                         @Override
@@ -252,45 +284,39 @@ public class VersioningProject {
                             return TMXReader2.detectCharset(file);
                         }
                     });
-            if (realProject.getProjectTMX() != null) {
-                // it can be not loaded yet
-                ProjectTMX newTMX = new ProjectTMX(realProject.getConfig().getSourceLanguage(),
-                        realProject.getConfig().getTargetLanguage(), realProject.getConfig().isSentenceSegmentingEnabled(), new File(
-                        realProject.getConfig().getProjectInternalDir(), OConsts.STATUS_EXTENSION), null);
-                realProject.getProjectTMX().replaceContent(newTMX);
-            }
+            realProject.replaceContentTMX(config);
         }
 
         if (processGlossary) {
-            final String glossaryPath = realProject.getConfig().getWritableGlossaryFile().getUnderRoot();
-            final File glossaryFile = realProject.getConfig().getWritableGlossaryFile().getAsFile();
-            new File(realProject.getConfig().getProjectRootDir(), glossaryPath);
-            if (glossaryPath != null && realProject.getRemoteRepositoryProvider().isUnderMapping(glossaryPath)) {
+            final String glossaryPath = config.getWritableGlossaryFile().getUnderRoot();
+            final File glossaryFile = config.getWritableGlossaryFile().getAsFile();
+            new File(config.getProjectRootDir(), glossaryPath);
+            if (glossaryPath != null && remoteRepositoryProvider.isUnderMapping(glossaryPath)) {
                 final List<GlossaryEntry> glossaryEntries;
                 if (glossaryFile.exists()) {
                     glossaryEntries = GlossaryReaderTSV.read(glossaryFile, true);
                 } else {
                     glossaryEntries = Collections.emptyList();
                 }
-                RebaseAndCommit.rebaseAndCommit(realProject.getGlossaryPrepared(), realProject.getRemoteRepositoryProvider(),
-                        realProject.getConfig().getProjectRootDir(), glossaryPath, new RebaseAndCommit.IRebase() {
+                RebaseAndCommit.rebaseAndCommit(glossaryPrepared, remoteRepositoryProvider,
+                        config.getProjectRootDir(), glossaryPath, new RebaseAndCommit.IRebase() {
                             List<GlossaryEntry> baseGlossaryEntries, headGlossaryEntries;
 
                             @Override
                             public void parseBaseFile(File file) throws Exception {
                                 if (file.exists()) {
-                                    baseGlossaryEntries = GlossaryReaderTSV.read(file, true));
+                                    baseGlossaryEntries = GlossaryReaderTSV.read(file, true);
                                 } else {
-                                    baseGlossaryEntries = new ArrayList<GlossaryEntry>());
+                                    baseGlossaryEntries = new ArrayList<GlossaryEntry>();
                                 }
                             }
 
                             @Override
                             public void parseHeadFile(File file) throws Exception {
                                 if (file.exists()) {
-                                    headGlossaryEntries = GlossaryReaderTSV.read(file, true));
+                                    headGlossaryEntries = GlossaryReaderTSV.read(file, true);
                                 } else {
-                                    headGlossaryEntries = new ArrayList<GlossaryEntry>());
+                                    headGlossaryEntries = new ArrayList<GlossaryEntry>();
                                 }
                             }
 
@@ -326,4 +352,6 @@ public class VersioningProject {
         }
         Log.logInfoRB("TEAM_REBASE_END");
     }
+
+
 }

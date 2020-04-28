@@ -73,15 +73,11 @@ import org.omegat.core.statistics.CalcStandardStatistics;
 import org.omegat.core.statistics.Statistics;
 import org.omegat.core.statistics.StatisticsInfo;
 import org.omegat.core.team2.IRemoteRepository2;
-import org.omegat.core.team2.RebaseAndCommit;
-import org.omegat.core.team2.RemoteRepositoryProvider;
 import org.omegat.core.threads.CommandMonitor;
 import org.omegat.filters2.FilterContext;
 import org.omegat.filters2.IAlignCallback;
 import org.omegat.filters2.IFilter;
 import org.omegat.filters2.master.FilterMaster;
-import org.omegat.gui.glossary.GlossaryEntry;
-import org.omegat.gui.glossary.GlossaryReaderTSV;
 import org.omegat.tokenizer.DefaultTokenizer;
 import org.omegat.tokenizer.ITokenizer;
 import org.omegat.util.DirectoryMonitor;
@@ -97,7 +93,6 @@ import org.omegat.util.RuntimePreferences;
 import org.omegat.util.StaticUtils;
 import org.omegat.util.StreamUtil;
 import org.omegat.util.StringUtil;
-import org.omegat.util.TMXReader2;
 import org.omegat.util.TagUtil;
 import org.omegat.util.gui.UIThreadsUtil;
 import org.xml.sax.SAXParseException;
@@ -125,10 +120,8 @@ import gen.core.filters.Filters;
  * @author Aaron Madlon-Kay
  */
 public class RealProject implements IProject {
-    private static final Logger LOGGER = Logger.getLogger(RealProject.class.getName());
-
     protected final ProjectProperties config;
-    protected final RemoteRepositoryProvider remoteRepositoryProvider;
+
 
     enum PreparedStatus {
         NONE, PREPARED, PREPARED2, REBASED
@@ -138,8 +131,10 @@ public class RealProject implements IProject {
      * Status required for execute prepare/rebase/commit in the correct order.
      */
     private volatile PreparedStatus preparedStatus = PreparedStatus.NONE;
-    private volatile RebaseAndCommit.Prepared tmxPrepared;
-    private volatile RebaseAndCommit.Prepared glossaryPrepared;
+
+    public PreparedStatus getPreparedStatus() {
+        return preparedStatus;
+    }
 
     private boolean isOnlineMode;
 
@@ -157,7 +152,7 @@ public class RealProject implements IProject {
     private final StatisticsInfo hotStat = new StatisticsInfo();
 
     private final ITokenizer sourceTokenizer, targetTokenizer;
-    private final VersioningProject versioningProject;
+    private final VersioningProject verPro;
     private DirectoryMonitor tmMonitor;
 
     private DirectoryMonitor tmOtherLanguagesMonitor;
@@ -213,6 +208,19 @@ public class RealProject implements IProject {
      */
     private Stack<Process> processCache = new Stack<Process>();
 
+    public ProjectTMX getProjectTMX() {
+        return projectTMX;
+    }
+
+    public void replaceContentTMX(ProjectProperties config) throws Exception {
+        if (projectTMX != null) {
+            // it can be not loaded yet
+            ProjectTMX newTMX = new ProjectTMX(config.getSourceLanguage(),
+                    config.getTargetLanguage(), config.isSentenceSegmentingEnabled(), new File(
+                    config.getProjectInternalDir(), OConsts.STATUS_EXTENSION), null);
+            projectTMX.replaceContent(newTMX);
+        }
+    }
     /**
      * Create new project instance. It required to call {@link #createProject()}
      * or {@link #loadProject(boolean)} methods just after constructor before
@@ -223,18 +231,7 @@ public class RealProject implements IProject {
      */
     public RealProject(final ProjectProperties props) {
         config = props;
-        versioningProject = new VersioningProject(this);
-        if (config.getRepositories() != null && !Core.getParams().containsKey(CLIParameters.NO_TEAM)) {
-            try {
-                remoteRepositoryProvider = new RemoteRepositoryProvider(config.getProjectRootDir(),
-                        config.getRepositories());
-            } catch (Exception ex) {
-                // TODO
-                throw new RuntimeException(ex);
-            }
-        } else {
-            remoteRepositoryProvider = null;
-        }
+        verPro = new VersioningProject(this,props);
 
         sourceTokenizer = createTokenizer(Core.getParams().get(CLIParameters.TOKENIZER_SOURCE),
                 props.getSourceTokenizer());
@@ -244,6 +241,7 @@ public class RealProject implements IProject {
         Log.log("Target tokenizer: " + targetTokenizer.getClass().getName());
     }
 
+    
     public void saveProjectProperties() throws Exception {
         unlockProject();
         try {
@@ -278,7 +276,6 @@ public class RealProject implements IProject {
             createDirectory(config.getTMAutoRoot(), OConsts.AUTO_TM);
             createDirectory(config.getDictRoot(), OConsts.DEFAULT_DICT);
             createDirectory(config.getTargetRoot(), OConsts.DEFAULT_TARGET);
-            //createDirectory(m_config.getTMOtherLangRoot(), OConsts.DEFAULT_OTHERLANG);
 
             saveProjectProperties();
 
@@ -313,7 +310,32 @@ public class RealProject implements IProject {
         }
         Log.logInfoRB("LOG_DATAENGINE_CREATE_END");
     }
-
+    /**
+     * Do 3-way merge of:
+     *
+     * Base: baseTMX
+     *
+     * File 1: projectTMX (mine)
+     *
+     * File 2: headTMX (theirs)
+     */
+    public void mergeTMX(ProjectTMX baseTMX, ProjectTMX headTMX, StringBuilder commitDetails,Logger LOGGER) {
+        StmProperties props = new StmProperties()
+                .setLanguageResource(OStrings.getResourceBundle())
+                .setParentWindow(Core.getMainWindow().getApplicationFrame())
+                // More than this number of conflicts will trigger List View by default.
+                .setListViewThreshold(5);
+        String srcLang = config.getSourceLanguage().getLanguage();
+        String trgLang = config.getTargetLanguage().getLanguage();
+        ProjectTMX mergedTMX = SuperTmxMerge.merge(
+                new SyncTMX(baseTMX, OStrings.getString("TMX_MERGE_BASE"), srcLang, trgLang),
+                new SyncTMX(projectTMX, OStrings.getString("TMX_MERGE_MINE"), srcLang, trgLang),
+                new SyncTMX(headTMX, OStrings.getString("TMX_MERGE_THEIRS"), srcLang, trgLang), props);
+        projectTMX.replaceContent(mergedTMX);
+        Log.logDebug(LOGGER, "Merge report: {0}", props.getReport());
+        commitDetails.append('\n');
+        commitDetails.append(props.getReport().toString());
+    }
     /**
      * Load exist project in a "big" sense -- loads project's properties, glossaries, tms, source files etc.
      */
@@ -336,39 +358,13 @@ public class RealProject implements IProject {
 
             Core.getMainWindow().showStatusMessageRB("CT_LOADING_PROJECT");
 
-            if (remoteRepositoryProvider != null) {
-                try {
-                    tmxPrepared = null;
-                    glossaryPrepared = null;
-
-                    remoteRepositoryProvider.switchAllToLatest();
-                } catch (IRemoteRepository2.NetworkException e) {
-                    Log.logErrorRB("TEAM_NETWORK_ERROR", e.getCause());
-                    setOfflineMode();
-                }
-
-                remoteRepositoryProvider.copyFilesFromRepoToProject("", '/' + RemoteRepositoryProvider.REPO_SUBDIR,
-                        '/' + RemoteRepositoryProvider.REPO_GIT_SUBDIR, '/' + RemoteRepositoryProvider.REPO_SVN_SUBDIR,
-                        '/' + OConsts.FILE_PROJECT,
-                        '/' + config.getProjectInternalRelative() + OConsts.STATUS_EXTENSION,
-                        '/' + config.getWritableGlossaryFile().getUnderRoot(),
-                        '/' + config.getTargetDir().getUnderRoot());
-
-                // After adding filters.xml and segmentation.conf, we must reload them again
-                config.loadProjectFilters();
-                config.loadProjectSRX();
-            }
+            verPro.configLoad(config);
 
             loadFilterSettings();
             loadSegmentationSettings();
             loadTranslations();
             loadSourceFiles();
-
-            // This MUST happen after calling loadTranslations()
-            if (remoteRepositoryProvider != null && isOnlineMode) {
-                Core.getMainWindow().showStatusMessageRB("TEAM_REBASE_AND_COMMIT");
-                rebaseAndCommitProject(true);
-            }
+            verPro.afterLoadTranslations(isOnlineMode,config);
 
             allProjectEntries = Collections.unmodifiableList(allProjectEntries);
             importHandler = new ImportFromAutoTMX(this, allProjectEntries);
@@ -658,23 +654,8 @@ public class RealProject implements IProject {
                 numberOfCompiled++;
             }
         }
-        if (remoteRepositoryProvider != null && config.getTargetDir().isUnderRoot() && commitTargetFiles && isOnlineMode) {
-            tmxPrepared = null;
-            glossaryPrepared = null;
-            // commit translations
-            try {
-                Core.getMainWindow().showStatusMessageRB("TF_COMMIT_TARGET_START");
-                remoteRepositoryProvider.switchAllToLatest();
-                remoteRepositoryProvider.copyFilesFromProjectToRepo(config.getTargetDir().getUnderRoot(), null);
-                remoteRepositoryProvider.commitFiles(config.getTargetDir().getUnderRoot(), "Project translation");
-                Core.getMainWindow().showStatusMessageRB("TF_COMMIT_TARGET_DONE");
-            } catch (Exception e) {
-                Log.logErrorRB("TF_COMMIT_TARGET_ERROR");
-                Log.log(e);
-                throw new IOException(OStrings.getString("TF_COMMIT_TARGET_ERROR") + "\n"
-                        + e.getMessage());
-            }
-        }
+
+        verPro.commitTarget(commitTargetFiles,isOnlineMode,config);
 
         if (numberOfCompiled == 1) {
             Core.getMainWindow().showStatusMessageRB("CT_COMPILE_DONE_MX_SINGULAR");
@@ -697,6 +678,8 @@ public class RealProject implements IProject {
 
         Log.logInfoRB("LOG_DATAENGINE_COMPILE_END");
     }
+
+
     /**
      * Prepare for future team sync.
      *
@@ -704,7 +687,7 @@ public class RealProject implements IProject {
      */
     @Override
     public void teamSyncPrepare() throws Exception {
-        versioningProject.teamSyncPrepare();
+        verPro.teamSyncPrepare(isOnlineMode,config);
     }
 
     @Override
@@ -719,12 +702,12 @@ public class RealProject implements IProject {
      */
     @Override
     public void teamSync() {
-        versioningProject.teamSync();
+        verPro.teamSync(config);
     }
 
     @Override
     public void commitSourceFiles() throws Exception {
-        versioningProject.commitSourceFiles();
+        verPro.commitSourceFiles(config);
     }
 
     /**
@@ -804,14 +787,7 @@ public class RealProject implements IProject {
                     projectTMX.save(config, config.getProjectInternal() + OConsts.STATUS_EXTENSION,
                             isProjectModified());
 
-                    if (remoteRepositoryProvider != null && doTeamSync) {
-                        tmxPrepared = null;
-                        glossaryPrepared = null;
-                        remoteRepositoryProvider.cleanPrepared();
-                        Core.getMainWindow().showStatusMessageRB("TEAM_SYNCHRONIZE");
-                        rebaseAndCommitProject(true);
-                        setOnlineMode();
-                    }
+                    verPro.saveTeamSync(doTeamSync,config);
 
                     setProjectModified(false);
                 } catch (KnownException ex) {
@@ -844,6 +820,7 @@ public class RealProject implements IProject {
 
         isSaving = false;
     }
+
 
     /**
      * Create the given directory if it does not exist yet.
@@ -1631,6 +1608,10 @@ public class RealProject implements IProject {
         }
     };
 
+    public void setPreparedStatus(PreparedStatus preparedStatus) {
+        this.preparedStatus = preparedStatus;
+    }
+
     void setOnlineMode() {
         if (!isOnlineMode) {
             Log.logInfoRB("VCS_ONLINE");
@@ -1651,7 +1632,7 @@ public class RealProject implements IProject {
 
     @Override
     public boolean isRemoteProject() {
-        return remoteRepositoryProvider != null;
+        return verPro.getRemoteRepositoryProvider() != null;
     }
 
 }
