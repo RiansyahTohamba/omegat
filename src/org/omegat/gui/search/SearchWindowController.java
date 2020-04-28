@@ -1,19 +1,19 @@
 /**************************************************************************
  OmegaT - Computer Assisted Translation (CAT) tool
-          with fuzzy matching, translation memory, keyword search,
-          glossaries, and translation leveraging into updated projects.
+ with fuzzy matching, translation memory, keyword search,
+ glossaries, and translation leveraging into updated projects.
 
  Copyright (C) 2000-2006 Keith Godfrey and Maxym Mykhalchuk
-               2006 Henry Pijffers
-               2009 Didier Briel
-               2010 Martin Fleurke, Antonio Vilei, Didier Briel
-               2012 Didier Briel
-               2013 Aaron Madlon-Kay, Alex Buloichik
-               2014 Aaron Madlon-Kay, Piotr Kulik
-               2015 Yu Tang, Aaron Madlon-Kay, Hiroshi Miura
-               2017-2018 Thomas Cordonnier
-               Home page: http://www.omegat.org/
-               Support center: https://omegat.org/support
+ 2006 Henry Pijffers
+ 2009 Didier Briel
+ 2010 Martin Fleurke, Antonio Vilei, Didier Briel
+ 2012 Didier Briel
+ 2013 Aaron Madlon-Kay, Alex Buloichik
+ 2014 Aaron Madlon-Kay, Piotr Kulik
+ 2015 Yu Tang, Aaron Madlon-Kay, Hiroshi Miura
+ 2017-2018 Thomas Cordonnier
+ Home page: http://www.omegat.org/
+ Support center: https://omegat.org/support
 
  This file is part of OmegaT.
 
@@ -32,7 +32,6 @@
  **************************************************************************/
 
 package org.omegat.gui.search;
-
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.event.ActionEvent;
@@ -109,11 +108,12 @@ public class SearchWindowController {
     private final SearchMode mode;
     private final int initialEntry;
     private final CaretPosition initialCaret;
-//todo: SearchWindowController & SearchWindowController & 11.0 & 0.818 & 2.0 & 0 & 0 & 0
+//todo: SearchWindowController & 11.0 & 0.818 & 2.0 & 0 & 0 & 0
     public SearchWindowController(SearchMode mode) {
         form = new SearchWindowForm();
         form.setJMenuBar(new SearchWindowMenu(this));
         this.mode = mode;
+//        selesaikan core dulu
         initialEntry = Core.getEditor().getCurrentEntryNumber();
         initialCaret = getCurrentPositionInEntryTranslationInEditor(Core.getEditor());
 
@@ -122,28 +122,9 @@ public class SearchWindowController {
         }
         dateFormat = new SimpleDateFormat(SAVED_DATE_FORMAT);
 
-        form.m_searchField.setModel(new DefaultComboBoxModel<>(HistoryManager.getSearchItems()));
-        if (form.m_searchField.getModel().getSize() > 0) {
-            form.m_searchField.setSelectedIndex(-1);
-        }
-
-        form.m_replaceField.setModel(new DefaultComboBoxModel<>(HistoryManager.getReplaceItems()));
-        if (form.m_replaceField.getModel().getSize() > 0) {
-            form.m_replaceField.setSelectedIndex(-1);
-        }
-
-        // box DateBox
-        Calendar calendar = Calendar.getInstance();
-        Date initDate = calendar.getTime();
-        calendar.add(Calendar.YEAR, -100);
-        Date earliestDate = calendar.getTime();
-        Date latestDate = initDate;
-
-        dateFromModel = new SpinnerDateModel(initDate, earliestDate, latestDate, Calendar.YEAR);
-        form.m_dateFromSpinner.setModel(dateFromModel);
-
-        dateToModel = new SpinnerDateModel(initDate, earliestDate, latestDate, Calendar.YEAR);
-        form.m_dateToSpinner.setModel(dateToModel);
+        selectIndex(form.m_searchField, HistoryManager.getSearchItems());
+        selectIndex(form.m_replaceField, HistoryManager.getReplaceItems());
+        setDateBox();
 
         // Box Number of results
         SpinnerNumberModel numberModel = new SpinnerNumberModel(OConsts.ST_MAX_SEARCH_RESULTS, 1, Integer.MAX_VALUE,
@@ -161,31 +142,55 @@ public class SearchWindowController {
         }
         // update enabled/selected status of options
         updateOptionStatus();
-
         initActions();
+        chooseVisibility(mode);
+    }
 
+    private void chooseVisibility(SearchMode mode) {
         switch (mode) {
-        case SEARCH:
-            form.setTitle(OStrings.getString("SW_TITLE"));
-            form.m_replaceLabel.setVisible(false);
-            form.m_replaceField.setVisible(false);
-            form.m_replaceAllButton.setVisible(false);
-            form.m_replaceButton.setVisible(false);
-            form.m_panelSearch.setVisible(true);
-            form.m_panelReplace.setVisible(false);
-            break;
-        case REPLACE:
-            form.setTitle(OStrings.getString("SW_TITLE_REPLACE"));
-            form.m_SearchInPane.setVisible(false);
-            form.m_allResultsCB.setVisible(false);
-            form.m_fileNamesCB.setVisible(false);
-            form.m_filterButton.setVisible(false);
-            form.m_numberLabel.setVisible(false);
-            form.m_numberOfResults.setVisible(false);
-            form.m_panelSearch.setVisible(false);
-            form.m_panelReplace.setVisible(true);
-            form.m_excludeOrphans.setVisible(false);
-            break;
+            case SEARCH:
+                form.setTitle(OStrings.getString("SW_TITLE"));
+                form.m_replaceLabel.setVisible(false);
+                form.m_replaceField.setVisible(false);
+                form.m_replaceAllButton.setVisible(false);
+                form.m_replaceButton.setVisible(false);
+                form.m_panelSearch.setVisible(true);
+                form.m_panelReplace.setVisible(false);
+                break;
+            case REPLACE:
+                form.setTitle(OStrings.getString("SW_TITLE_REPLACE"));
+                form.m_SearchInPane.setVisible(false);
+                form.m_allResultsCB.setVisible(false);
+                form.m_fileNamesCB.setVisible(false);
+                form.m_filterButton.setVisible(false);
+                form.m_numberLabel.setVisible(false);
+                form.m_numberOfResults.setVisible(false);
+                form.m_panelSearch.setVisible(false);
+                form.m_panelReplace.setVisible(true);
+                form.m_excludeOrphans.setVisible(false);
+                break;
+        }
+    }
+
+    private void setDateBox() {
+        // box DateBox
+        Calendar calendar = Calendar.getInstance();
+        Date initDate = calendar.getTime();
+        calendar.add(Calendar.YEAR, -100);
+        Date earliestDate = calendar.getTime();
+        Date latestDate = initDate;
+
+        dateFromModel = new SpinnerDateModel(initDate, earliestDate, latestDate, Calendar.YEAR);
+        form.m_dateFromSpinner.setModel(dateFromModel);
+
+        dateToModel = new SpinnerDateModel(initDate, earliestDate, latestDate, Calendar.YEAR);
+        form.m_dateToSpinner.setModel(dateToModel);
+    }
+
+    private void selectIndex(JComboBox<String> m_replaceField, String[] replaceItems) {
+        m_replaceField.setModel(new DefaultComboBoxModel<>(replaceItems));
+        if (m_replaceField.getModel().getSize() > 0) {
+            m_replaceField.setSelectedIndex(-1);
         }
     }
 
@@ -204,7 +209,7 @@ public class SearchWindowController {
 
         form.m_searchButton.addActionListener(e -> doSearch());
         form.m_advancedButton.addActionListener(e ->
-            setAdvancedOptionsVisible(!form.m_advancedVisiblePane.isVisible()));
+                setAdvancedOptionsVisible(!form.m_advancedVisiblePane.isVisible()));
 
         form.m_authorCB.addActionListener(e -> enableDisableAuthor());
 
@@ -395,16 +400,16 @@ public class SearchWindowController {
                 Preferences.SEARCHWINDOW_SEARCH_TYPE,
                 SearchExpression.SearchExpressionType.EXACT);
         switch (searchType) {
-        case EXACT:
-        default:
-            form.m_searchExactSearchRB.setSelected(true);
-            break;
-        case KEYWORD:
-            form.m_searchKeywordSearchRB.setSelected(true);
-            break;
-        case REGEXP:
-            form.m_searchRegexpSearchRB.setSelected(true);
-            break;
+            case EXACT:
+            default:
+                form.m_searchExactSearchRB.setSelected(true);
+                break;
+            case KEYWORD:
+                form.m_searchKeywordSearchRB.setSelected(true);
+                break;
+            case REGEXP:
+                form.m_searchRegexpSearchRB.setSelected(true);
+                break;
         }
 
         // case sensitivity
@@ -424,23 +429,23 @@ public class SearchWindowController {
         SearchExpression.SearchState searchState = Preferences.getPreferenceEnumDefault(
                 Preferences.SEARCHWINDOW_SEARCH_STATE, SearchExpression.SearchState.TRANSLATED_UNTRANSLATED);
         switch (searchState) {
-        case TRANSLATED_UNTRANSLATED:
-        default:
-            form.m_searchTranslatedUntranslated.setSelected(true);
-            break;
-        case TRANSLATED:
-            form.m_searchTranslated.setSelected(true);
-            break;
-        case UNTRANSLATED:
-            form.m_searchUntranslated.setSelected(true);
-            break;
+            case TRANSLATED_UNTRANSLATED:
+            default:
+                form.m_searchTranslatedUntranslated.setSelected(true);
+                break;
+            case TRANSLATED:
+                form.m_searchTranslated.setSelected(true);
+                break;
+            case UNTRANSLATED:
+                form.m_searchUntranslated.setSelected(true);
+                break;
         }
 
         // case sensitivity
         form.m_replaceCase
                 .setSelected(Preferences.isPreferenceDefault(Preferences.SEARCHWINDOW_CASE_SENSITIVE_REPLACE, false));
 
-                // nbsp as space
+        // nbsp as space
         form.m_replaceSpaceMatchNbsp.setSelected(Preferences.isPreferenceDefault(
                 Preferences.SEARCHWINDOW_SPACE_MATCH_NBSP_REPLACE, false));
 
@@ -448,13 +453,13 @@ public class SearchWindowController {
         SearchExpression.SearchExpressionType replaceType = Preferences.getPreferenceEnumDefault(
                 Preferences.SEARCHWINDOW_REPLACE_TYPE, SearchExpression.SearchExpressionType.EXACT);
         switch (replaceType) {
-        case EXACT:
-        default:
-            form.m_replaceExactSearchRB.setSelected(true);
-            break;
-        case REGEXP:
-            form.m_replaceRegexpSearchRB.setSelected(true);
-            break;
+            case EXACT:
+            default:
+                form.m_replaceExactSearchRB.setSelected(true);
+                break;
+            case REGEXP:
+                form.m_replaceRegexpSearchRB.setSelected(true);
+                break;
         }
 
         form.m_replaceUntranslated.setSelected(Preferences.isPreferenceDefault(
@@ -694,8 +699,7 @@ public class SearchWindowController {
         Core.getEditor().commitAndLeave(); // Otherwise, the current segment being edited is lost
         Core.getEditor().setFilter(new SearchFilter(viewer.getEntryList()));
     }
-
-    //   todo: SearchWindowController & doReplace & 9.0 & 0.66 & 1.0 & 0 & 0 & 0
+//    todo : doReplace & 9.0 & 0.66 & 1.0 & 0 & 0 & 0
     private void doReplace() {
         String replaceString = form.m_replaceField.getEditor().getItem().toString();
         replaceString = StringUtil.normalizeUnicode(replaceString);
@@ -727,9 +731,7 @@ public class SearchWindowController {
         form.m_replaceButton.setEnabled(false);
         form.m_replaceAllButton.setEnabled(false);
     }
-
-//  todo:  SearchWindowController & doSearch & 16.0 & 0.8125 & 3.0 & 0 & 0 & 0
-
+//todo:    doSearch & 16.0 & 0.8125 & 3.0 & 0 & 0 & 0
     private void doSearch() {
         UIThreadsUtil.mustBeSwingThread();
         if (thread != null) {
@@ -762,12 +764,6 @@ public class SearchWindowController {
                 Log.log(error);
                 return;
             }
-            // if (m_dirCB.isSelected()) {
-            // Preferences.setPreference(Preferences.SEARCHWINDOW_DIR, root);
-            // // need to explicitly save preferences because project
-            // // might not be open
-            // Preferences.save();
-            // }
         }
 
         // save user preferences
@@ -779,6 +775,13 @@ public class SearchWindowController {
             form.setTitle(queryString + " - OmegaT");
         }
 
+        // start the search in a separate thread
+        Searcher searcher = new Searcher(Core.getProject(), getSearchExpression(queryString, root));
+        thread = new SearchThread(this, searcher);
+        thread.start();
+    }
+
+    private SearchExpression getSearchExpression(String queryString, String root) {
         SearchExpression s = new SearchExpression();
         s.mode = mode;
         s.text = queryString;
@@ -786,60 +789,12 @@ public class SearchWindowController {
         s.recursive = form.m_recursiveCB.isSelected();
 
         switch (mode) {
-        case SEARCH:
-            if (form.m_searchExactSearchRB.isSelected()) {
-                s.searchExpressionType = SearchExpression.SearchExpressionType.EXACT;
-            } else if (form.m_searchKeywordSearchRB.isSelected()) {
-                s.searchExpressionType = SearchExpression.SearchExpressionType.KEYWORD;
-            } else if (form.m_searchRegexpSearchRB.isSelected()) {
-                s.searchExpressionType = SearchExpression.SearchExpressionType.REGEXP;
-            }
-            s.caseSensitive = form.m_searchCase.isSelected();
-            s.spaceMatchNbsp = form.m_searchSpaceMatchNbsp.isSelected();
-            s.glossary = mode == SearchMode.SEARCH ? form.m_cbSearchInGlossaries.isSelected() : false;
-            s.memory = mode == SearchMode.SEARCH ? form.m_cbSearchInMemory.isSelected() : true;
-            s.tm = mode == SearchMode.SEARCH ? form.m_cbSearchInTMs.isSelected() : false;
-            s.allResults = mode == SearchMode.SEARCH ? form.m_allResultsCB.isSelected() : true;
-            s.fileNames = mode == SearchMode.SEARCH ? form.m_fileNamesCB.isSelected() : true;
-            s.searchSource = form.m_searchSource.isSelected();
-            s.searchTarget = form.m_searchTranslation.isSelected();
-            if (form.m_searchTranslatedUntranslated.isSelected()) {
-                s.searchTranslated = true;
-                s.searchUntranslated = true;
-            } else if (form.m_searchTranslated.isSelected()) {
-                s.searchTranslated = true;
-                s.searchUntranslated = false;
-            } else if (form.m_searchUntranslated.isSelected()) {
-                s.searchTranslated = false;
-                s.searchUntranslated = true;
-            }
-            s.widthInsensitive = form.m_fullHalfWidthInsensitive.isSelected();
-            s.excludeOrphans = form.m_excludeOrphans.isSelected();
-            s.replacement = null;
-            break;
-        case REPLACE:
-            if (form.m_replaceExactSearchRB.isSelected()) {
-                s.searchExpressionType = SearchExpression.SearchExpressionType.EXACT;
-            } else if (form.m_replaceRegexpSearchRB.isSelected()) {
-                s.searchExpressionType = SearchExpression.SearchExpressionType.REGEXP;
-            }
-            s.caseSensitive = form.m_replaceCase.isSelected();
-            s.spaceMatchNbsp = form.m_replaceSpaceMatchNbsp.isSelected();
-            s.glossary = false;
-            s.memory = true;
-            s.tm = false;
-            s.allResults = true;
-            s.fileNames = Core.getProject().getProjectFiles().size() > 1;
-            s.searchSource = false;
-            s.searchTarget = false;
-            s.searchTranslated = false;
-            s.searchUntranslated = false;
-            s.replaceTranslated = true;
-            s.replaceUntranslated = form.m_replaceUntranslated.isSelected();
-            s.widthInsensitive = form.m_fullHalfWidthInsensitive.isSelected();
-            s.excludeOrphans = true;
-            s.replacement = form.m_replaceField.getEditor().getItem().toString();
-            break;
+            case SEARCH:
+                modeSearch(s);
+                break;
+            case REPLACE:
+                replaceDoSearch(s);
+                break;
         }
 
         s.searchNotes = form.m_searchNotesCB.isSelected();
@@ -852,11 +807,63 @@ public class SearchWindowController {
         s.dateBefore = dateToModel.getDate().getTime();
         s.numberOfResults = mode == SearchMode.SEARCH ? ((Integer) form.m_numberOfResults.getValue())
                 : Integer.MAX_VALUE;
+        return s;
+    }
 
-        Searcher searcher = new Searcher(Core.getProject(), s);
-        // start the search in a separate thread
-        thread = new SearchThread(this, searcher);
-        thread.start();
+    private void modeSearch(SearchExpression s) {
+        if (form.m_searchExactSearchRB.isSelected()) {
+            s.searchExpressionType = SearchExpression.SearchExpressionType.EXACT;
+        } else if (form.m_searchKeywordSearchRB.isSelected()) {
+            s.searchExpressionType = SearchExpression.SearchExpressionType.KEYWORD;
+        } else if (form.m_searchRegexpSearchRB.isSelected()) {
+            s.searchExpressionType = SearchExpression.SearchExpressionType.REGEXP;
+        }
+        s.caseSensitive = form.m_searchCase.isSelected();
+        s.spaceMatchNbsp = form.m_searchSpaceMatchNbsp.isSelected();
+        s.glossary = mode == SearchMode.SEARCH ? form.m_cbSearchInGlossaries.isSelected() : false;
+        s.memory = mode == SearchMode.SEARCH ? form.m_cbSearchInMemory.isSelected() : true;
+        s.tm = mode == SearchMode.SEARCH ? form.m_cbSearchInTMs.isSelected() : false;
+        s.allResults = mode == SearchMode.SEARCH ? form.m_allResultsCB.isSelected() : true;
+        s.fileNames = mode == SearchMode.SEARCH ? form.m_fileNamesCB.isSelected() : true;
+        s.searchSource = form.m_searchSource.isSelected();
+        s.searchTarget = form.m_searchTranslation.isSelected();
+        if (form.m_searchTranslatedUntranslated.isSelected()) {
+            s.searchTranslated = true;
+            s.searchUntranslated = true;
+        } else if (form.m_searchTranslated.isSelected()) {
+            s.searchTranslated = true;
+            s.searchUntranslated = false;
+        } else if (form.m_searchUntranslated.isSelected()) {
+            s.searchTranslated = false;
+            s.searchUntranslated = true;
+        }
+        s.widthInsensitive = form.m_fullHalfWidthInsensitive.isSelected();
+        s.excludeOrphans = form.m_excludeOrphans.isSelected();
+        s.replacement = null;
+    }
+
+    private void replaceDoSearch(SearchExpression s) {
+        if (form.m_replaceExactSearchRB.isSelected()) {
+            s.searchExpressionType = SearchExpression.SearchExpressionType.EXACT;
+        } else if (form.m_replaceRegexpSearchRB.isSelected()) {
+            s.searchExpressionType = SearchExpression.SearchExpressionType.REGEXP;
+        }
+        s.caseSensitive = form.m_replaceCase.isSelected();
+        s.spaceMatchNbsp = form.m_replaceSpaceMatchNbsp.isSelected();
+        s.glossary = false;
+        s.memory = true;
+        s.tm = false;
+        s.allResults = true;
+        s.fileNames = Core.getProject().getProjectFiles().size() > 1;
+        s.searchSource = false;
+        s.searchTarget = false;
+        s.searchTranslated = false;
+        s.searchUntranslated = false;
+        s.replaceTranslated = true;
+        s.replaceUntranslated = form.m_replaceUntranslated.isSelected();
+        s.widthInsensitive = form.m_fullHalfWidthInsensitive.isSelected();
+        s.excludeOrphans = true;
+        s.replacement = form.m_replaceField.getEditor().getItem().toString();
     }
 
     void doCancel() {
