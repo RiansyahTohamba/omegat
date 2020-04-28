@@ -109,7 +109,7 @@ public class SearchWindowController {
     private final SearchMode mode;
     private final int initialEntry;
     private final CaretPosition initialCaret;
-
+//todo: SearchWindowController & SearchWindowController & 11.0 & 0.818 & 2.0 & 0 & 0 & 0
     public SearchWindowController(SearchMode mode) {
         form = new SearchWindowForm();
         form.setJMenuBar(new SearchWindowMenu(this));
@@ -695,6 +695,7 @@ public class SearchWindowController {
         Core.getEditor().setFilter(new SearchFilter(viewer.getEntryList()));
     }
 
+    //   todo: SearchWindowController & doReplace & 9.0 & 0.66 & 1.0 & 0 & 0 & 0
     private void doReplace() {
         String replaceString = form.m_replaceField.getEditor().getItem().toString();
         replaceString = StringUtil.normalizeUnicode(replaceString);
@@ -726,6 +727,8 @@ public class SearchWindowController {
         form.m_replaceButton.setEnabled(false);
         form.m_replaceAllButton.setEnabled(false);
     }
+
+//  todo:  SearchWindowController & doSearch & 16.0 & 0.8125 & 3.0 & 0 & 0 & 0
 
     private void doSearch() {
         UIThreadsUtil.mustBeSwingThread();

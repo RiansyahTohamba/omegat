@@ -764,46 +764,32 @@ public class RealProject implements IProject {
      *
      * This method must be executed in the Core.executeExclusively.
      */
-//    TODO: saveProject & 20.0 & 0.7 & 5.0
+//    CINT & CDISP & MAXNESTING
+//    saveProject & 20.0 & 0.7 & 5.0 & 1.0 & 1.0 & 1.0
+    // CDISP >= 0.5 jadi dibawah < 1 juga
     public synchronized void saveProject(boolean doTeamSync) {
+      // CINT = 1
+      // CDSIP = cls_called/cint = 1/1
+//        intensity dan dispersion cuman dari kelas Log
         if (isSaving) {
             return;
         }
         isSaving = true;
+        startSave(doTeamSync);
+        Log.logInfoRB("LOG_DATAENGINE_SAVE_END");
+        isSaving = false;
+    }
 
+    private void startSave(boolean doTeamSync) {
         Log.logInfoRB("LOG_DATAENGINE_SAVE_START");
         UIThreadsUtil.mustNotBeSwingThread();
-
         Core.getAutoSave().disable();
         try {
-
             Core.getMainWindow().getMainMenu().getProjectMenu().setEnabled(false);
             try {
                 Preferences.save();
-
-                try {
-                    saveProjectProperties();
-
-                    projectTMX.save(config, config.getProjectInternal() + OConsts.STATUS_EXTENSION,
-                            isProjectModified());
-
-                    verPro.saveTeamSync(doTeamSync,config);
-
-                    setProjectModified(false);
-                } catch (KnownException ex) {
-                    throw ex;
-                } catch (IRemoteRepository2.NetworkException e) {
-                    if (isOnlineMode) {
-                        Log.logErrorRB("TEAM_NETWORK_ERROR", e.getCause());
-                        setOfflineMode();
-                    }
-                } catch (Exception e) {
-                    Log.logErrorRB(e, "CT_ERROR_SAVING_PROJ");
-                    Core.getMainWindow().displayErrorRB(e, "CT_ERROR_SAVING_PROJ");
-                }
-
+                trySaveProject(doTeamSync);
                 LastSegmentManager.saveLastSegment();
-
                 // update statistics
                 String stat = CalcStandardStatistics.buildProjectStats(this, hotStat);
                 String fn = config.getProjectInternal() + OConsts.STATS_FILENAME;
@@ -811,14 +797,30 @@ public class RealProject implements IProject {
             } finally {
                 Core.getMainWindow().getMainMenu().getProjectMenu().setEnabled(true);
             }
-
             CoreEvents.fireProjectChange(IProjectEventListener.PROJECT_CHANGE_TYPE.SAVE);
         } finally {
             Core.getAutoSave().enable();
         }
-        Log.logInfoRB("LOG_DATAENGINE_SAVE_END");
+    }
 
-        isSaving = false;
+    private void trySaveProject(boolean doTeamSync) {
+        try {
+            saveProjectProperties();
+            projectTMX.save(config, config.getProjectInternal() + OConsts.STATUS_EXTENSION,
+                    isProjectModified());
+            verPro.saveTeamSync(doTeamSync,config);
+            setProjectModified(false);
+        } catch (KnownException ex) {
+            throw ex;
+        } catch (IRemoteRepository2.NetworkException e) {
+            if (isOnlineMode) {
+                Log.logErrorRB("TEAM_NETWORK_ERROR", e.getCause());
+                setOfflineMode();
+            }
+        } catch (Exception e) {
+            Log.logErrorRB(e, "CT_ERROR_SAVING_PROJ");
+            Core.getMainWindow().displayErrorRB(e, "CT_ERROR_SAVING_PROJ");
+        }
     }
 
 
@@ -874,7 +876,7 @@ public class RealProject implements IProject {
     /**
      * Load source files for project.
      */
-//  todo:  loadSourceFiles & 16.0 & 0.6875 & 4.0
+//  todo:  loadSourceFiles & 16.0 & 0.6875 & 4.0 & ? & ? & ?
     private void loadSourceFiles() throws Exception {
         long st = System.currentTimeMillis();
         FilterMaster fm = Core.getFilterMaster();
@@ -886,23 +888,18 @@ public class RealProject implements IProject {
 
         for (String filepath : srcPathList) {
             Core.getMainWindow().showStatusMessageRB("CT_LOAD_FILE_MX", filepath);
-
             LoadFilesCallback loadFilesCallback = new LoadFilesCallback(existSource, existKeys, transMemories);
-
             FileInfo fi = new FileInfo();
             fi.filePath = filepath;
-
             loadFilesCallback.setCurrentFile(fi);
-
             IFilter filter = fm.loadFile(config.getSourceRoot() + filepath, new FilterContext(config),
                     loadFilesCallback);
-
             loadFilesCallback.fileFinished();
-
             if (filter != null && !fi.entries.isEmpty()) {
-                fi.filterClass = filter.getClass(); //Don't store the instance, because every file gets an instance and
-                                                    // then we consume a lot of memory for all instances.
-                                                    //See also IFilter "TODO: each filter should be stateless"
+                fi.filterClass = filter.getClass();
+                //Don't store the instance, because every file gets an instance and
+                // then we consume a lot of memory for all instances.
+                //See also IFilter "TODO: each filter should be stateless"
                 fi.filterFileFormatName = filter.getFileFormatName();
                 try {
                     fi.fileEncoding = filter.getInEncodingLastParsedFile();
