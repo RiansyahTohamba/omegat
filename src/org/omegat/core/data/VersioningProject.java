@@ -1,7 +1,9 @@
 package org.omegat.core.data;
 
+import org.jetbrains.annotations.NotNull;
 import org.madlonkay.supertmxmerge.StmProperties;
 import org.madlonkay.supertmxmerge.SuperTmxMerge;
+import org.madlonkay.supertmxmerge.data.ITmx;
 import org.omegat.CLIParameters;
 import org.omegat.core.Core;
 import org.omegat.core.team2.IRemoteRepository2;
@@ -19,18 +21,20 @@ import java.util.List;
 import java.util.logging.Logger;
 
 public class VersioningProject {
-    private final RealProject realProject;
+    private final RealProject realPr;
     private static final Logger LOGGER = Logger.getLogger(RealProject.class.getName());
     protected RemoteRepositoryProvider remoteRepositoryProvider;
     private volatile RebaseAndCommit.Prepared tmxPrepared;
     private volatile RebaseAndCommit.Prepared glossaryPrepared;
-    
-    public VersioningProject(RealProject realProject,ProjectProperties config) {
-        this.realProject = realProject;
-        setRemoteRepo(config);
+    private ProjectProperties config;
+
+    public VersioningProject(RealProject realPr,ProjectProperties config) {
+        this.realPr = realPr;
+        this.config = config;
+        setRemoteRepo();
     }
 
-    private void setRemoteRepo(ProjectProperties config) {
+    private void setRemoteRepo() {
         if (config.getRepositories() != null && !Core.getParams().containsKey(CLIParameters.NO_TEAM)) {
             try {
                 remoteRepositoryProvider = new RemoteRepositoryProvider(config.getProjectRootDir(),
@@ -47,26 +51,26 @@ public class VersioningProject {
         return remoteRepositoryProvider;
     }
 
-    public void afterLoadTranslations(boolean isOnlineMode,ProjectProperties config) throws Exception {
+    public void afterLoadTranslations(boolean isOnlineMode) throws Exception {
         // This MUST happen after calling loadTranslations()
         if (remoteRepositoryProvider != null && isOnlineMode) {
             Core.getMainWindow().showStatusMessageRB("TEAM_REBASE_AND_COMMIT");
-            rebaseAndCommitProject(true,config);
+            rebaseAndCommitProject(true);
         }
     }
 
-    public void saveTeamSync(boolean doTeamSync,ProjectProperties config) throws Exception {
+    public void saveTeamSync(boolean doTeamSync) throws Exception {
         if (remoteRepositoryProvider != null && doTeamSync) {
             tmxPrepared = null;
             glossaryPrepared = null;
             remoteRepositoryProvider.cleanPrepared();
             Core.getMainWindow().showStatusMessageRB("TEAM_SYNCHRONIZE");
-            rebaseAndCommitProject(true,config);
-            realProject.setOnlineMode();
+            rebaseAndCommitProject(true);
+            realPr.setOnlineMode();
         }
     }
 
-    public void configLoad(ProjectProperties config) throws Exception {
+    public void configLoad() throws Exception {
         if (remoteRepositoryProvider != null) {
             try {
                 tmxPrepared = null;
@@ -75,7 +79,7 @@ public class VersioningProject {
                 remoteRepositoryProvider.switchAllToLatest();
             } catch (IRemoteRepository2.NetworkException e) {
                 Log.logErrorRB("TEAM_NETWORK_ERROR", e.getCause());
-                realProject.setOfflineMode();
+                realPr.setOfflineMode();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -92,7 +96,7 @@ public class VersioningProject {
             config.loadProjectSRX();
         }
     }
-    public void commitTarget(boolean commitTargetFiles,boolean isOnlineMode,ProjectProperties config) throws IOException {
+    public void commitTarget(boolean commitTargetFiles,boolean isOnlineMode) throws IOException {
         if (remoteRepositoryProvider != null && config.getTargetDir().isUnderRoot() && commitTargetFiles && isOnlineMode) {
             tmxPrepared = null;
             glossaryPrepared = null;
@@ -112,8 +116,8 @@ public class VersioningProject {
         }
     }
 
-    public void commitSourceFiles(ProjectProperties config) throws Exception {
-        if (realProject.isRemoteProject() && config.getSourceDir().isUnderRoot())  {
+    public void commitSourceFiles() throws Exception {
+        if (realPr.isRemoteProject() && config.getSourceDir().isUnderRoot())  {
             try {
                 Core.getMainWindow().showStatusMessageRB("TF_COMMIT_START");
                 remoteRepositoryProvider.switchAllToLatest();
@@ -134,8 +138,8 @@ public class VersioningProject {
      * <p>
      * This method must be executed in the Core.executeExclusively.
      */
-    public void teamSyncPrepare(boolean isOnlineMode, ProjectProperties config) throws Exception {
-        if (remoteRepositoryProvider == null || realProject.getPreparedStatus() != RealProject.PreparedStatus.NONE || !isOnlineMode) {
+    public void teamSyncPrepare(boolean isOnlineMode) throws Exception {
+        if (remoteRepositoryProvider == null || realPr.getPreparedStatus() != RealProject.PreparedStatus.NONE || !isOnlineMode) {
             return;
         }
         LOGGER.fine("Prepare team sync");
@@ -153,7 +157,7 @@ public class VersioningProject {
             glossaryPrepared = RebaseAndCommit.prepare(remoteRepositoryProvider, config.getProjectRootDir(),
                     glossaryPath);
         }
-        realProject.setPreparedStatus(RealProject.PreparedStatus.PREPARED);
+        realPr.setPreparedStatus(RealProject.PreparedStatus.PREPARED);
     }
 
     /**
@@ -161,24 +165,24 @@ public class VersioningProject {
      * <p>
      * This method must be executed in the Core.executeExclusively.
      */
-    public void teamSync(ProjectProperties config) {
-        if (remoteRepositoryProvider == null || realProject.getPreparedStatus() != RealProject.PreparedStatus.PREPARED) {
+    public void teamSync() {
+        if (remoteRepositoryProvider == null || realPr.getPreparedStatus() != RealProject.PreparedStatus.PREPARED) {
             return;
         }
         LOGGER.fine("Rebase team sync");
         try {
-            realProject.setPreparedStatus(RealProject.PreparedStatus.PREPARED2);
-            synchronized (realProject) {
-                realProject.getProjectTMX().save(config, config.getProjectInternal() + OConsts.STATUS_EXTENSION,
-                        realProject.isProjectModified());
+            realPr.setPreparedStatus(RealProject.PreparedStatus.PREPARED2);
+            synchronized (realPr) {
+                realPr.getProjectTMX().save(config, config.getProjectInternal() + OConsts.STATUS_EXTENSION,
+                        realPr.isProjectModified());
             }
-            rebaseAndCommitProject(glossaryPrepared != null,config);
-            realProject.setPreparedStatus(RealProject.PreparedStatus.REBASED);
+            rebaseAndCommitProject(glossaryPrepared != null);
+            realPr.setPreparedStatus(RealProject.PreparedStatus.REBASED);
 
             new Thread(() -> {
                 try {
                     Core.executeExclusively(true, () -> {
-                        if (realProject.getPreparedStatus() != RealProject.PreparedStatus.REBASED) {
+                        if (realPr.getPreparedStatus() != RealProject.PreparedStatus.REBASED) {
                             return;
                         }
                         LOGGER.fine("Commit team sync");
@@ -196,7 +200,7 @@ public class VersioningProject {
                         } catch (Exception ex) {
                             Log.logErrorRB(ex, "CT_ERROR_SAVING_PROJ");
                         }
-                        realProject.setPreparedStatus(RealProject.PreparedStatus.NONE);
+                        realPr.setPreparedStatus(RealProject.PreparedStatus.NONE);
                     });
                 } catch (Exception ex) {
                     Log.logErrorRB(ex, "CT_ERROR_SAVING_PROJ");
@@ -204,7 +208,7 @@ public class VersioningProject {
             }).start();
         } catch (Exception ex) {
             Log.logErrorRB(ex, "CT_ERROR_SAVING_PROJ");
-            realProject.setPreparedStatus(RealProject.PreparedStatus.NONE);
+            realPr.setPreparedStatus(RealProject.PreparedStatus.NONE);
         }
     }
 
@@ -244,7 +248,7 @@ public class VersioningProject {
      * <li>Upload new revision into repository.
      * </ol>
      */
-    void rebaseAndCommitProject(boolean processGlossary,ProjectProperties config) throws Exception {
+    void rebaseAndCommitProject(boolean processGlossary) throws Exception {
         Log.logInfoRB("TEAM_REBASE_START");
 
         final String author = Preferences.getPreferenceDefault(Preferences.TEAM_AUTHOR,
@@ -270,8 +274,8 @@ public class VersioningProject {
 
                         @Override
                         public void rebaseAndSave(File out) throws Exception {
-                            realProject.mergeTMX(baseTMX, headTMX, commitDetails,LOGGER);
-                            realProject.getProjectTMX().exportTMX(config, out, false, false, true);
+                            mergeTMX(baseTMX, headTMX, commitDetails);
+                            realPr.getProjectTMX().exportTMX(config, out, false, false, true);
                         }
 
                         @Override
@@ -284,7 +288,7 @@ public class VersioningProject {
                             return TMXReader2.detectCharset(file);
                         }
                     });
-            realProject.replaceContentTMX(config);
+            realPr.replaceContentTMX(config);
         }
 
         if (processGlossary) {
@@ -353,5 +357,45 @@ public class VersioningProject {
         Log.logInfoRB("TEAM_REBASE_END");
     }
 
+    /**
+     * Do 3-way merge of:
+     *
+     * Base: baseTMX
+     *
+     * File 1: projectTMX (mine)
+     *
+     * File 2: headTMX (theirs)
+     */
+    //    todo: 10 & 0.8 & 1 & 7 & 1 & 1
+//        dibawah parameter -lib tidak dianggap coupling,e.g. sdk,gradle
+    public void mergeTMX(ProjectTMX baseTMX, ProjectTMX headTMX, StringBuilder commitDetails) {
+        // clscalled = config,SyncTMX,OString,realPr,ProjectTMX,Log,commitDetails,Report
+//        clscalled = 7,
+//        CINT = getStrTargetLanguage,getStrSourceLanguage,SyncTMX(),getString,getProjectTMX,logDebug
+//        CINT = 7
+        StmProperties props = getProps();
+        String srcLang = config.getStrTargetLanguage();
+        String trgLang = config.getStrSourceLanguage();
+        SyncTMX base = new SyncTMX(baseTMX, OStrings.getString("TMX_MERGE_BASE"), srcLang, trgLang);
+        SyncTMX mine = new SyncTMX(realPr.getProjectTMX(), OStrings.getString("TMX_MERGE_MINE"), srcLang, trgLang);
+        SyncTMX theirs = new SyncTMX(headTMX, OStrings.getString("TMX_MERGE_THEIRS"), srcLang, trgLang);
+        ProjectTMX mergedTMX = SuperTmxMerge.merge(base,mine,theirs, props);
+        realPr.replaceMerged(mergedTMX);
+        Log.logDebug(LOGGER, "Merge report: {0}", props.getReport());
+        commitDetails.append('\n');
+        commitDetails.append(props.getReport().toString());
+    }
+
+    @NotNull
+    private StmProperties getProps() {
+//        CINT = getResourceBundle+getMainWindow+getApplicationFrame
+//      StmProperties,OStrings,Core,IMainWindow
+        StmProperties props = new StmProperties();
+        props.setLanguageResource(OStrings.getResourceBundle());
+        props.setParentWindow(Core.getMainWindow().getApplicationFrame());
+        // More than this number of conflicts will trigger List View by default.
+        props.setListViewThreshold(5);
+        return props;
+    }
 
 }

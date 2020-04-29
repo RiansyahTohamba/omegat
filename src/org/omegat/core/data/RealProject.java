@@ -77,6 +77,7 @@ import org.omegat.core.threads.CommandMonitor;
 import org.omegat.filters2.FilterContext;
 import org.omegat.filters2.IAlignCallback;
 import org.omegat.filters2.IFilter;
+import org.omegat.filters2.TranslationException;
 import org.omegat.filters2.master.FilterMaster;
 import org.omegat.tokenizer.DefaultTokenizer;
 import org.omegat.tokenizer.ITokenizer;
@@ -212,6 +213,10 @@ public class RealProject implements IProject {
         return projectTMX;
     }
 
+    public void replaceMerged(ProjectTMX tmx) {
+        projectTMX.replaceContent(tmx);
+    }
+
     public void replaceContentTMX(ProjectProperties config) throws Exception {
         if (projectTMX != null) {
             // it can be not loaded yet
@@ -241,7 +246,6 @@ public class RealProject implements IProject {
         Log.log("Target tokenizer: " + targetTokenizer.getClass().getName());
     }
 
-    
     public void saveProjectProperties() throws Exception {
         unlockProject();
         try {
@@ -311,32 +315,6 @@ public class RealProject implements IProject {
         Log.logInfoRB("LOG_DATAENGINE_CREATE_END");
     }
     /**
-     * Do 3-way merge of:
-     *
-     * Base: baseTMX
-     *
-     * File 1: projectTMX (mine)
-     *
-     * File 2: headTMX (theirs)
-     */
-    public void mergeTMX(ProjectTMX baseTMX, ProjectTMX headTMX, StringBuilder commitDetails,Logger LOGGER) {
-        StmProperties props = new StmProperties()
-                .setLanguageResource(OStrings.getResourceBundle())
-                .setParentWindow(Core.getMainWindow().getApplicationFrame())
-                // More than this number of conflicts will trigger List View by default.
-                .setListViewThreshold(5);
-        String srcLang = config.getSourceLanguage().getLanguage();
-        String trgLang = config.getTargetLanguage().getLanguage();
-        ProjectTMX mergedTMX = SuperTmxMerge.merge(
-                new SyncTMX(baseTMX, OStrings.getString("TMX_MERGE_BASE"), srcLang, trgLang),
-                new SyncTMX(projectTMX, OStrings.getString("TMX_MERGE_MINE"), srcLang, trgLang),
-                new SyncTMX(headTMX, OStrings.getString("TMX_MERGE_THEIRS"), srcLang, trgLang), props);
-        projectTMX.replaceContent(mergedTMX);
-        Log.logDebug(LOGGER, "Merge report: {0}", props.getReport());
-        commitDetails.append('\n');
-        commitDetails.append(props.getReport().toString());
-    }
-    /**
      * Load exist project in a "big" sense -- loads project's properties, glossaries, tms, source files etc.
      */
     public synchronized void loadProject(boolean onlineMode) {
@@ -358,13 +336,13 @@ public class RealProject implements IProject {
 
             Core.getMainWindow().showStatusMessageRB("CT_LOADING_PROJECT");
 
-            verPro.configLoad(config);
+            verPro.configLoad();
 
             loadFilterSettings();
             loadSegmentationSettings();
             loadTranslations();
             loadSourceFiles();
-            verPro.afterLoadTranslations(isOnlineMode,config);
+            verPro.afterLoadTranslations(isOnlineMode);
 
             allProjectEntries = Collections.unmodifiableList(allProjectEntries);
             importHandler = new ImportFromAutoTMX(this, allProjectEntries);
@@ -655,7 +633,7 @@ public class RealProject implements IProject {
             }
         }
 
-        verPro.commitTarget(commitTargetFiles,isOnlineMode,config);
+        verPro.commitTarget(commitTargetFiles,isOnlineMode);
 
         if (numberOfCompiled == 1) {
             Core.getMainWindow().showStatusMessageRB("CT_COMPILE_DONE_MX_SINGULAR");
@@ -687,7 +665,7 @@ public class RealProject implements IProject {
      */
     @Override
     public void teamSyncPrepare() throws Exception {
-        verPro.teamSyncPrepare(isOnlineMode,config);
+        verPro.teamSyncPrepare(isOnlineMode);
     }
 
     @Override
@@ -702,12 +680,12 @@ public class RealProject implements IProject {
      */
     @Override
     public void teamSync() {
-        verPro.teamSync(config);
+        verPro.teamSync();
     }
 
     @Override
     public void commitSourceFiles() throws Exception {
-        verPro.commitSourceFiles(config);
+        verPro.commitSourceFiles();
     }
 
     /**
@@ -808,7 +786,7 @@ public class RealProject implements IProject {
             saveProjectProperties();
             projectTMX.save(config, config.getProjectInternal() + OConsts.STATUS_EXTENSION,
                     isProjectModified());
-            verPro.saveTeamSync(doTeamSync,config);
+            verPro.saveTeamSync(doTeamSync);
             setProjectModified(false);
         } catch (KnownException ex) {
             throw ex;
@@ -876,11 +854,21 @@ public class RealProject implements IProject {
     /**
      * Load source files for project.
      */
-//  todo:  loadSourceFiles & 16.0 & 0.6875 & 4.0 & ? & ? & ?
+//  sudah  loadSourceFiles & 16.0 & 0.6875 & 4.0 & 4 & 1 & 1
     private void loadSourceFiles() throws Exception {
+// 4 cls called : System,Core, IMainWindow, Log
+// CINT =  4,
+//        cdisp 4/4=1
         long st = System.currentTimeMillis();
-        FilterMaster fm = Core.getFilterMaster();
+        addProjectFile();
+        findNonUniqueSegments();
+        Core.getMainWindow().showStatusMessageRB("CT_LOAD_SRC_COMPLETE");
+        long en = System.currentTimeMillis();
+        Log.log("Load project source files: " + (en - st) + "ms");
+    }
 
+    private void addProjectFile() throws IOException, TranslationException {
+        FilterMaster fm = Core.getFilterMaster();
         File root = new File(config.getSourceRoot());
         List<String> srcPathList = FileUtil
                 .buildRelativeFilesList(root, Collections.emptyList(), config.getSourceRootExcludes()).stream()
@@ -909,12 +897,6 @@ public class RealProject implements IProject {
                 projectFilesList.add(fi);
             }
         }
-
-        findNonUniqueSegments();
-
-        Core.getMainWindow().showStatusMessageRB("CT_LOAD_SRC_COMPLETE");
-        long en = System.currentTimeMillis();
-        Log.log("Load project source files: " + (en - st) + "ms");
     }
 
     protected void findNonUniqueSegments() {

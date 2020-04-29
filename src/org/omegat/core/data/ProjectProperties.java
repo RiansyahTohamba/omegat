@@ -305,6 +305,13 @@ public class ProjectProperties {
     public Language getTargetLanguage() {
         return targetLanguage;
     }
+    public String getStrTargetLanguage(){
+        return targetLanguage.getLanguage();
+    }
+
+    public String getStrSourceLanguage(){
+        return sourceLanguage.getLanguage();
+    }
 
     /**
      * Sets The Target Language (language of the translated files) of the Project
