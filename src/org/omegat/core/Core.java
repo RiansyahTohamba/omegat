@@ -54,6 +54,8 @@ import org.omegat.gui.dictionaries.DictionariesTextArea;
 import org.omegat.gui.dictionaries.IDictionaries;
 import org.omegat.gui.editor.EditorController;
 import org.omegat.gui.editor.IEditor;
+import org.omegat.gui.editor.IEditorFilter;
+import org.omegat.gui.editor.filter.ReplaceFilter;
 import org.omegat.gui.editor.mark.BidiMarkerFactory;
 import org.omegat.gui.editor.mark.ComesFromAutoTMMarker;
 import org.omegat.gui.editor.mark.FontFallbackMarker;
@@ -150,6 +152,12 @@ public final class Core {
     /** Get editor instance. */
     public static IEditor getEditor() {
         return editor;
+    }
+
+    /** Get editor instance. */
+    public static void commitSetFilter(IEditorFilter filter) {
+        editor.commitAndLeave();
+        editor.setFilter(filter);
     }
 
     /** Get tag validation component instance. */

@@ -60,6 +60,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.text.BadLocationException;
 import javax.swing.undo.UndoManager;
 
+import org.jetbrains.annotations.NotNull;
 import org.omegat.core.Core;
 import org.omegat.core.data.SourceTextEntry;
 import org.omegat.core.search.SearchExpression;
@@ -102,38 +103,47 @@ import org.openide.awt.Mnemonics;
  * @author Thomas Cordonnier
  */
 @SuppressWarnings("serial")
-//after refactoring realproject then refactoring SearchWindowController class too
+
 public class SearchWindowController {
 
     private final SearchWindowForm form;
     private final SearchMode mode;
     private final int initialEntry;
     private final CaretPosition initialCaret;
-//todo: SearchWindowController & 11.0 & 0.818 & 2.0 & 0 & 0 & 0
+//sudah SearchWindowController & 11 & 0.818 & 2 & 6 & 0.83 & 1
     public SearchWindowController(SearchMode mode) {
+//        CINT = SearchWindowForm(),SearchWindowMenu,getEditor(),getCurrentEntryNumber(),
+//        getSearchItems,getReplaceItems = 6
+// CLSCALLED = SearchWindowForm,SearchWindowMenu,Core,IEditor,HistoryManager = 5
         form = new SearchWindowForm();
         form.setJMenuBar(new SearchWindowMenu(this));
         this.mode = mode;
 //        selesaikan core dulu
         initialEntry = Core.getEditor().getCurrentEntryNumber();
         initialCaret = getCurrentPositionInEntryTranslationInEditor(Core.getEditor());
-
-        if (Platform.isMacOSX()) {
-            OSXIntegration.enableFullScreen(form);
-        }
+        checkOS();
         dateFormat = new SimpleDateFormat(SAVED_DATE_FORMAT);
-
         selectIndex(form.m_searchField, HistoryManager.getSearchItems());
         selectIndex(form.m_replaceField, HistoryManager.getReplaceItems());
         setDateBox();
-
         // Box Number of results
-        SpinnerNumberModel numberModel = new SpinnerNumberModel(OConsts.ST_MAX_SEARCH_RESULTS, 1, Integer.MAX_VALUE,
-                1);
+        SpinnerNumberModel numberModel = new SpinnerNumberModel(OConsts.ST_MAX_SEARCH_RESULTS, 1, Integer.MAX_VALUE,1);
         form.m_numberOfResults.setModel(numberModel);
-
         loadPreferences();
+        setRadioBtn();
+        // update enabled/selected status of options
+        updateOptionStatus();
+        initActions();
+        chooseVisibility(mode);
+    }
 
+    private void checkOS() {
+        if (Platform.isMacOSX()) {
+            OSXIntegration.enableFullScreen(form);
+        }
+    }
+
+    private void setRadioBtn() {
         if (!Core.getProject().isProjectLoaded()) {
             // restrict user to file only access
             form.m_rbDir.setSelected(true);
@@ -141,10 +151,6 @@ public class SearchWindowController {
         } else {
             form.m_rbProject.setSelected(true);
         }
-        // update enabled/selected status of options
-        updateOptionStatus();
-        initActions();
-        chooseVisibility(mode);
     }
 
     private void chooseVisibility(SearchMode mode) {
@@ -697,20 +703,19 @@ public class SearchWindowController {
 
     private void doFilter() {
         EntryListPane viewer = (EntryListPane) form.m_viewer;
-        Core.getEditor().commitAndLeave(); // Otherwise, the current segment being edited is lost
-        Core.getEditor().setFilter(new SearchFilter(viewer.getEntryList()));
+        Core.commitSetFilter(new SearchFilter(viewer.getEntryList()));
     }
-//    todo : doReplace & 9.0 & 0.66 & 1.0 & 0 & 0 & 0
+//    sudah: doReplace & 9 & 0.66 & 1 & 7 & 0.714 & 1
     private void doReplace() {
+        //cint =.normalizeUnicode,addReplaceItem,getReplaceItems,commitSetFilter,ReplaceFilter
+//        getEntryList(), getSearcher() = 7
+        //clscalled = StringUtil,HistoryManager,EntryListPane,Core,IEditorFilter = 5
         String replaceString = form.m_replaceField.getEditor().getItem().toString();
         replaceString = StringUtil.normalizeUnicode(replaceString);
         HistoryManager.addReplaceItem(replaceString);
         form.m_replaceField.setModel(new DefaultComboBoxModel<>(HistoryManager.getReplaceItems()));
-
         EntryListPane viewer = (EntryListPane) form.m_viewer;
-        Core.getEditor().commitAndLeave(); // Otherwise, the current segment being edited is lost
-        Core.getEditor()
-                .setFilter(new ReplaceFilter(viewer.getEntryList(), viewer.getSearcher()));
+        Core.commitSetFilter(new ReplaceFilter(viewer.getEntryList(), viewer.getSearcher()));
     }
 
     private void doReplaceAll() {
@@ -732,54 +737,70 @@ public class SearchWindowController {
         form.m_replaceButton.setEnabled(false);
         form.m_replaceAllButton.setEnabled(false);
     }
-//todo:    doSearch & 16.0 & 0.8125 & 3.0 & 0 & 0 & 0
+//sudah:    doSearch & 16 & 0.8125 & 3 & 7 & 0.714 & 3
     private void doSearch() {
+        //CINT = mustBeSwingThread,EntryListPane,fin(),normalizeUnicode,addSearchItem,
+//        getSearchItems,reset = 7
+// CLSCALLED = UIThreadsUtil,SearchWindowForm,EntryListPane,StringUtil,
+// HistoryManager = 5
+
         UIThreadsUtil.mustBeSwingThread();
         if (thread != null) {
             // stop old search thread
             thread.fin();
         }
-
         EntryListPane viewer = (EntryListPane) form.m_viewer;
-
         String queryString = form.m_searchField.getEditor().getItem().toString();
         queryString = StringUtil.normalizeUnicode(queryString);
-
         HistoryManager.addSearchItem(queryString);
         form.m_searchField.setModel(new DefaultComboBoxModel<>(HistoryManager.getSearchItems()));
         form.m_searchField.requestFocus();
-
         viewer.reset();
         String root = null;
         if (form.m_rbDir.isSelected()) {
-            // make sure it's a valid directory name
-            root = form.m_dirField.getText();
-            if (!root.endsWith(File.separator)) {
-                root += File.separator;
-            }
-            File f = new File(root);
-            if (!f.exists() || !f.isDirectory()) {
-                String error = StringUtil.format(OStrings.getString("SW_ERROR_BAD_DIR"),
-                        form.m_dirField.getText());
-                form.m_viewer.setText(error);
-                Log.log(error);
-                return;
-            }
+            root = setValidDir();
+            if (isFileExists(root)) return;
         }
-
-        // save user preferences
         savePreferences();
+        setTitle(queryString);
+        startSearSeparateThread(queryString, root);
+    }
 
+    @NotNull
+    private String setValidDir() {
+        String root;// make sure it's a valid directory name
+        root = form.m_dirField.getText();
+        if (!root.endsWith(File.separator)) {
+            root += File.separator;
+        }
+        return root;
+    }
+
+    private boolean isFileExists(String root) {
+        File f = new File(root);
+        if (!f.exists() || !f.isDirectory()) {
+            String error = StringUtil.format(OStrings.getString("SW_ERROR_BAD_DIR"),
+                    form.m_dirField.getText());
+            form.m_viewer.setText(error);
+            Log.log(error);
+            return true;
+        }
+        return false;
+    }
+
+    private void startSearSeparateThread(String queryString, String root) {
+        // start the search in a separate thread
+        Searcher searcher = new Searcher(Core.getProject(), getSearchExpression(queryString, root));
+        thread = new SearchThread(this, searcher);
+        thread.start();
+    }
+
+    private void setTitle(String queryString) {
         if (StringUtil.isEmpty(queryString)) {
             form.setTitle(OStrings.getString("SW_TITLE"));
         } else {
             form.setTitle(queryString + " - OmegaT");
         }
-
-        // start the search in a separate thread
-        Searcher searcher = new Searcher(Core.getProject(), getSearchExpression(queryString, root));
-        thread = new SearchThread(this, searcher);
-        thread.start();
     }
 
     private SearchExpression getSearchExpression(String queryString, String root) {
