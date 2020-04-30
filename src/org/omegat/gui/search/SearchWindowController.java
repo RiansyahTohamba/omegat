@@ -102,6 +102,7 @@ import org.openide.awt.Mnemonics;
  * @author Thomas Cordonnier
  */
 @SuppressWarnings("serial")
+//after refactoring realproject then refactoring SearchWindowController class too
 public class SearchWindowController {
 
     private final SearchWindowForm form;
