@@ -237,60 +237,69 @@ public final class Core {
     /**
      * Initialize application components.
      */
+//    sudah: Core & initializeGUI & 37 & 0.972 & 1 & 11 & 0.909 & 1
     public static void initializeGUI(final Map<String, String> params) throws Exception {
+//        clscalled = IProject,LanguageToolWrapper,3+1 ,+4 = 10
+//        cint = NotLoadedProject,init,3+2+6 = 11
         cmdLineParams = params;
-
         // 1. Initialize project
         currentProject = new NotLoadedProject();
-
         // 2. Initialize application frame
-        MainWindow me = new MainWindow();
-        mainWindow = me;
-
-        Core.registerMarker(new ProtectedPartsMarker());
-        Core.registerMarker(new RemoveTagMarker());
-        Core.registerMarker(new NBSPMarker());
-        Core.registerMarker(new TransTipsMarker());
-        Core.registerMarker(new WhitespaceMarkerFactory.SpaceMarker());
-        Core.registerMarker(new WhitespaceMarkerFactory.TabMarker());
-        Core.registerMarker(new WhitespaceMarkerFactory.LFMarker());
-        Core.registerMarker(new BidiMarkerFactory.RLMMarker());
-        Core.registerMarker(new BidiMarkerFactory.LRMMarker());
-        Core.registerMarker(new BidiMarkerFactory.PDFMarker());
-        Core.registerMarker(new BidiMarkerFactory.LROMarker());
-        Core.registerMarker(new BidiMarkerFactory.RLOMarker());
-        Core.registerMarker(new ReplaceMarker());
-        Core.registerMarker(new ComesFromAutoTMMarker());
-        Core.registerMarker(new FontFallbackMarker());
-
+        regMarker();
         LanguageToolWrapper.init();
-
+//       clscalled +3, Preferences +1
+//        cint 3+2
         segmenter = new Segmenter(Preferences.getSRX());
         filterMaster = new FilterMaster(Preferences.getFilters());
-
+        MainWindow me = new MainWindow();
+        mainWindow = me;
         // 3. Initialize other components. They add themselves to the main window.
-        editor = new EditorController(me);
+        addOnMainWindow(me);
+//         6 cint, 4 clscalled
         tagValidation = new TagValidationTool();
+        spellChecker = new SpellChecker();
+        SaveThread th = new SaveThread();
+        saveThread = th;
+        th.start();
+        new VersionCheckThread(10).start();
+    }
+
+
+    private static void addOnMainWindow(MainWindow me) {
+        editor = new EditorController(me);
         issuesWindow = new IssuesPanelController(me);
         matcher = new MatchesTextArea(me);
-        GlossaryTextArea glossaryArea = new GlossaryTextArea(me);
-        glossary = glossaryArea;
-        glossaryManager = new GlossaryManager(glossaryArea);
         notes = new NotesTextArea(me);
         comments = new CommentsTextArea(me);
         machineTranslatePane = new MachineTranslateTextArea(me);
         dictionaries = new DictionariesTextArea(me);
-        spellChecker = new SpellChecker();
         multiple = new MultipleTransPane(me);
+        GlossaryTextArea glossaryArea = new GlossaryTextArea(me);
+        glossary = glossaryArea;
+        glossaryManager = new GlossaryManager(glossaryArea);
         new SegmentPropertiesArea(me);
-
-        SaveThread th = new SaveThread();
-        saveThread = th;
-        th.start();
-
-        new VersionCheckThread(10).start();
     }
 
+    private static void regMarker() throws Exception {
+        registerMarker(new ProtectedPartsMarker());
+        registerMarker(new RemoveTagMarker());
+        registerMarker(new NBSPMarker());
+        registerMarker(new TransTipsMarker());
+
+        registerMarker(new WhitespaceMarkerFactory.SpaceMarker());
+        registerMarker(new WhitespaceMarkerFactory.TabMarker());
+        registerMarker(new WhitespaceMarkerFactory.LFMarker());
+
+        registerMarker(new BidiMarkerFactory.RLMMarker());
+        registerMarker(new BidiMarkerFactory.LRMMarker());
+        registerMarker(new BidiMarkerFactory.PDFMarker());
+        registerMarker(new BidiMarkerFactory.LROMarker());
+        registerMarker(new BidiMarkerFactory.RLOMarker());
+
+        registerMarker(new ReplaceMarker());
+        registerMarker(new ComesFromAutoTMMarker());
+        registerMarker(new FontFallbackMarker());
+    }
     /**
      * Initialize application components.
      */
