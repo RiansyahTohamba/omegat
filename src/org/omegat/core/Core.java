@@ -223,6 +223,9 @@ public final class Core {
         segmenter = newSegmenter;
     }
 
+    public static void showStatusMessageRB(String messageKey, Object... params){
+        getMainWindow().showStatusMessageRB(messageKey, params);
+    }
     /**
      * Initialize application components.
      */

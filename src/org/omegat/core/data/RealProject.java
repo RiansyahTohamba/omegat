@@ -306,7 +306,7 @@ public class RealProject implements IProject {
             loaded = true;
 
             // clear status message
-            Core.getMainWindow().showStatusMessageRB(null);
+            Core.showStatusMessageRB(null);
         } catch (Exception e) {
             // trouble in tinsletown...
             Log.logErrorRB(e, "CT_ERROR_CREATING_PROJECT");
@@ -334,7 +334,7 @@ public class RealProject implements IProject {
                 Preferences.save();
             }
 
-            Core.getMainWindow().showStatusMessageRB("CT_LOADING_PROJECT");
+            Core.showStatusMessageRB("CT_LOADING_PROJECT");
 
             verPro.configLoad();
 
@@ -361,7 +361,7 @@ public class RealProject implements IProject {
             loaded = true;
 
             // Project Loaded...
-            Core.getMainWindow().showStatusMessageRB(null);
+            Core.showStatusMessageRB(null);
 
             setProjectModified(false);
         } catch (Exception e) {
@@ -624,7 +624,7 @@ public class RealProject implements IProject {
                         throw new IOException(OStrings.getString("CT_ERROR_CREATING_TARGET_DIR") + fn.getParentFile());
                     }
                 }
-                Core.getMainWindow().showStatusMessageRB("CT_COMPILE_FILE_MX", midName);
+                Core.showStatusMessageRB("CT_COMPILE_FILE_MX", midName);
                 translateFilesCallback.fileStarted(midName);
                 fm.translateFile(srcRoot, midName, locRoot, new FilterContext(config),
                         translateFilesCallback);
@@ -636,9 +636,9 @@ public class RealProject implements IProject {
         verPro.commitTarget(commitTargetFiles,isOnlineMode);
 
         if (numberOfCompiled == 1) {
-            Core.getMainWindow().showStatusMessageRB("CT_COMPILE_DONE_MX_SINGULAR");
+            Core.showStatusMessageRB("CT_COMPILE_DONE_MX_SINGULAR");
         } else {
-            Core.getMainWindow().showStatusMessageRB("CT_COMPILE_DONE_MX");
+            Core.showStatusMessageRB("CT_COMPILE_DONE_MX");
         }
 
         CoreEvents.fireProjectChange(IProjectEventListener.PROJECT_CHANGE_TYPE.COMPILE);
@@ -692,35 +692,44 @@ public class RealProject implements IProject {
      * Set up and execute the user-specified external command.
      * @param command Command to execute
      */
-//    TODO: doExternalCommand & 9.0 & 0.78 & 3.0
+//    sudah doExternalCommand & 9 & 0.78 & 3 & 5 & 0.8 & 3
     private void doExternalCommand(String command) {
-
+//        CINT = isEmpty,showStatusMessageRB,CommandVarExpansion,expandVariables,log
+//        CINT = 5
+//        CLSCALLED = StringUtil,Core,CommandVarExpansion,Log
+//        CLSCALLED = 4
+//        CDISP = 4/5
         if (StringUtil.isEmpty(command)) {
             return;
         }
-
-        Core.getMainWindow().showStatusMessageRB("CT_START_EXTERNAL_CMD");
-
-        CommandVarExpansion expander = new CommandVarExpansion(command);
-        command = expander.expandVariables(config);
+        Core.showStatusMessageRB("CT_START_EXTERNAL_CMD");
+        command = new CommandVarExpansion(command).expandVariables(config);
         Log.log("Executing command: " + command);
         try {
-            Process p = Runtime.getRuntime().exec(StaticUtils.parseCLICommand(command));
-            processCache.push(p);
-            CommandMonitor stdout = CommandMonitor.newStdoutMonitor(p);
-            CommandMonitor stderr = CommandMonitor.newStderrMonitor(p);
-            stdout.start();
-            stderr.start();
+            startCmdMonitor(command);
         } catch (IOException e) {
-            String message;
-            Throwable cause = e.getCause();
-            if (cause == null) {
-                message = e.getLocalizedMessage();
-            } else {
-                message = cause.getLocalizedMessage();
-            }
-            Core.getMainWindow().showStatusMessageRB("CT_ERROR_STARTING_EXTERNAL_CMD", message);
+            errorExtCommand(e);
         }
+    }
+
+    private void startCmdMonitor(String command) throws IOException {
+        Process p = Runtime.getRuntime().exec(StaticUtils.parseCLICommand(command));
+        processCache.push(p);
+        CommandMonitor stdout = CommandMonitor.newStdoutMonitor(p);
+        CommandMonitor stderr = CommandMonitor.newStderrMonitor(p);
+        stdout.start();
+        stderr.start();
+    }
+
+    private void errorExtCommand(IOException e) {
+        String message;
+        Throwable cause = e.getCause();
+        if (cause == null) {
+            message = e.getLocalizedMessage();
+        } else {
+            message = cause.getLocalizedMessage();
+        }
+        Core.showStatusMessageRB("CT_ERROR_STARTING_EXTERNAL_CMD", message);
     }
 
     /**
@@ -832,7 +841,7 @@ public class RealProject implements IProject {
                 config.getProjectInternalDir(), OConsts.STATUS_EXTENSION);
 
         try {
-            Core.getMainWindow().showStatusMessageRB("CT_LOAD_TMX");
+            Core.showStatusMessageRB("CT_LOAD_TMX");
 
             projectTMX = new ProjectTMX(config.getSourceLanguage(), config.getTargetLanguage(),
                     config.isSentenceSegmentingEnabled(), file, checkOrphanedCallback);
@@ -862,7 +871,7 @@ public class RealProject implements IProject {
         long st = System.currentTimeMillis();
         addProjectFile();
         findNonUniqueSegments();
-        Core.getMainWindow().showStatusMessageRB("CT_LOAD_SRC_COMPLETE");
+        Core.showStatusMessageRB("CT_LOAD_SRC_COMPLETE");
         long en = System.currentTimeMillis();
         Log.log("Load project source files: " + (en - st) + "ms");
     }
@@ -875,7 +884,7 @@ public class RealProject implements IProject {
                 .sorted(StreamUtil.comparatorByList(getSourceFilesOrder())).collect(Collectors.toList());
 
         for (String filepath : srcPathList) {
-            Core.getMainWindow().showStatusMessageRB("CT_LOAD_FILE_MX", filepath);
+            Core.showStatusMessageRB("CT_LOAD_FILE_MX", filepath);
             LoadFilesCallback loadFilesCallback = new LoadFilesCallback(existSource, existKeys, transMemories);
             FileInfo fi = new FileInfo();
             fi.filePath = filepath;
