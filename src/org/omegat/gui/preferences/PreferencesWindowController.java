@@ -159,6 +159,7 @@ public class PreferencesWindowController implements FurtherActionListener {
         show(parent, null);
     }
 
+//    todo:8.875 & PreferencesWindowController & show & 11.0 & 0.8181818181818182 & 3.0 & 0 & 0 & 0
     @SuppressWarnings("serial")
     public void show(Window parent, Class<? extends IPreferencesController> initialSelection) {
         dialog = new JDialog();
@@ -353,7 +354,7 @@ public class PreferencesWindowController implements FurtherActionListener {
         dialog.setLocationRelativeTo(parent);
         dialog.setVisible(true);
     }
-
+//todo: 10.0 & PreferencesWindowController & createNodeTree & 31.0 & 0.967741935483871 & 1.0 & 0 & 0 & 0
     private static DefaultMutableTreeNode createNodeTree() {
         HideableNode root = new HideableNode();
         root.add(new HideableNode(new GeneralOptionsController()));
