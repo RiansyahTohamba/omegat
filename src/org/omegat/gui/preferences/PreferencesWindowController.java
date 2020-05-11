@@ -88,13 +88,9 @@ import javax.swing.event.DocumentListener;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeSelectionEvent;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeCellRenderer;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
-import javax.swing.tree.TreeSelectionModel;
+import javax.swing.tree.*;
 
+import org.jetbrains.annotations.NotNull;
 import org.omegat.core.Core;
 import org.omegat.core.team2.gui.RepositoriesCredentialsController;
 import org.omegat.externalfinder.gui.ExternalFinderPreferencesController;
@@ -167,7 +163,137 @@ public class PreferencesWindowController implements FurtherActionListener {
         dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         dialog.setModal(true);
         StaticUIUtils.setWindowIcon(dialog);
+        showRenderer();
+        showOuterPanel();
+        showInnerPanel(initialSelection);
+        showSearch();
+        showInitState(parent);
+    }
 
+    private void showInnerPanel(Class<? extends IPreferencesController> initialSelection) {
+        // Use ones on inner panel to indicate that actions are view-specific
+        innerPanel.undoButton.addActionListener(e -> currentView.undoChanges());
+        innerPanel.resetButton.addActionListener(e -> currentView.restoreDefaults());
+
+        dialog.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowOpened(WindowEvent e) {
+                walkTree(getDefaultMutableTreeNode(), node -> {
+                    // Start with tree fully expanded
+                    if (node.getChildCount() > 0) {
+                        innerPanel.availablePrefsTree.expandPath(new TreePath(node.getPath()));
+                    }
+                });
+                SwingUtilities.invokeLater(() -> {
+                    if (initialSelection != null) {
+                        selectView(initialSelection);
+                    }
+                });
+            }
+        });
+        innerPanel.availablePrefsScrollPane.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                SwingUtilities.invokeLater(PreferencesWindowController.this::adjustTreeSize);
+            }
+        });
+    }
+
+    private void showSearch() {
+        ActionMap actionMap = innerPanel.getActionMap();
+        InputMap inputMap = innerPanel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+
+        actionMap.put(ACTION_KEY_NEW_SEARCH, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                innerPanel.searchTextField.requestFocusInWindow();
+                innerPanel.searchTextField.selectAll();
+            }
+        });
+        KeyStroke searchKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_F,
+                Java8Compat.getMenuShortcutKeyMaskEx());
+        inputMap.put(searchKeyStroke, ACTION_KEY_NEW_SEARCH);
+        actionMap.put(ACTION_KEY_CLEAR_OR_CLOSE, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (!innerPanel.searchTextField.isEmpty()) {
+                    // Move focus away from search field
+                    innerPanel.availablePrefsTree.requestFocusInWindow();
+                    innerPanel.clearButton.doClick();
+                } else {
+                    StaticUIUtils.closeWindowByEvent(dialog);
+                }
+            }
+        });
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), ACTION_KEY_CLEAR_OR_CLOSE);
+
+        // Don't let Enter close the dialog
+        innerPanel.searchTextField.getInputMap(JComponent.WHEN_FOCUSED)
+                .put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), ACTION_KEY_DO_SEARCH);
+        innerPanel.searchTextField.getActionMap().put(ACTION_KEY_DO_SEARCH, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                searchCurrentView();
+            }
+        });
+
+        String searchKeyText = StaticUIUtils.getKeyStrokeText(searchKeyStroke);
+        innerPanel.searchTextField.setHintText(OStrings.getString("PREFERENCES_SEARCH_HINT", searchKeyText));
+    }
+
+    private void showInitState(Window parent) {
+        // Set initial state
+        searchAndFilterTree();
+        adjustTreeSize();
+        dialog.getRootPane().setDefaultButton(outerPanel.okButton);
+
+        dialog.setPreferredSize(new Dimension(800, 500));
+        dialog.pack();
+        // Prevent search field from getting initial focus
+        innerPanel.availablePrefsTree.requestFocusInWindow();
+        dialog.setLocationRelativeTo(parent);
+        dialog.setVisible(true);
+    }
+
+    private void showOuterPanel() {
+        outerPanel.okButton.addActionListener(e -> {
+            if (currentView == null || currentView.validate()) {
+                new SwingWorker<Void, Void>() {
+                    @Override
+                    protected Void doInBackground() throws Exception {
+                        doSave();
+                        return null;
+                    }
+
+                    @Override
+                    protected void done() {
+                        if (getIsReloadRequired()) {
+                            SwingUtilities.invokeLater(ProjectUICommands::promptReload);
+                        }
+                    }
+                }.execute();
+                StaticUIUtils.closeWindowByEvent(dialog);
+            }
+        });
+        outerPanel.cancelButton.addActionListener(e -> StaticUIUtils.closeWindowByEvent(dialog));
+
+        // Hide undo, reset buttons on outer panel
+        outerPanel.undoButton.setVisible(false);
+        outerPanel.resetButton.setVisible(false);
+    }
+
+    private void showRenderer() {
+        TreeCellRenderer cellRenderer = innerPanel.availablePrefsTree.getCellRenderer();
+        DefaultTreeCellRenderer renderer = (DefaultTreeCellRenderer) cellRenderer;
+        renderer.setIcon(null);
+        renderer.setLeafIcon(null);
+        renderer.setOpenIcon(null);
+        renderer.setClosedIcon(null);
+        renderer.setDisabledIcon(null);
+    }
+
+    @NotNull
+    private DefaultMutableTreeNode getDefaultMutableTreeNode() {
         outerPanel = new PreferencePanel();
         innerPanel = new PreferenceViewSelectorPanel();
         outerPanel.prefsViewPanel.add(innerPanel, BorderLayout.CENTER);
@@ -242,142 +368,27 @@ public class PreferencesWindowController implements FurtherActionListener {
             }
         });
         innerPanel.selectedPrefsScrollPane.getViewport().setBackground(innerPanel.getBackground());
-        DefaultTreeCellRenderer renderer = (DefaultTreeCellRenderer) innerPanel.availablePrefsTree
-                .getCellRenderer();
-        renderer.setIcon(null);
-        renderer.setLeafIcon(null);
-        renderer.setOpenIcon(null);
-        renderer.setClosedIcon(null);
-        renderer.setDisabledIcon(null);
-
-        outerPanel.okButton.addActionListener(e -> {
-            if (currentView == null || currentView.validate()) {
-                new SwingWorker<Void, Void>() {
-                    @Override
-                    protected Void doInBackground() throws Exception {
-                        doSave();
-                        return null;
-                    }
-
-                    @Override
-                    protected void done() {
-                        if (getIsReloadRequired()) {
-                            SwingUtilities.invokeLater(ProjectUICommands::promptReload);
-                        }
-                    }
-                }.execute();
-                StaticUIUtils.closeWindowByEvent(dialog);
-            }
-        });
-        outerPanel.cancelButton.addActionListener(e -> StaticUIUtils.closeWindowByEvent(dialog));
-
-        // Hide undo, reset buttons on outer panel
-        outerPanel.undoButton.setVisible(false);
-        outerPanel.resetButton.setVisible(false);
-        // Use ones on inner panel to indicate that actions are view-specific
-        innerPanel.undoButton.addActionListener(e -> currentView.undoChanges());
-        innerPanel.resetButton.addActionListener(e -> currentView.restoreDefaults());
-
-        dialog.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowOpened(WindowEvent e) {
-                walkTree(root, node -> {
-                    // Start with tree fully expanded
-                    if (node.getChildCount() > 0) {
-                        innerPanel.availablePrefsTree.expandPath(new TreePath(node.getPath()));
-                    }
-                });
-                SwingUtilities.invokeLater(() -> {
-                    if (initialSelection != null) {
-                        selectView(initialSelection);
-                    }
-                });
-            }
-        });
-        innerPanel.availablePrefsScrollPane.addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                SwingUtilities.invokeLater(PreferencesWindowController.this::adjustTreeSize);
-            }
-        });
-
-        ActionMap actionMap = innerPanel.getActionMap();
-        InputMap inputMap = innerPanel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-
-        actionMap.put(ACTION_KEY_NEW_SEARCH, new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                innerPanel.searchTextField.requestFocusInWindow();
-                innerPanel.searchTextField.selectAll();
-            }
-        });
-        KeyStroke searchKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_F,
-                Java8Compat.getMenuShortcutKeyMaskEx());
-        inputMap.put(searchKeyStroke, ACTION_KEY_NEW_SEARCH);
-        actionMap.put(ACTION_KEY_CLEAR_OR_CLOSE, new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (!innerPanel.searchTextField.isEmpty()) {
-                    // Move focus away from search field
-                    innerPanel.availablePrefsTree.requestFocusInWindow();
-                    innerPanel.clearButton.doClick();
-                } else {
-                    StaticUIUtils.closeWindowByEvent(dialog);
-                }
-            }
-        });
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), ACTION_KEY_CLEAR_OR_CLOSE);
-
-        // Don't let Enter close the dialog
-        innerPanel.searchTextField.getInputMap(JComponent.WHEN_FOCUSED)
-                .put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), ACTION_KEY_DO_SEARCH);
-        innerPanel.searchTextField.getActionMap().put(ACTION_KEY_DO_SEARCH, new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                searchCurrentView();
-            }
-        });
-
-        String searchKeyText = StaticUIUtils.getKeyStrokeText(searchKeyStroke);
-        innerPanel.searchTextField.setHintText(OStrings.getString("PREFERENCES_SEARCH_HINT", searchKeyText));
-
-        // Set initial state
-        searchAndFilterTree();
-        adjustTreeSize();
-
-        dialog.getRootPane().setDefaultButton(outerPanel.okButton);
-
-        dialog.setPreferredSize(new Dimension(800, 500));
-        dialog.pack();
-        // Prevent search field from getting initial focus
-        innerPanel.availablePrefsTree.requestFocusInWindow();
-        dialog.setLocationRelativeTo(parent);
-        dialog.setVisible(true);
+        return root;
     }
-//todo: 10.0 & PreferencesWindowController & createNodeTree & 31.0 & 0.967741935483871 & 1.0 & 0 & 0 & 0
+
+    //todo: 10.0 & PreferencesWindowController & createNodeTree & 31.0 & 0.967741935483871 & 1.0 & 0 & 0 & 0
     private static DefaultMutableTreeNode createNodeTree() {
         HideableNode root = new HideableNode();
-        root.add(new HideableNode(new GeneralOptionsController()));
-        root.add(new HideableNode(new MachineTranslationPreferencesController()));
-        root.add(new HideableNode(new GlossaryPreferencesController()));
-        root.add(new HideableNode(new DictionaryPreferencesController()));
-        HideableNode appearanceNode = new HideableNode(new AppearanceController());
-        appearanceNode.add(new HideableNode(new FontSelectionController()));
-        appearanceNode.add(new HideableNode(new CustomColorSelectionController()));
-        root.add(appearanceNode);
+        addNodeDictOnRoot(root);
+        setAppearance(root);
         root.add(new HideableNode(new FiltersCustomizerController()));
         root.add(new HideableNode(new SegmentationCustomizerController()));
-        HideableNode acNode = new HideableNode(new AutoCompleterController());
-        acNode.add(new HideableNode(new GlossaryAutoCompleterOptionsController()));
-        acNode.add(new HideableNode(new AutotextAutoCompleterOptionsController()));
-        acNode.add(new HideableNode(new CharTableAutoCompleterOptionsController()));
-        acNode.add(new HideableNode(new HistoryAutoCompleterOptionsController()));
-        root.add(acNode);
-        root.add(new HideableNode(new SpellcheckerConfigurationController()));
-        root.add(new HideableNode(new LanguageToolConfigurationController()));
-        root.add(new HideableNode(new ExternalFinderPreferencesController()));
-        root.add(new HideableNode(new EditingBehaviorController()));
-        root.add(new HideableNode(new TagProcessingOptionsController()));
+        setAcNode(root);
+        setNodeConfOnRoot(root);
+        setTeamNode(root);
+        HideableNode pluginsNode = new HideableNode(new PluginsPreferencesController());
+        root.add(pluginsNode);
+        root.add(new HideableNode(new VersionCheckPreferencesController()));
+        PreferencesControllers.getSuppliers().forEach(s -> placePluginView(root, s.get()));
+        return root;
+    }
+
+    private static void setTeamNode(HideableNode root) {
         HideableNode teamNode = new HideableNode(new TeamOptionsController());
         teamNode.add(new HideableNode(new RepositoriesCredentialsController()));
         root.add(teamNode);
@@ -386,11 +397,37 @@ public class PreferencesWindowController implements FurtherActionListener {
         root.add(new HideableNode(new SaveOptionsController()));
         root.add(new HideableNode(new UserPassController()));
         root.add(new HideableNode(new SecureStoreController()));
-        HideableNode pluginsNode = new HideableNode(new PluginsPreferencesController());
-        root.add(pluginsNode);
-        root.add(new HideableNode(new VersionCheckPreferencesController()));
-        PreferencesControllers.getSuppliers().forEach(s -> placePluginView(root, s.get()));
-        return root;
+    }
+
+    private static void setNodeConfOnRoot(HideableNode root) {
+        root.add(new HideableNode(new SpellcheckerConfigurationController()));
+        root.add(new HideableNode(new LanguageToolConfigurationController()));
+        root.add(new HideableNode(new ExternalFinderPreferencesController()));
+        root.add(new HideableNode(new EditingBehaviorController()));
+        root.add(new HideableNode(new TagProcessingOptionsController()));
+    }
+
+    private static void setAcNode(HideableNode root) {
+        HideableNode acNode = new HideableNode(new AutoCompleterController());
+        acNode.add(new HideableNode(new GlossaryAutoCompleterOptionsController()));
+        acNode.add(new HideableNode(new AutotextAutoCompleterOptionsController()));
+        acNode.add(new HideableNode(new CharTableAutoCompleterOptionsController()));
+        acNode.add(new HideableNode(new HistoryAutoCompleterOptionsController()));
+        root.add(acNode);
+    }
+
+    private static void setAppearance(HideableNode root) {
+        HideableNode appearanceNode = new HideableNode(new AppearanceController());
+        appearanceNode.add(new HideableNode(new FontSelectionController()));
+        appearanceNode.add(new HideableNode(new CustomColorSelectionController()));
+        root.add(appearanceNode);
+    }
+
+    private static void addNodeDictOnRoot(HideableNode root) {
+        root.add(new HideableNode(new GeneralOptionsController()));
+        root.add(new HideableNode(new MachineTranslationPreferencesController()));
+        root.add(new HideableNode(new GlossaryPreferencesController()));
+        root.add(new HideableNode(new DictionaryPreferencesController()));
     }
 
     private static void placePluginView(HideableNode root, IPreferencesController view) {
