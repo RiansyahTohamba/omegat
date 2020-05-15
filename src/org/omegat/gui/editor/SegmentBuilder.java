@@ -254,65 +254,26 @@ public class SegmentBuilder {
     /**
      * Create active segment for given entry
      */
+//    todo:sudah 10.0 & SegmentBuilder & createActiveSegmentElement & 13.0 & 0.846  & 5.0 & 0 & 0 & 0
     private void createActiveSegmentElement(TMXEntry trans) throws BadLocationException {
         try {
-            if (EditorSettings.DISPLAY_MODIFICATION_INFO_ALL.equals(settings.getDisplayModificationInfo())
-                    || EditorSettings.DISPLAY_MODIFICATION_INFO_SELECTED.equals(settings
-                            .getDisplayModificationInfo())) {
-                addModificationInfoPart(trans);
-            }
-
-            int prevOffset = offset;
+            checkIfModifNeeded(trans);
             sourceText = addInactiveSegPart(true, ste.getSrcText());
-
-            Map<Language, ProjectTMX> otherLanguageTMs = Core.getProject().getOtherTargetLanguageTMs();
-            for (Map.Entry<Language, ProjectTMX> entry : otherLanguageTMs.entrySet()) {
-                TMXEntry altTrans = entry.getValue().getDefaultTranslation(ste.getSrcText());
-                if (altTrans != null && altTrans.isTranslated()) {
-                    Language language = entry.getKey();
-                    addOtherLanguagePart(altTrans.translation, language);
-                }
-            }
-
-            posSourceBeg = doc.createPosition(prevOffset + (hasRTL ? 1 : 0));
+            addOtherLang();
+            posSourceBeg = doc.createPosition(offset + (hasRTL ? 1 : 0));
             posSourceLength = sourceText.length();
-
-            if (trans.isTranslated()) {
-                //translation exist
-                translationText = trans.translation;
-            } else {
-                boolean insertSource = !Preferences.isPreference(Preferences.DONT_INSERT_SOURCE_TEXT);
-                if (controller.entriesFilter != null && controller.entriesFilter.isSourceAsEmptyTranslation()) {
-                    insertSource = true;
-                }
-                if (insertSource) {
-                    // need to insert source text on empty translation
-                    String srcText = ste.getSrcText();
-                    if (Preferences.isPreference(Preferences.GLOSSARY_REPLACE_ON_INSERT)) {
-                        srcText = EditorUtils.replaceGlossaryEntries(srcText);
-                    }
-                    translationText = srcText;
-                } else {
-                    // empty text on non-exist translation
-                    translationText = "";
-                }
-            }
-
+            checkTranslt(trans);
             translationText = addActiveSegPart(translationText);
             posTranslationBeg = null;
-
-            doc.activeTranslationBeginM1 = doc.createPosition(activeTranslationBeginOffset - 1);
-            doc.activeTranslationEndP1 = doc.createPosition(activeTranslationEndOffset + 1);
+            createPos();
         } catch (OutOfMemoryError oome) {
             // Oh shit, we're all out of storage space!
             // Of course we should've cleaned up after ourselves earlier,
             // but since we didn't, do a bit of cleaning up now, otherwise
             // we can't even inform the user about our slacking off.
             doc.remove(0, doc.getLength());
-
             // Well, that cleared up some, GC to the rescue!
             System.gc();
-
             // There, that should do it, now inform the user
             long memory = Runtime.getRuntime().maxMemory() / 1024 / 1024;
             Log.logErrorRB("OUT_OF_MEMORY", memory);
@@ -320,7 +281,57 @@ public class SegmentBuilder {
             Core.getMainWindow().showErrorDialogRB("TF_ERROR", "OUT_OF_MEMORY", memory);
             // Just quit, we can't help it anyway
             System.exit(0);
+        }
+    }
 
+    private void checkTranslt(TMXEntry trans) {
+        if (trans.isTranslated()) {
+            //translation exist
+            translationText = trans.translation;
+        } else {
+            transltNotExist();
+        }
+    }
+
+    private void createPos() throws BadLocationException {
+        doc.activeTranslationBeginM1 = doc.createPosition(activeTranslationBeginOffset - 1);
+        doc.activeTranslationEndP1 = doc.createPosition(activeTranslationEndOffset + 1);
+    }
+
+    private void addOtherLang() throws BadLocationException {
+        Map<Language, ProjectTMX> otherLanguageTMs = Core.getProject().getOtherTargetLanguageTMs();
+        for (Map.Entry<Language, ProjectTMX> entry : otherLanguageTMs.entrySet()) {
+            TMXEntry altTrans = entry.getValue().getDefaultTranslation(ste.getSrcText());
+            if (altTrans != null && altTrans.isTranslated()) {
+                Language language = entry.getKey();
+                addOtherLanguagePart(altTrans.translation, language);
+            }
+        }
+    }
+
+    private void checkIfModifNeeded(TMXEntry trans) throws BadLocationException {
+        if (EditorSettings.DISPLAY_MODIFICATION_INFO_ALL.equals(settings.getDisplayModificationInfo())
+                || EditorSettings.DISPLAY_MODIFICATION_INFO_SELECTED.equals(settings
+                        .getDisplayModificationInfo())) {
+            addModificationInfoPart(trans);
+        }
+    }
+
+    private void transltNotExist() {
+        boolean insertSource = !Preferences.isPreference(Preferences.DONT_INSERT_SOURCE_TEXT);
+        if (controller.entriesFilter != null && controller.entriesFilter.isSourceAsEmptyTranslation()) {
+            insertSource = true;
+        }
+        if (insertSource) {
+            // need to insert source text on empty translation
+            String srcText = ste.getSrcText();
+            if (Preferences.isPreference(Preferences.GLOSSARY_REPLACE_ON_INSERT)) {
+                srcText = EditorUtils.replaceGlossaryEntries(srcText);
+            }
+            translationText = srcText;
+        } else {
+            // empty text on non-exist translation
+            translationText = "";
         }
     }
 
