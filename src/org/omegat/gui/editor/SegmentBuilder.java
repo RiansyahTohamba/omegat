@@ -254,7 +254,8 @@ public class SegmentBuilder {
     /**
      * Create active segment for given entry
      */
-//    todo:sudah 10.0 & SegmentBuilder & createActiveSegmentElement & 13.0 & 0.846  & 5.0 & 0 & 0 & 0
+//    sudah 10.0 & SegmentBuilder & createActiveSegmentElement & 13.0 & 0.846  & 5.0 & 0 & 0 & 0
+//    todo:nanti dihitung langsung utk semuanya
     private void createActiveSegmentElement(TMXEntry trans) throws BadLocationException {
         try {
             checkIfModifNeeded(trans);
