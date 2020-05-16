@@ -220,7 +220,7 @@ public final class ProjectUICommands {
             }
         }.execute();
     }
-
+//todo: projectCreateMED & 12.0 & 0.666 & 3.0 & 0 & 0 & 0
     public static void projectCreateMED() {
         UIThreadsUtil.mustBeSwingThread();
 
@@ -408,6 +408,7 @@ public final class ProjectUICommands {
      * @param closeCurrent
      *            whether or not to close the current project first, if any
      */
+//    todo: projectOpen & 8.0 & 0.875 & 7.0 & 0 & 0 & 0
     public static void projectOpen(final File projectDirectory, boolean closeCurrent) {
         UIThreadsUtil.mustBeSwingThread();
 
@@ -710,7 +711,7 @@ public final class ProjectUICommands {
             }
         }.execute();
     }
-
+//todo: projectEditProperties & 12.0 & 0.666 & 3.0 & 0 & 0 & 0
     public static void projectEditProperties() {
         UIThreadsUtil.mustBeSwingThread();
 
@@ -948,6 +949,7 @@ public final class ProjectUICommands {
      * @param doReload
      *            If true, the project will be reloaded after the files are successfully copied
      */
+//    todo: projectImportFiles & 9.0 & 0.778 & 3.0 & 0 & 0 & 0
     public static void projectImportFiles(String destination, File[] toImport, boolean doReload) {
         UIThreadsUtil.mustBeSwingThread();
 
@@ -1018,6 +1020,7 @@ public final class ProjectUICommands {
     /**
      * Does wikiread
      */
+//    todo: doWikiImport & 9.0 & 0.778 & 2.0 & 0 & 0 & 0
     public static void doWikiImport() {
         String remoteUrl = JOptionPane.showInputDialog(Core.getMainWindow().getApplicationFrame(),
                 OStrings.getString("TF_WIKI_IMPORT_PROMPT"),

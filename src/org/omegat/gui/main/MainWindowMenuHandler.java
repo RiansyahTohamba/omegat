@@ -223,6 +223,7 @@ public final class MainWindowMenuHandler {
     /**
      * Create current translated document.
      */
+//    todo:
     public void projectSingleCompileMenuItemActionPerformed() {
         String midName = Core.getEditor().getCurrentFile();
         if (StringUtil.isEmpty(midName)) {
@@ -302,7 +303,7 @@ public final class MainWindowMenuHandler {
         String path = Core.getProject().getProjectProperties().getTMRoot();
         openFile(new File(path));
     }
-
+//todo: projectAccessCurrentSourceDocumentMenuItemActionPerformed & 8.0 & 0.75 & 2.0 & 0 & 0 & 0
     public void projectAccessCurrentSourceDocumentMenuItemActionPerformed(int modifier) {
         if (!Core.getProject().isProjectLoaded()) {
             return;
@@ -318,7 +319,7 @@ public final class MainWindowMenuHandler {
         }
         openFile(toOpen);
     }
-
+//todo: projectAccessCurrentTargetDocumentMenuItemActionPerformed & 8.0 & 0.75 & 2.0 & 0 & 0 & 0
     public void projectAccessCurrentTargetDocumentMenuItemActionPerformed(int modifier) {
         if (!Core.getProject().isProjectLoaded()) {
             return;
@@ -369,29 +370,37 @@ public final class MainWindowMenuHandler {
     }
 
     /** Quits OmegaT */
+//    sudah projectExitMenuItemActionPerformed & 8.0 & 0.75 & 4.0 & 0 & 0 & 0
+//    todo: tinggal hitung
     public void projectExitMenuItemActionPerformed() {
          // Bug #902: commit the current entry first
         // We do it before checking project status, so that it can eventually change it
-        if (Core.getProject().isProjectLoaded()) {
+        if (Core.isProjectLoaded()) {
             Core.getEditor().commitAndLeave();
         }
-
         boolean projectModified = false;
-        if (Core.getProject().isProjectLoaded()) {
-            projectModified = Core.getProject().isProjectModified();
+        if (Core.isProjectLoaded()) {
+            projectModified = Core.isProjectModified();
         }
+        if (addWarning(projectModified)) return;
+        SegmentExportImport.flushExportedSegments();
+        setSwingWorker();
+    }
+
+    private boolean addWarning(boolean projectModified) {
         // RFE 1302358
         // Add Yes/No Warning before OmegaT quits
         if (projectModified || Preferences.isPreference(Preferences.ALWAYS_CONFIRM_QUIT)) {
             if (JOptionPane.YES_OPTION != JOptionPane.showConfirmDialog(mainWindow,
                     OStrings.getString("MW_QUIT_CONFIRM"), OStrings.getString("CONFIRM_DIALOG_TITLE"),
                     JOptionPane.YES_NO_OPTION)) {
-                return;
+                return true;
             }
         }
+        return false;
+    }
 
-        SegmentExportImport.flushExportedSegments();
-
+    private void setSwingWorker() {
         new SwingWorker<Object, Void>() {
             @Override
             protected Object doInBackground() throws Exception {
@@ -472,6 +481,7 @@ public final class MainWindowMenuHandler {
     /**
      * replaces entire edited segment text with a the source text of a segment at cursor position
      */
+//    todo: editOverwriteSourceMenuItemActionPerformed & 8.0 & 0.75 & 2.0 & 0 & 0 & 0
     public void editOverwriteSourceMenuItemActionPerformed() {
         if (!Core.getProject().isProjectLoaded()) {
             return;
@@ -484,6 +494,7 @@ public final class MainWindowMenuHandler {
     }
 
     /** inserts the source text of a segment at cursor position */
+//    todo:
     public void editInsertSourceMenuItemActionPerformed() {
         if (!Core.getProject().isProjectLoaded()) {
             return;
@@ -494,7 +505,7 @@ public final class MainWindowMenuHandler {
         }
         Core.getEditor().insertText(toInsert);
     }
-
+//todo:
     public void editExportSelectionMenuItemActionPerformed() {
         if (!Core.getProject().isProjectLoaded()) {
             return;

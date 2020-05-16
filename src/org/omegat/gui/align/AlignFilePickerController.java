@@ -114,6 +114,7 @@ public class AlignFilePickerController {
      *            Parent window of file picker and align window
      */
     @SuppressWarnings("serial")
+//    todo: show & 8.0 & 1.0 & 5.0 & 0 & 0 & 0
     public void show(final Component parent) {
         final JFrame frame = new JFrame(OStrings.getString("ALIGNER_FILEPICKER"));
         frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -425,6 +426,8 @@ public class AlignFilePickerController {
      * @param args
      * @throws Exception
      */
+//    todo: ada main disini wkwkw
+//    todo: main & 9.0 & 0.778 & 2.0 & 0 & 0 & 0
     public static void main(String[] args) throws Exception {
         System.setProperty("apple.laf.useScreenMenuBar", "true");
 

@@ -85,8 +85,7 @@ public class SegmentPropertiesArea implements IPaneMenu {
     private static final String KEY_ID = "id";
     private static final String KEY_TRANSLATION = "translation";
     private static final String KEY_TRANSLATIONISFUZZY = "translationIsFuzzy";
-    // private static final String KEY_NEXT = "next";
-    // private static final String KEY_PREV = "prev";
+
     private static final String KEY_PATH = "path";
     private static final String KEY_HASNOTE = "hasNote";
     private static final String KEY_CHANGED = "changed";
@@ -101,7 +100,7 @@ public class SegmentPropertiesArea implements IPaneMenu {
     final DockableScrollPane scrollPane;
 
     private ISegmentPropertiesView viewImpl;
-
+//todo:SegmentPropertiesArea & 13.0 & 0.769 & 3.0 & 0 & 0 & 0  
     public SegmentPropertiesArea(IMainWindow mw) {
         scrollPane = new DockableScrollPane("SEGMENTPROPERTIES", OStrings.getString("SEGPROP_PANE_TITLE"),
                 null, true);

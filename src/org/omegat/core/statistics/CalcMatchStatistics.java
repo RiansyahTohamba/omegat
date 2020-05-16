@@ -137,7 +137,7 @@ public class CalcMatchStatistics extends LongProcessThread {
     void showTable(String[][] table) {
         callback.setTable(header, table);
     }
-
+//todo: calcPerFile & 11.0 & 0.818 & 2.0 & 0 & 0 & 0
     void calcPerFile() {
         int fileNumber = 0;
         for (IProject.FileInfo fi : Core.getProject().getProjectFiles()) {
@@ -216,7 +216,7 @@ public class CalcMatchStatistics extends LongProcessThread {
 
         return result;
     }
-
+//todo: forFile & 9.0 & 0.666 & 3.0 & 0 & 0 & 0
     MatchStatCounts forFile(IProject.FileInfo fi) {
         MatchStatCounts result = new MatchStatCounts();
         alreadyProcessedInFile.clear();

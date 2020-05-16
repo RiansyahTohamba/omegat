@@ -214,7 +214,7 @@ public class EditorController implements IEditor {
      * Previous translations. Used for optimistic locking.
      */
     private IProject.AllTranslations previousTranslations;
-
+//todo: EditorController & 11.0 & 0.818 & 2.0 & 0 & 0 & 0
     public EditorController(final MainWindow mainWindow) {
         this.mw = mainWindow;
 
@@ -825,6 +825,7 @@ public class EditorController implements IEditor {
      * <p>
      * Also moves document focus to current entry, and makes sure fuzzy info displayed if available.
      */
+//    todo: activateEntry & 21.0 & 0.7142857142857143 & 3.0 & 0 & 0 & 0
     public void activateEntry(CaretPosition pos) {
         UIThreadsUtil.mustBeSwingThread();
 
@@ -995,6 +996,7 @@ public class EditorController implements IEditor {
     /**
      * Calculate statistic for file, request statistic for project and display in status bar.
      */
+//    todo: showStat & 10.0 & 0.8 & 4.0 & 0 & 0 & 0
     public void showStat() {
         IProject project = Core.getProject();
         IProject.FileInfo fi = project.getProjectFiles().get(displayedFileIndex);
@@ -1503,7 +1505,7 @@ public class EditorController implements IEditor {
     public void gotoEntry(final int entryNum) {
         gotoEntry(entryNum, CaretPosition.startOfEntry());
     }
-
+//  todo: gotoEntry & 8.0 & 0.75 & 4.0 & 0 & 0 & 0
     public void gotoEntry(final int entryNum, final CaretPosition pos) {
         UIThreadsUtil.mustBeSwingThread();
 
@@ -1693,6 +1695,7 @@ public class EditorController implements IEditor {
      * {@inheritDoc}
      */
     @Override
+//    todo: replaceEditText & 9.0 & 0.666 & 2.0 & 0 & 0 & 0
     public void replaceEditText(String text) {
         UIThreadsUtil.mustBeSwingThread();
 

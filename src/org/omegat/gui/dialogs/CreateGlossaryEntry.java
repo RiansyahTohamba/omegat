@@ -96,7 +96,9 @@ public class CreateGlossaryEntry extends JDialog {
     public javax.swing.JTextArea getGlossaryFileText() {
         return glossaryFileText;
     }
-
+    public String getGlossaryText(){
+        return glossaryFileText.getText();
+    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always

@@ -63,6 +63,7 @@ import javax.swing.text.Element;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.StyledDocument;
 
+import org.jetbrains.annotations.NotNull;
 import org.omegat.core.Core;
 import org.omegat.core.data.ProjectProperties;
 import org.omegat.core.data.SourceTextEntry;
@@ -122,22 +123,25 @@ public class GlossaryTextArea extends EntryInfoThreadPane<List<GlossaryEntry>>
     private transient final IGlossaryRenderer entryRenderer = new DefaultGlossaryRenderer();
 
     /** Creates new form MatchGlossaryPane */
+//    GlossaryTextArea & GlossaryTextArea & 10.0 & 1.0 & 3.0 & 0 & 0 & 0
+//    nestingnya sdh dihapus
     public GlossaryTextArea(IMainWindow mw) {
         super(true);
-
         String title = OStrings.getString("GUI_MATCHWINDOW_SUBWINDOWTITLE_Glossary");
         scrollPane = new DockableScrollPane("GLOSSARY", title, this, true);
         mw.addDockable(scrollPane);
-
         setEditable(false);
         StaticUIUtils.makeCaretAlwaysVisible(this);
         setText(EXPLANATION);
         setMinimumSize(new Dimension(100, 50));
-
         addMouseListener(mouseListener);
-
         Core.getEditor().registerPopupMenuConstructors(300, new TransTipsPopup());
+        applyDragTarget();
+        ToolTipManager.sharedInstance().registerComponent(this);
+        JTextPaneLinkifier.linkify(this);
+    }
 
+    private void applyDragTarget() {
         if (!GraphicsEnvironment.isHeadless()) {
             DragTargetOverlay.apply(this, new FileDropInfo(false) {
                 @Override
@@ -165,10 +169,6 @@ public class GlossaryTextArea extends EntryInfoThreadPane<List<GlossaryEntry>>
                 }
             });
         }
-
-        ToolTipManager.sharedInstance().registerComponent(this);
-
-        JTextPaneLinkifier.linkify(this);
     }
 
     @Override
@@ -210,28 +210,28 @@ public class GlossaryTextArea extends EntryInfoThreadPane<List<GlossaryEntry>>
      * of {@link GlossaryEntry}.
      */
     @Override
+//    GlossaryTextArea & setFoundResult & 8.0 & 0.875 & 2.0 & 0 & 0 & 0
+//    sudah dikurangi 2,dari IEditor, IEditorSettings, dan method yg lain
     protected void setFoundResult(SourceTextEntry en, List<GlossaryEntry> entries) {
         UIThreadsUtil.mustBeSwingThread();
-
         clear();
-
         if (entries == null) {
             return;
         }
-
         if (!entries.isEmpty() && Preferences.isPreference(Preferences.NOTIFY_GLOSSARY_HITS)) {
             scrollPane.notify(true);
         }
-
         nowEntries = entries;
-
-        // If the TransTips is enabled then underline all the matched glossary entries
-        if (Core.getEditor().getSettings().isMarkGlossaryMatches()) {
-            Core.getEditor().remarkOneMarker(TransTipsMarker.class.getName());
-        }
-
+        remarkGlossaryEntries();
         for (GlossaryEntry entry : entries) {
             entryRenderer.render(entry, getStyledDocument());
+        }
+    }
+
+    private void remarkGlossaryEntries() {
+        // If the TransTips is enabled then underline all the matched glossary entries
+        if (Core.isMarkGlossaryMatches()) {
+            Core.remarkOneMarker(TransTipsMarker.class.getName());
         }
     }
 
@@ -322,22 +322,30 @@ public class GlossaryTextArea extends EntryInfoThreadPane<List<GlossaryEntry>>
     }
 
     @Override
+//    showCreateGlossaryEntryDialog & 8.0 & 0.75 & 5.0 & 0 & 0 & 0
     public void showCreateGlossaryEntryDialog(final Frame parent) {
         CreateGlossaryEntry d = createGlossaryEntryDialog;
         if (d != null) {
             d.requestFocus();
             return;
         }
-
         ProjectProperties props = Core.getProject().getProjectProperties();
         final File out = new File(props.getWriteableGlossary());
-
         final CreateGlossaryEntry dialog = new CreateGlossaryEntry(parent);
-        String txt = dialog.getGlossaryFileText().getText();
-        txt = MessageFormat.format(txt, out.getAbsolutePath());
+        setEntryDialog(out, dialog);
+    }
+
+    private void setEntryDialog(File out, CreateGlossaryEntry dialog) {
+        String txt = MessageFormat.format(dialog.getGlossaryText(), out.getAbsolutePath());
         dialog.getGlossaryFileText().setText(txt);
         dialog.getSourceText().requestFocus();
+        addListener(out, dialog);
+        StaticUIUtils.persistGeometry(dialog, Preferences.CREATE_GLOSSARY_GEOMETRY_PREFIX);
+        dialog.setVisible(true);
+        createGlossaryEntryDialog = dialog;
+    }
 
+    private void addListener(File out, CreateGlossaryEntry dialog) {
         dialog.addWindowFocusListener(new WindowFocusListener() {
             @Override
             public void windowLostFocus(WindowEvent e) {
@@ -396,38 +404,32 @@ public class GlossaryTextArea extends EntryInfoThreadPane<List<GlossaryEntry>>
                 }
             }
         });
-        StaticUIUtils.persistGeometry(dialog, Preferences.CREATE_GLOSSARY_GEOMETRY_PREFIX);
-        dialog.setVisible(true);
-        createGlossaryEntryDialog = dialog;
     }
 
     @Override
+//    GlossaryTextArea & populatePaneMenu & 9.0 & 0.888 & 2.0 & 0 & 0 & 0
     public void populatePaneMenu(JPopupMenu menu) {
         populateContextMenu(menu);
         menu.addSeparator();
+        final JMenuItem openFile = enableOpenFile();
+        menu.add(openFile);
+        menu.addSeparator();
+        final JMenuItem notify = new JCheckBoxMenuItem(OStrings.getString("GUI_GLOSSARYWINDOW_SETTINGS_NOTIFICATIONS"));
+        notify.setSelected(Preferences.isPreference(Preferences.NOTIFY_GLOSSARY_HITS));
+        notify.addActionListener(e -> Preferences.setPreference(Preferences.NOTIFY_GLOSSARY_HITS, notify.isSelected()));
+        menu.add(notify);
+    }
+
+    @NotNull
+    private JMenuItem enableOpenFile() {
         final JMenuItem openFile = new JMenuItem(OStrings.getString("GUI_GLOSSARYWINDOW_SETTINGS_OPEN_FILE"));
-        openFile.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Core.getMainWindow().getMainMenu().invokeAction("projectAccessWriteableGlossaryMenuItem", e.getModifiers());
-            }
-        });
+        openFile.addActionListener(e -> Core.getMainWindow().getMainMenu().invokeAction("projectAccessWriteableGlossaryMenuItem", e.getModifiers()));
         openFile.setEnabled(false);
         if (Core.getProject().isProjectLoaded()) {
             String glossaryPath = Core.getProject().getProjectProperties().getWriteableGlossary();
             openFile.setEnabled(!StringUtil.isEmpty(glossaryPath) && new File(glossaryPath).isFile());
         }
-        menu.add(openFile);
-        menu.addSeparator();
-        final JMenuItem notify = new JCheckBoxMenuItem(OStrings.getString("GUI_GLOSSARYWINDOW_SETTINGS_NOTIFICATIONS"));
-        notify.setSelected(Preferences.isPreference(Preferences.NOTIFY_GLOSSARY_HITS));
-        notify.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Preferences.setPreference(Preferences.NOTIFY_GLOSSARY_HITS, notify.isSelected());
-            }
-        });
-        menu.add(notify);
+        return openFile;
     }
 
 }

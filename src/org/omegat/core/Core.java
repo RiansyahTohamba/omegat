@@ -138,6 +138,12 @@ public final class Core {
     public static IProject getProject() {
         return currentProject;
     }
+    public static boolean isProjectLoaded() {
+        return currentProject.isProjectLoaded();
+    }
+    public static boolean isProjectModified() {
+        return currentProject.isProjectModified();
+    }
 
     /** Set new current project. */
     public static void setProject(final IProject newCurrentProject) {
@@ -153,7 +159,12 @@ public final class Core {
     public static IEditor getEditor() {
         return editor;
     }
-
+    public static boolean isMarkGlossaryMatches(){
+        return editor.getSettings().isMarkGlossaryMatches();
+    }
+    public static void remarkOneMarker(String markerClassName){
+        editor.remarkOneMarker(markerClassName);
+    }
     /** Get editor instance. */
     public static void commitSetFilter(IEditorFilter filter) {
         editor.commitAndLeave();
