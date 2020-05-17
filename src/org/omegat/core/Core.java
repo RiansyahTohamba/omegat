@@ -37,6 +37,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.omegat.core.data.EntryKey;
 import org.omegat.core.data.IProject;
 import org.omegat.core.data.NotLoadedProject;
+import org.omegat.core.data.ProjectProperties;
 import org.omegat.core.segmentation.Segmenter;
 import org.omegat.core.spellchecker.ISpellChecker;
 import org.omegat.core.spellchecker.SpellChecker;
@@ -137,6 +138,9 @@ public final class Core {
     /** Get project instance. */
     public static IProject getProject() {
         return currentProject;
+    }
+    public static String getProjectInternal(){
+        return currentProject.getProjectProperties().getProjectInternal();
     }
     public static boolean isProjectLoaded() {
         return currentProject.isProjectLoaded();

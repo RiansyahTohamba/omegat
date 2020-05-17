@@ -137,15 +137,27 @@ public class CalcMatchStatistics extends LongProcessThread {
     void showTable(String[][] table) {
         callback.setTable(header, table);
     }
-//todo: calcPerFile & 11.0 & 0.818 & 2.0 & 0 & 0 & 0
+//calcPerFile & 11.0 & 0.818 & 2.0 & 0 & 0 & 0
+//apply LOD pada getProjectInternal
     void calcPerFile() {
+        appendProjectFile();
+        String title = OStrings.getString("CT_STATSMATCH_FileTotal");
+        appendText(title + "\n");
+        String[][] table = calcTotal(false).calcTable(rowsTotal, i -> i != 1);
+        String outText = TextUtil.showTextTable(header, table, align);
+        appendText(outText + "\n");
+        appendTable(title, table);
+        String fn = Core.getProjectInternal() + OConsts.STATS_MATCH_PER_FILE_FILENAME;
+        Statistics.writeStat(fn, textForLog.toString());
+        callback.setDataFile(fn);
+    }
+
+    private void appendProjectFile() {
         int fileNumber = 0;
         for (IProject.FileInfo fi : Core.getProject().getProjectFiles()) {
             fileNumber++;
-
             MatchStatCounts perFile = forFile(fi);
             checkInterrupted();
-
             String[][] table = perFile.calcTable(rowsPerFile);
             String outText = TextUtil.showTextTable(header, table, align);
             String title = StringUtil.format(OStrings.getString("CT_STATSMATCH_File"), fileNumber, fi.filePath);
@@ -153,20 +165,6 @@ public class CalcMatchStatistics extends LongProcessThread {
             appendText(outText + "\n");
             appendTable(title, table);
         }
-
-        MatchStatCounts total = calcTotal(false);
-
-        String title = OStrings.getString("CT_STATSMATCH_FileTotal");
-        appendText(title + "\n");
-        String[][] table = total.calcTable(rowsTotal, i -> i != 1);
-        String outText = TextUtil.showTextTable(header, table, align);
-        appendText(outText + "\n");
-        appendTable(title, table);
-
-        String fn = Core.getProject().getProjectProperties().getProjectInternal()
-                + OConsts.STATS_MATCH_PER_FILE_FILENAME;
-        Statistics.writeStat(fn, textForLog.toString());
-        callback.setDataFile(fn);
     }
 
     MatchStatCounts calcTotal(boolean outData) {
@@ -208,7 +206,7 @@ public class CalcMatchStatistics extends LongProcessThread {
             String outText = TextUtil.showTextTable(header, table, align);
             showText(outText);
             showTable(table);
-            String fn = Core.getProject().getProjectProperties().getProjectInternal()
+            String fn = Core.getProjectInternal()
                     + OConsts.STATS_MATCH_FILENAME;
             Statistics.writeStat(fn, outText);
             callback.setDataFile(fn);
@@ -216,43 +214,43 @@ public class CalcMatchStatistics extends LongProcessThread {
 
         return result;
     }
-//todo: forFile & 9.0 & 0.666 & 3.0 & 0 & 0 & 0
+//forFile & 9.0 & 0.666 & 3.0 & 0 & 0 & 0
     MatchStatCounts forFile(IProject.FileInfo fi) {
         MatchStatCounts result = new MatchStatCounts();
         alreadyProcessedInFile.clear();
-
         final List<SourceTextEntry> untranslatedEntries = new ArrayList<SourceTextEntry>();
-
         // We should iterate all segments from file.
         for (SourceTextEntry ste : fi.entries) {
-            checkInterrupted();
-            StatCount count = new StatCount(ste);
-            boolean existInFile = alreadyProcessedInFile.contains(ste.getSrcText());
-            boolean existInPreviousFiles = alreadyProcessedInProject.contains(ste.getSrcText());
-            if (Core.getProject().getTranslationInfo(ste).isTranslated()) {
-                // segment has translation - should be calculated as
-                // "Exact matched"
-                result.addExact(count);
-                treated++;
-            } else if (existInPreviousFiles) {
-                // exist in other file
-                result.addRepetitionFromOtherFiles(count);
-                entryProcessed();
-            } else if (existInFile) {
-                // exist in this file
-                result.addRepetitionWithinThisFile(count);
-                entryProcessed();
-            } else {
-                // first time
-                untranslatedEntries.add(ste);
-                alreadyProcessedInFile.add(ste.getSrcText());
-            }
+            iterateAllSegments(result, untranslatedEntries, ste);
         }
         alreadyProcessedInProject.addAll(alreadyProcessedInFile);
-
         calcSimilarity(untranslatedEntries).ifPresent(result::addCounts);
-
         return result;
+    }
+
+    private void iterateAllSegments(MatchStatCounts result, List<SourceTextEntry> untranslatedEntries, SourceTextEntry ste) {
+        checkInterrupted();
+        StatCount count = new StatCount(ste);
+        boolean existInFile = alreadyProcessedInFile.contains(ste.getSrcText());
+        boolean existInPreviousFiles = alreadyProcessedInProject.contains(ste.getSrcText());
+        if (Core.getProject().getTranslationInfo(ste).isTranslated()) {
+            // segment has translation - should be calculated as
+            // "Exact matched"
+            result.addExact(count);
+            treated++;
+        } else if (existInPreviousFiles) {
+            // exist in other file
+            result.addRepetitionFromOtherFiles(count);
+            entryProcessed();
+        } else if (existInFile) {
+            // exist in this file
+            result.addRepetitionWithinThisFile(count);
+            entryProcessed();
+        } else {
+            // first time
+            untranslatedEntries.add(ste);
+            alreadyProcessedInFile.add(ste.getSrcText());
+        }
     }
 
     /**
