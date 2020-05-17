@@ -152,6 +152,7 @@ public class EditorController implements IEditor {
     private static final Logger LOGGER = Logger.getLogger(EditorController.class.getName());
 
     private static final double PAGE_LOAD_THRESHOLD = 0.25;
+    private EditorEntry edEntry;
 
     /** Some predefined translations that OmegaT can assign by popup. */
     enum ForceTranslation {
@@ -217,7 +218,7 @@ public class EditorController implements IEditor {
 //todo: EditorController & 11.0 & 0.818 & 2.0 & 0 & 0 & 0
     public EditorController(final MainWindow mainWindow) {
         this.mw = mainWindow;
-
+        this.edEntry = new EditorEntry(this);
         segmentExportImport = new SegmentExportImport(this);
 
         editor = new EditorTextArea3(this);
@@ -429,6 +430,10 @@ public class EditorController implements IEditor {
         }
         firstLoaded = loadTo;
     };
+
+    public SegmentBuilder getBuilder(){
+        return m_docSegList[displayedEntryIndex];
+    }
 
     private void updateState(SHOW_TYPE showType) {
         UIThreadsUtil.mustBeSwingThread();
@@ -816,101 +821,10 @@ public class EditorController implements IEditor {
      * Activates the current entry and puts the cursor at the start of segment
      */
     public void activateEntry() {
-        activateEntry(CaretPosition.startOfEntry());
+        edEntry.activateEntry(CaretPosition.startOfEntry());
     }
 
-    /**
-     * Activates the current entry (if available) by displaying source text and embedding displayed text in
-     * markers.
-     * <p>
-     * Also moves document focus to current entry, and makes sure fuzzy info displayed if available.
-     */
-//    todo: activateEntry & 21.0 & 0.7142857142857143 & 3.0 & 0 & 0 & 0
-    public void activateEntry(CaretPosition pos) {
-        UIThreadsUtil.mustBeSwingThread();
-
-        SourceTextEntry ste = getCurrentEntry();
-        if (ste == null) {
-            return;
-        }
-
-        if (scrollPane.getViewport().getView() != editor) {
-            // editor not displayed
-            return;
-        }
-
-        if (!Core.getProject().isProjectLoaded()) {
-            return;
-        }
-
-        SegmentBuilder builder = m_docSegList[displayedEntryIndex];
-
-        // If the builder has not been created then we are trying to jump to a
-        // segment that is in the current document but not yet loaded. To avoid
-        // loading large swaths of the document at once, we then re-load the
-        // document centered at the destination segment.
-        if (!builder.hasBeenCreated()) {
-            loadDocument();
-            activateEntry(pos);
-            return;
-        }
-
-        previousTranslations = Core.getProject().getAllTranslations(ste);
-        TMXEntry currentTranslation = previousTranslations.getCurrentTranslation();
-        // forget about old marks
-        builder.createSegmentElement(true, currentTranslation);
-
-        Core.getNotes().setNoteText(currentTranslation.note);
-
-        // then add new marks
-        markerController.reprocessImmediately(builder);
-
-        editor.undoManager.reset();
-
-        history.insertNew(builder.segmentNumberInProject);
-
-        setMenuEnabled();
-
-        showStat();
-
-        showLengthMessage();
-
-        if (Preferences.isPreference(Preferences.EXPORT_CURRENT_SEGMENT)) {
-            segmentExportImport.exportCurrentSegment(ste);
-        }
-
-        int te = editor.getOmDocument().getTranslationEnd();
-        int ts = editor.getOmDocument().getTranslationStart();
-        //
-        // Navigate to entry as requested.
-        //
-        if (pos.position != null) { // check if outside of entry
-            pos.position = Math.max(0, pos.position);
-            pos.position = Math.min(pos.position, te - ts);
-        }
-        if (pos.selectionStart != null && pos.selectionEnd != null) { // check if outside of entry
-            pos.selectionStart = Math.max(0, pos.selectionStart);
-            pos.selectionEnd = Math.min(pos.selectionEnd, te - ts);
-            if (pos.selectionStart >= pos.selectionEnd) { // if end after start
-                pos.selectionStart = null;
-                pos.selectionEnd = null;
-            }
-        }
-        scrollForDisplayNearestSegments(pos);
-        // check if file was changed
-        if (previousDisplayedFileIndex != displayedFileIndex) {
-            previousDisplayedFileIndex = displayedFileIndex;
-            CoreEvents.fireEntryNewFile(Core.getProject().getProjectFiles().get(displayedFileIndex).filePath);
-        }
-
-        editor.autoCompleter.setVisible(false);
-        editor.repaint();
-
-        // fire event about new segment activated
-        CoreEvents.fireEntryActivated(ste);
-    }
-
-    private void setMenuEnabled() {
+    public void setMenuEnabled() {
         // update history menu items
         mw.menu.gotoHistoryBackMenuItem.setEnabled(history.hasPrev());
         mw.menu.gotoHistoryForwardMenuItem.setEnabled(history.hasNext());
@@ -1312,7 +1226,7 @@ public class EditorController implements IEditor {
     //
         int currentPosition = getCurrentPositionInEntryTranslation();
         commitAndDeactivate();
-        activateEntry(new CaretPosition(currentPosition));
+        edEntry.activateEntry(new CaretPosition(currentPosition));
     }
 
     private void iterateToEntry(boolean forward, Predicate<SourceTextEntry> shouldStop) {
@@ -1457,7 +1371,7 @@ public class EditorController implements IEditor {
 
     /**
      * Find the next unique entry.
-     * @param findTranslated should the next entry be translated or not.
+     *
      */
     public void nextUniqueEntry() {
         iterateToEntry(true, ste -> ste.getDuplicate() != DUPLICATE.NEXT);
@@ -1551,7 +1465,7 @@ public class EditorController implements IEditor {
                 }
             }
         }
-        activateEntry(pos);
+        edEntry.activateEntry(pos);
         editor.setCursor(oldCursor);
         updateTitleCurrentFile();
     }
