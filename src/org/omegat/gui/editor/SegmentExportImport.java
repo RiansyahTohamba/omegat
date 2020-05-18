@@ -90,6 +90,7 @@ public class SegmentExportImport {
     /**
      * Export the current source and target segments in text files.
      */
+
     public synchronized void exportCurrentSegment(final SourceTextEntry ste) {
         importFile.delete();
         if (ste == null) {

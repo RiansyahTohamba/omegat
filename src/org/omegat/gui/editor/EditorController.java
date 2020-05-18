@@ -220,17 +220,12 @@ public class EditorController implements IEditor {
         this.mw = mainWindow;
         this.edEntry = new EditorEntry(this);
         segmentExportImport = new SegmentExportImport(this);
-
         editor = new EditorTextArea3(this);
         DragTargetOverlay.apply(editor, dropInfo);
         setFont(mainWindow.getApplicationFont());
-
         markerController = new MarkerController(this);
-
         createUI();
-
         settings = new EditorSettings(this);
-
         CoreEvents.registerProjectChangeListener(eventType -> {
             SHOW_TYPE showType;
             switch (eventType) {
@@ -394,6 +389,18 @@ public class EditorController implements IEditor {
             }
         }
     };
+
+    void setCurrentTrans(SegmentBuilder builder){
+        previousTranslations = Core.getProject().getAllTranslations(getCurrentEntry());
+        TMXEntry currentTranslation = previousTranslations.getCurrentTranslation();
+        builder.createSegmentElement(true, currentTranslation);
+        Core.getNotes().setNoteText(currentTranslation.note);
+
+        //then add new marks
+        markerController.reprocessImmediately(builder);
+        editor.resetUndoMgr();
+        history.insertNew(builder.segmentNumberInProject);
+    }
 
     private synchronized void loadDown(int count) {
         if (lastLoaded < 0 || lastLoaded >= m_docSegList.length - 1) {
@@ -1199,19 +1206,23 @@ public class EditorController implements IEditor {
      */
     protected void deactivateWithoutCommit() {
         UIThreadsUtil.mustBeSwingThread();
+//        segmentExportImport.exportCurrentSegment() cuman dipakai disini, sisanya di EditorEntry
+//        segmentExportImport set nya di class ini, harus
 
         segmentExportImport.exportCurrentSegment(null);
-
         Document3 doc = editor.getOmDocument();
-
         if (doc == null) {
             // there is no active doc, it's empty project
             return;
         }
-
         doc.stopEditMode();
     }
 
+    public void checkPrefExport() {
+        if (Preferences.isPreference(Preferences.EXPORT_CURRENT_SEGMENT)) {
+            segmentExportImport.exportCurrentSegment(getCurrentEntry());
+        }
+    }
     /**
      * {@inheritDoc}
      */

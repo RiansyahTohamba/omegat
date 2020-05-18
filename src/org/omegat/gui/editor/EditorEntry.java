@@ -35,17 +35,17 @@ public class EditorEntry {
 //        ada 3 displayedEntryIndex yang dipakai di sini
         SegmentBuilder builder = edCtrl.getBuilder();
         if (exitActivateEntry(builder, pos)) return;
-        setCurrentTrans(builder);
+        edCtrl.setCurrentTrans(builder);
         edCtrl.setMenuEnabled();
         showStat();
         showLengthMessage();
-        if (Preferences.isPreference(Preferences.EXPORT_CURRENT_SEGMENT)) {
-            edCtrl.getSegmentExportImport().exportCurrentSegment(edCtrl.getCurrentEntry());
-        }
+        edCtrl.checkPrefExport();
         navigateEntry(pos);
         scrollForDisplayNearestSegments(pos);
         fireEvent();
     }
+
+
 
     /**
      * Attempt to center the active segment in the editor. When the active
@@ -79,18 +79,6 @@ public class EditorEntry {
 
         // fire event about new segment activated
         CoreEvents.fireEntryActivated(edCtrl.getCurrentEntry());
-    }
-
-    void setCurrentTrans(SegmentBuilder builder) {
-        edCtrl.setPreviousTranslations(Core.getProject().getAllTranslations(edCtrl.getCurrentEntry()));
-        TMXEntry currentTranslation = edCtrl.getPreviousTranslations().getCurrentTranslation();
-        builder.createSegmentElement(true, currentTranslation);
-        Core.getNotes().setNoteText(currentTranslation.note);
-
-        //then add new marks
-        edCtrl.getMarkerController().reprocessImmediately(builder);
-        edCtrl.getEditor().resetUndoMgr();
-        edCtrl.getHistory().insertNew(builder.segmentNumberInProject);
     }
 
     void navigateEntry(IEditor.CaretPosition pos) {

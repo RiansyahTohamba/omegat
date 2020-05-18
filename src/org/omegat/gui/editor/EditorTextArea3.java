@@ -813,6 +813,9 @@ public class EditorTextArea3 extends JEditorPane {
         }
     };
 
+    public void resetUndoMgr() {
+        undoManager.reset();
+    }
     private static class PopupMenuConstructorInfo {
         final int priority;
         final IPopupMenuConstructor constructor;
