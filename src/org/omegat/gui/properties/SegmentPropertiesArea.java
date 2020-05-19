@@ -100,14 +100,22 @@ public class SegmentPropertiesArea implements IPaneMenu {
     final DockableScrollPane scrollPane;
 
     private ISegmentPropertiesView viewImpl;
-//todo:SegmentPropertiesArea & 13.0 & 0.769 & 3.0 & 0 & 0 & 0  
+//SegmentPropertiesArea & 13.0 & 0.769 & 3.0 & 0 & 0 & 0
     public SegmentPropertiesArea(IMainWindow mw) {
         scrollPane = new DockableScrollPane("SEGMENTPROPERTIES", OStrings.getString("SEGPROP_PANE_TITLE"),
                 null, true);
         mw.addDockable(scrollPane);
-
         scrollPane.setMenuProvider(this);
+        registerCoreEvent();
+        CoreEvents.registerFontChangedEventListener(newFont -> viewImpl.getViewComponent().setFont(newFont));
+        scrollPane.setForeground(Styles.EditorColor.COLOR_FOREGROUND.getColor());
+        scrollPane.setBackground(Styles.EditorColor.COLOR_BACKGROUND.getColor());
+        scrollPane.getViewport().setBackground(Styles.EditorColor.COLOR_BACKGROUND.getColor());
+        initInstall();
+        scrollPane.addMouseListener(contextMenuListener);
+    }
 
+    private void registerCoreEvent() {
         CoreEvents.registerEntryEventListener(new IEntryEventListener() {
             @Override
             public void onNewFile(String activeFileName) {
@@ -120,25 +128,14 @@ public class SegmentPropertiesArea implements IPaneMenu {
                 doNotify(getKeysToNotify());
             }
         });
-        CoreEvents.registerProjectChangeListener(new IProjectEventListener() {
-            @Override
-            public void onProjectChanged(PROJECT_CHANGE_TYPE eventType) {
-                if (eventType == PROJECT_CHANGE_TYPE.CLOSE) {
-                    setProperties(null);
-                }
+        CoreEvents.registerProjectChangeListener(eventType -> {
+            if (eventType == IProjectEventListener.PROJECT_CHANGE_TYPE.CLOSE) {
+                setProperties(null);
             }
         });
-        CoreEvents.registerFontChangedEventListener(new IFontChangedEventListener() {
-            @Override
-            public void onFontChanged(Font newFont) {
-                viewImpl.getViewComponent().setFont(newFont);
-            }
-        });
+    }
 
-        scrollPane.setForeground(Styles.EditorColor.COLOR_FOREGROUND.getColor());
-        scrollPane.setBackground(Styles.EditorColor.COLOR_BACKGROUND.getColor());
-        scrollPane.getViewport().setBackground(Styles.EditorColor.COLOR_BACKGROUND.getColor());
-
+    private void initInstall() {
         Class<?> initModeClass = SegmentPropertiesTableView.class;
         String initModeClassName = Preferences.getPreferenceDefault(Preferences.SEGPROPS_INITIAL_MODE, null);
         if (initModeClassName != null) {
@@ -149,8 +146,6 @@ public class SegmentPropertiesArea implements IPaneMenu {
             }
         }
         installView(initModeClass);
-
-        scrollPane.addMouseListener(contextMenuListener);
     }
 
     private void installView(Class<?> viewClass) {

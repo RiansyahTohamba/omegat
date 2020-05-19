@@ -96,7 +96,6 @@ import org.omegat.core.data.SourceTextEntry;
 import org.omegat.core.data.SourceTextEntry.DUPLICATE;
 import org.omegat.core.data.TMXEntry;
 import org.omegat.core.events.IEntryEventListener;
-import org.omegat.core.statistics.StatisticsInfo;
 import org.omegat.gui.dialogs.ConflictDialogController;
 import org.omegat.gui.editor.autocompleter.IAutoCompleter;
 import org.omegat.gui.editor.mark.CalcMarkersThread;
@@ -212,84 +211,49 @@ public class EditorController implements IEditor {
      * Previous translations. Used for optimistic locking.
      */
     private IProject.AllTranslations previousTranslations;
-//todo: EditorController & 11.0 & 0.818 & 2.0 & 0 & 0 & 0
+// EditorController & 11.0 & 0.818 & 2.0 & 0 & 0 & 0
     public EditorController(final MainWindow mainWindow) {
         this.mw = mainWindow;
         segmentExportImport = new SegmentExportImport(this);
         editor = new EditorTextArea3(this);
         this.edEntry = new EditorEntry(this,editor,mw);
-
         DragTargetOverlay.apply(editor, dropInfo);
         setFont(mainWindow.getApplicationFont());
         markerController = new MarkerController(this);
         createUI();
         settings = new EditorSettings(this);
-        CoreEvents.registerProjectChangeListener(eventType -> {
-            SHOW_TYPE showType;
-            switch (eventType) {
-            case CREATE:
-            case LOAD:
-                history.clear();
-                removeFilter();
-                if (!Core.getProject().getAllEntries().isEmpty()) {
-                    showType = SHOW_TYPE.FIRST_ENTRY;
-                } else {
-                    showType = SHOW_TYPE.EMPTY_PROJECT;
-                }
-                markerController.removeAll();
-                setInitialOrientation();
-                break;
-            case CLOSE:
-                m_docSegList = null;
-                history.clear();
-                removeFilter();
-                markerController.removeAll();
-                showType = SHOW_TYPE.INTRO;
-                deactivateWithoutCommit();
-                break;
-            default:
-                showType = SHOW_TYPE.NO_CHANGE;
-            }
-            if (showType != SHOW_TYPE.NO_CHANGE) {
-                updateState(showType);
-            }
-        });
-
+        registerProjectChange();
         // register entry changes callback
         CoreEvents.registerEntryEventListener(new IEntryEventListener() {
             public void onNewFile(String activeFileName) {
                 updateState(SHOW_TYPE.NO_CHANGE);
             }
-
             public void onEntryActivated(SourceTextEntry newEntry) {
             }
         });
-
         createAdditionalPanes();
-
         SwingUtilities.invokeLater(() -> {
             updateState(SHOW_TYPE.INTRO);
             pane.requestFocus();
         });
-
         // register font changes callback
         CoreEvents.registerFontChangedEventListener(newFont -> {
             setFont(newFont);
             ViewLabel.fontHeight = 0;
             editor.revalidate();
             editor.repaint();
-
             // fonts have changed
             emptyProjectPane.setFont(font);
         });
-
         // register Swing error logger
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
             LOGGER.log(Level.SEVERE, "Uncatched exception in thread [" + t.getName() + "]", e);
         });
-
         EditorPopups.init(this);
+        addListenerToLazyLoad();
+    }
 
+    private void addListenerToLazyLoad() {
         lazyLoadTimer.setRepeats(false);
         lazyLoadTimer.addActionListener(e -> {
             JScrollBar bar = scrollPane.getVerticalScrollBar();
@@ -329,6 +293,40 @@ public class EditorController implements IEditor {
             }
         });
     }
+
+    private void registerProjectChange() {
+        CoreEvents.registerProjectChangeListener(eventType -> {
+            SHOW_TYPE showType;
+            switch (eventType) {
+            case CREATE:
+            case LOAD:
+                history.clear();
+                removeFilter();
+                if (!Core.getProject().getAllEntries().isEmpty()) {
+                    showType = SHOW_TYPE.FIRST_ENTRY;
+                } else {
+                    showType = SHOW_TYPE.EMPTY_PROJECT;
+                }
+                markerController.removeAll();
+                setInitialOrientation();
+                break;
+            case CLOSE:
+                m_docSegList = null;
+                history.clear();
+                removeFilter();
+                markerController.removeAll();
+                showType = SHOW_TYPE.INTRO;
+                deactivateWithoutCommit();
+                break;
+            default:
+                showType = SHOW_TYPE.NO_CHANGE;
+            }
+            if (showType != SHOW_TYPE.NO_CHANGE) {
+                updateState(showType);
+            }
+        });
+    }
+
     public int getDisplayedEntryIndex(){
         return edEntry.getDisplayedEntryIndex();
     }
@@ -1534,7 +1532,7 @@ public class EditorController implements IEditor {
      * {@inheritDoc}
      */
     @Override
-//    todo: replaceEditText & 9.0 & 0.666 & 2.0 & 0 & 0 & 0
+//  sudah:  replaceEditText & 9.0 & 0.666 & 2.0 & 0 & 0 & 0
     public void replaceEditText(String text) {
         UIThreadsUtil.mustBeSwingThread();
         text = setTextEditor(text);
