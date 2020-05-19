@@ -41,6 +41,7 @@ public class EditorEntry {
      * <p>
      * Also moves document focus to current entry, and makes sure fuzzy info displayed if available.
      */
+//    sudah activateEntry
     public void activateEntry(IEditor.CaretPosition pos) {
         //LOGGING
         UIThreadsUtil.mustBeSwingThread();
