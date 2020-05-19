@@ -927,57 +927,9 @@ public class EditorController implements IEditor {
     /**
      * Calculate statistic for file, request statistic for project and display in status bar.
      */
-//    todo: showStat & 10.0 & 0.8 & 4.0 & 0 & 0 & 0
+//    sudah: showStat & 10.0 & 0.8 & 4.0 & 0 & 0 & 0
     public void showStat() {
-        IProject project = Core.getProject();
-        IProject.FileInfo fi = project.getProjectFiles().get(edEntry.getDisplayedFileIndex());
-        int translatedInFile = 0;
-        int translatedUniqueInFile = 0;
-        int uniqueInFile = 0;
-        boolean isUnique;
-        for (SourceTextEntry ste : fi.entries) {
-            isUnique = ste.getDuplicate() != SourceTextEntry.DUPLICATE.NEXT;
-            if (isUnique) {
-                uniqueInFile++;
-            }
-            if (project.getTranslationInfo(ste).isTranslated()) {
-                translatedInFile++;
-                if (isUnique) {
-                    translatedUniqueInFile++;
-                }
-            }
-        }
-
-        StatisticsInfo stat = project.getStatistics();
-
-        final MainWindowUI.StatusBarMode progressMode =
-                Preferences.getPreferenceEnumDefault(Preferences.SB_PROGRESS_MODE,
-                        MainWindowUI.StatusBarMode.DEFAULT);
-
-        if (progressMode == MainWindowUI.StatusBarMode.DEFAULT) {
-            StringBuilder pMsg = new StringBuilder(1024).append(" ");
-            pMsg.append(translatedInFile).append("/").append(fi.entries.size()).append(" (")
-                    .append(stat.numberofTranslatedSegments).append("/").append(stat.numberOfUniqueSegments)
-                    .append(", ").append(stat.numberOfSegmentsTotal).append(") ");
-            mw.showProgressMessage(pMsg.toString());
-        } else {
-            /*
-             * Percentage mode based on idea by Yu Tang
-             * http://dirtysexyquery.blogspot.tw/2013/03/omegat-custom-progress-format.html
-             */
-            java.text.NumberFormat nfPer = java.text.NumberFormat.getPercentInstance();
-            nfPer.setRoundingMode(java.math.RoundingMode.DOWN);
-            nfPer.setMaximumFractionDigits(1);
-
-            String message = StringUtil.format(OStrings.getString("MW_PROGRESS_DEFAULT_PERCENTAGE"),
-                    (translatedUniqueInFile == 0) ? "0%" : nfPer.format((double) translatedUniqueInFile / uniqueInFile),
-                    uniqueInFile - translatedUniqueInFile,
-                    (stat.numberofTranslatedSegments == 0) ? "0%"
-                            : nfPer.format((double) stat.numberofTranslatedSegments / stat.numberOfUniqueSegments),
-                    stat.numberOfUniqueSegments - stat.numberofTranslatedSegments, stat.numberOfSegmentsTotal);
-
-            mw.showProgressMessage(message);
-        }
+        edEntry.showStat();
     }
 
     /**
