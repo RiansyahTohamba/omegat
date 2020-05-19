@@ -63,11 +63,10 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
-
+import java.util.function.Predicate;
 import javax.swing.JComponent;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
@@ -186,11 +185,7 @@ public class EditorController implements IEditor {
     protected Timer lazyLoadTimer = new Timer(200, null);
 
     /** Current displayed file. */
-    protected int displayedFileIndex, previousDisplayedFileIndex;
-    /**
-     * Current active segment in current file, if there are segments in file (can be fale if filter active!)
-     */
-    protected int displayedEntryIndex;
+
 
     /** Object which store history of moving by segments. */
     private SegmentHistory history = new SegmentHistory();
@@ -218,9 +213,10 @@ public class EditorController implements IEditor {
 //todo: EditorController & 11.0 & 0.818 & 2.0 & 0 & 0 & 0
     public EditorController(final MainWindow mainWindow) {
         this.mw = mainWindow;
-        this.edEntry = new EditorEntry(this);
         segmentExportImport = new SegmentExportImport(this);
         editor = new EditorTextArea3(this);
+        this.edEntry = new EditorEntry(this,editor);
+
         DragTargetOverlay.apply(editor, dropInfo);
         setFont(mainWindow.getApplicationFont());
         markerController = new MarkerController(this);
@@ -395,7 +391,6 @@ public class EditorController implements IEditor {
         TMXEntry currentTranslation = previousTranslations.getCurrentTranslation();
         builder.createSegmentElement(true, currentTranslation);
         Core.getNotes().setNoteText(currentTranslation.note);
-
         //then add new marks
         markerController.reprocessImmediately(builder);
         editor.resetUndoMgr();
@@ -438,9 +433,7 @@ public class EditorController implements IEditor {
         firstLoaded = loadTo;
     };
 
-    public SegmentBuilder getBuilder(){
-        return m_docSegList[displayedEntryIndex];
-    }
+
 
     private void updateState(SHOW_TYPE showType) {
         UIThreadsUtil.mustBeSwingThread();
@@ -458,8 +451,8 @@ public class EditorController implements IEditor {
             updatedTitle = emptyProjectPaneTitle;
             break;
         case FIRST_ENTRY:
-            displayedFileIndex = 0;
-            displayedEntryIndex = 0;
+            edEntry.setDisplayedFileIndex(0);
+            edEntry.setDisplayedEntryIndex(0);
             updatedTitle = StringUtil.format(OStrings.getString("GUI_SUBWINDOWTITLE_Editor"), getCurrentFile());
             data = editor;
             SwingUtilities.invokeLater(() -> {
@@ -680,13 +673,16 @@ public class EditorController implements IEditor {
     }
 
     public SegmentBuilder getCurrentSegmentBuilder() {
-        if (m_docSegList == null || displayedEntryIndex < 0 || m_docSegList.length <= displayedEntryIndex) {
+            if (m_docSegList == null || edEntry.getDisplayedEntryIndex() < 0 || m_docSegList.length <= edEntry.getDisplayedEntryIndex()) {
             // there is no current entry
             return null;
         }
-        return m_docSegList[displayedEntryIndex];
+        return getBuilder();
     }
 
+    public SegmentBuilder getBuilder(){
+        return m_docSegList[edEntry.getDisplayedEntryIndex()];
+    }
     /**
      * {@inheritDoc}
      */
@@ -700,8 +696,8 @@ public class EditorController implements IEditor {
             return null;
         }
 
-        if (displayedFileIndex < proj.getProjectFiles().size()) {
-            return proj.getProjectFiles().get(displayedFileIndex).filePath;
+        if (edEntry.getDisplayedFileIndex() < proj.getProjectFiles().size()) {
+            return proj.getProjectFiles().get(edEntry.getDisplayedFileIndex()).filePath;
         } else {
             return null;
         }
@@ -718,15 +714,17 @@ public class EditorController implements IEditor {
 
     /**
      * Displays the {@link Preferences#EDITOR_INITIAL_SEGMENT_LOAD_COUNT}
-     * segments surrounding the entry with index {@link #displayedEntryIndex}.
+     * segments surrounding the entry with index getedEntry.getDisplayedEntryIndex().
      */
+//    ini masalahnya bukan dispersed coupling
+
     protected void loadDocument() {
         UIThreadsUtil.mustBeSwingThread();
 
         // Currently displayed file
         IProject.FileInfo file;
         try {
-            file = Core.getProject().getProjectFiles().get(displayedFileIndex);
+            file = Core.getProject().getProjectFiles().get(edEntry.getDisplayedFileIndex());
         } catch (IndexOutOfBoundsException ex) {
             // there is no displayedFileIndex file in project - load first file
             file = Core.getProject().getProjectFiles().get(0);
@@ -758,12 +756,13 @@ public class EditorController implements IEditor {
         m_docSegList = tmpSegList.toArray(new SegmentBuilder[tmpSegList.size()]);
 
         // Clamp displayedSegment to actually available entries.
-        displayedEntryIndex = Math.max(0, Math.min(m_docSegList.length - 1, displayedEntryIndex));
+        int displayedEntryIdx = Math.max(0, Math.min(m_docSegList.length - 1, edEntry.getDisplayedEntryIndex()));
+        edEntry.setDisplayedEntryIndex(displayedEntryIdx);
         // Calculate start, end indices of a span of initialSegCount segments
-        // centered around displayedEntryIndex and clamped to [0, m_docSegList.length).
+        // centered around edEntry.getDisplayedEntryIndex() and clamped to [0, m_docSegList.length).
         final int initialSegCount = Preferences.getPreferenceDefault(Preferences.EDITOR_INITIAL_SEGMENT_LOAD_COUNT,
                 Preferences.EDITOR_INITIAL_SEGMENT_LOAD_COUNT_DEFAULT);
-        firstLoaded = Math.max(0, displayedEntryIndex - initialSegCount / 2);
+        firstLoaded = Math.max(0, edEntry.getDisplayedEntryIndex() - initialSegCount / 2);
         lastLoaded = Math.min(file.entries.size() - 1, firstLoaded + initialSegCount - 1);
 
         // ...but only display the ones in [firstLoaded, lastLoaded]
@@ -835,8 +834,8 @@ public class EditorController implements IEditor {
         // update history menu items
         mw.menu.gotoHistoryBackMenuItem.setEnabled(history.hasPrev());
         mw.menu.gotoHistoryForwardMenuItem.setEnabled(history.hasNext());
-        mw.menu.editMultipleDefault.setEnabled(!m_docSegList[displayedEntryIndex].isDefaultTranslation());
-        mw.menu.editMultipleAlternate.setEnabled(m_docSegList[displayedEntryIndex].isDefaultTranslation());
+        mw.menu.editMultipleDefault.setEnabled(!getBuilder().isDefaultTranslation());
+        mw.menu.editMultipleAlternate.setEnabled(getBuilder().isDefaultTranslation());
     }
 
     /**
@@ -846,7 +845,7 @@ public class EditorController implements IEditor {
         Document3 doc = editor.getOmDocument();
         String trans = doc.extractTranslation();
         if (trans != null) {
-            SourceTextEntry ste = m_docSegList[displayedEntryIndex].ste;
+            SourceTextEntry ste = getBuilder().ste;
             String lMsg = " " + ste.getSrcText().length() + "/" + trans.length() + " ";
             mw.showLengthMessage(lMsg);
         }
@@ -861,10 +860,10 @@ public class EditorController implements IEditor {
             return;
         }
         if (doc.isEditMode()) {
-            m_docSegList[displayedEntryIndex].onActiveEntryChanged();
+            getBuilder().onActiveEntryChanged();
 
             SwingUtilities.invokeLater(() -> {
-                markerController.reprocessImmediately(m_docSegList[displayedEntryIndex]);
+                markerController.reprocessImmediately(getBuilder());
                 editor.autoCompleter.textDidChange();
             });
         }
@@ -875,9 +874,9 @@ public class EditorController implements IEditor {
      * segment is taller than the editor, the first line of the editable area
      * will be at the bottom of the editor.
      */
-    private void scrollForDisplayNearestSegments(final CaretPosition pos) {
+    public void scrollForDisplayNearestSegments(final CaretPosition pos,int displayedEntryIndex) {
         SwingUtilities.invokeLater(() -> {
-            Rectangle rect = getSegmentBounds(displayedEntryIndex);
+            Rectangle rect = getSegmentBounds(edEntry.getDisplayedEntryIndex());
             if (rect != null) {
                 // Expand rect vertically to fill height of viewport.
                 int viewportHeight = scrollPane.getViewport().getHeight();
@@ -920,7 +919,7 @@ public class EditorController implements IEditor {
 //    todo: showStat & 10.0 & 0.8 & 4.0 & 0 & 0 & 0
     public void showStat() {
         IProject project = Core.getProject();
-        IProject.FileInfo fi = project.getProjectFiles().get(displayedFileIndex);
+        IProject.FileInfo fi = project.getProjectFiles().get(edEntry.getDisplayedFileIndex());
         int translatedInFile = 0;
         int translatedUniqueInFile = 0;
         int uniqueInFile = 0;
@@ -984,9 +983,9 @@ public class EditorController implements IEditor {
         if (segmentAtLocation < 0) {
             return false;
         }
-        if (displayedEntryIndex != segmentAtLocation) {
+        if (edEntry.getDisplayedEntryIndex() != segmentAtLocation) {
             commitAndDeactivate();
-            displayedEntryIndex = segmentAtLocation;
+            edEntry.setDisplayedEntryIndex(segmentAtLocation);
             activateEntry();
             return true;
         } else {
@@ -1061,7 +1060,7 @@ public class EditorController implements IEditor {
         doc.stopEditMode();
 
         // segment was active
-        SegmentBuilder sb = m_docSegList[displayedEntryIndex];
+        SegmentBuilder sb = getBuilder();
         SourceTextEntry entry = sb.ste;
 
         TMXEntry oldTE = Core.getProject().getTranslationInfo(entry);
@@ -1138,12 +1137,12 @@ public class EditorController implements IEditor {
             }
         }
 
-        m_docSegList[displayedEntryIndex].createSegmentElement(false,
-                Core.getProject().getTranslationInfo(m_docSegList[displayedEntryIndex].ste));
+        getBuilder().createSegmentElement(false,
+                Core.getProject().getTranslationInfo(getBuilder().ste));
 
         // find all identical sources and redraw them
         for (int i = 0; i < m_docSegList.length; i++) {
-            if (i == displayedEntryIndex) {
+            if (i == edEntry.getDisplayedEntryIndex()) {
                 // current entry, skip
                 continue;
             }
@@ -1164,7 +1163,7 @@ public class EditorController implements IEditor {
         Core.getNotes().clear();
 
         // then add new marks
-        markerController.reprocessImmediately(m_docSegList[displayedEntryIndex]);
+        markerController.reprocessImmediately(getBuilder());
 
         editor.undoManager.reset();
 
@@ -1240,60 +1239,44 @@ public class EditorController implements IEditor {
         edEntry.activateEntry(new CaretPosition(currentPosition));
     }
 
-    private void iterateToEntry(boolean forward, Predicate<SourceTextEntry> shouldStop) {
+    public void iterateToEntry(boolean forward, Predicate<SourceTextEntry> shouldStop) {
         UIThreadsUtil.mustBeSwingThread();
-
-        if (!Core.getProject().isProjectLoaded()) {
+        if (!Core.isProjectLoaded()) {
             return;
         }
-
         Cursor hourglassCursor = Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR);
         Cursor oldCursor = editor.getCursor();
         editor.setCursor(hourglassCursor);
-
         commitAndDeactivate();
-
-        List<FileInfo> files = Core.getProject().getProjectFiles();
-        if (files.isEmpty()) {
+        if (Core.getProjectFiles().isEmpty()) {
             return;
         }
-        SourceTextEntry ste;
-        int startFileIndex = displayedFileIndex;
-        int startEntryIndex = displayedEntryIndex;
+        doIterate(forward, shouldStop);
+        activateEntry();
+        editor.setCursor(oldCursor);
+    }
+
+    private void doIterate(boolean forward, Predicate<SourceTextEntry> shouldStop) {
+        List<FileInfo> files = Core.getProjectFiles();
+        int startFileIndex = edEntry.getDisplayedFileIndex();
+        int startEntryIndex = edEntry.getDisplayedEntryIndex();
         boolean looped = false;
+        SourceTextEntry ste;
         while (true) {
             if (forward) {
-                displayedEntryIndex++;
-                if (displayedEntryIndex >= m_docSegList.length) {
-                    displayedFileIndex++;
-                    displayedEntryIndex = 0;
-                    if (displayedFileIndex >= files.size()) {
-                        displayedFileIndex = 0;
-                        looped = true;
-                    }
-                    loadDocument();
-                }
+                looped = edEntry.iterateForward(files, looped);
             } else {
-                displayedEntryIndex--;
-                if (displayedEntryIndex < 0) {
-                    displayedFileIndex--;
-                    if (displayedFileIndex < 0) {
-                        displayedFileIndex = files.size() - 1;
-                        looped = true;
-                    }
-                    loadDocument();
-                    displayedEntryIndex = m_docSegList.length - 1;
-                }
+                looped = edEntry.iterateNonForward(files, looped);
             }
             ste = getCurrentEntry();
             if (ste != null && shouldStop.test(ste)) {
                 break;
             }
-            if (looped && displayedFileIndex == startFileIndex) {
-                if (forward && displayedEntryIndex >= startEntryIndex) {
+            if (looped && edEntry.getDisplayedFileIndex() == startFileIndex) {
+                if (forward && edEntry.getDisplayedEntryIndex() >= startEntryIndex) {
                     // We have looped forward to our starting point
                     break;
-                } else if (!forward && displayedEntryIndex <= startEntryIndex) {
+                } else if (!forward && edEntry.getDisplayedEntryIndex() <= startEntryIndex) {
                     // We have looped backwards to our starting point
                     break;
                 }
@@ -1304,9 +1287,6 @@ public class EditorController implements IEditor {
                 }
             }
         }
-
-        activateEntry();
-        editor.setCursor(oldCursor);
     }
 
     private void anyEntry(boolean forwards) {
@@ -1417,8 +1397,8 @@ public class EditorController implements IEditor {
 
         commitAndDeactivate();
 
-        displayedFileIndex = fileIndex;
-        displayedEntryIndex = 0;
+        edEntry.setDisplayedFileIndex(fileIndex);
+        edEntry.setDisplayedEntryIndex(0);
         loadDocument();
 
         activateEntry();
@@ -1430,56 +1410,27 @@ public class EditorController implements IEditor {
     public void gotoEntry(final int entryNum) {
         gotoEntry(entryNum, CaretPosition.startOfEntry());
     }
-//  todo: gotoEntry & 8.0 & 0.75 & 4.0 & 0 & 0 & 0
+//  sudah: gotoEntry & 8.0 & 0.75 & 4.0 & 0 & 0 & 0
     public void gotoEntry(final int entryNum, final CaretPosition pos) {
         UIThreadsUtil.mustBeSwingThread();
-
-        if (!Core.getProject().isProjectLoaded()) {
-            return;
-        }
-
-        if (m_docSegList == null) {
-            // document didn't loaded yet
+        if (!Core.getProject().isProjectLoaded() || m_docSegList == null) {
+            //m_docSegList is null mean document didn't loaded yet
             return;
         }
         Cursor hourglassCursor = Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR);
         Cursor oldCursor = editor.getCursor();
         editor.setCursor(hourglassCursor);
         commitAndDeactivate();
-
         if (entryNum == 0) {
-            // it was empty project, need to display first entry
-            displayedFileIndex = 0;
-            displayedEntryIndex = 0;
-            loadDocument();
+            edEntry.displayFirstEntry();
         } else {
-            IProject dataEngine = Core.getProject();
-            for (int i = 0; i < dataEngine.getProjectFiles().size(); i++) {
-                IProject.FileInfo fi = dataEngine.getProjectFiles().get(i);
-                SourceTextEntry firstEntry = fi.entries.get(0);
-                SourceTextEntry lastEntry = fi.entries.get(fi.entries.size() - 1);
-                if (firstEntry.entryNum() <= entryNum && lastEntry.entryNum() >= entryNum) {
-                    // this file
-                    if (i != displayedFileIndex) {
-                        // it's other file than displayed
-                        displayedFileIndex = i;
-                        loadDocument();
-                    }
-                    // find correct displayedEntryIndex
-                    for (int j = 0; j < m_docSegList.length; j++) {
-                        if (m_docSegList[j].segmentNumberInProject >= entryNum) { //
-                            displayedEntryIndex = j;
-                            break;
-                        }
-                    }
-                    break;
-                }
-            }
+            edEntry.findIndex(entryNum);
         }
         edEntry.activateEntry(pos);
         editor.setCursor(oldCursor);
         updateTitleCurrentFile();
     }
+
 
     public void gotoEntry(String srcString, EntryKey key) {
         UIThreadsUtil.mustBeSwingThread();
@@ -1521,7 +1472,7 @@ public class EditorController implements IEditor {
         if (entryNum == getCurrentEntryNumber() || getCurrentEntry().getSrcText().equals(fixedSource)) {
             deactivateWithoutCommit();
         }
-        gotoFile(displayedFileIndex);
+        gotoFile(edEntry.getDisplayedFileIndex());
         gotoEntry(entryNum);
     }
 
@@ -1540,7 +1491,7 @@ public class EditorController implements IEditor {
         }
         int currentEntry = getCurrentEntryNumber();
         int caretPosition = getCurrentPositionInEntryTranslation();
-        gotoFile(displayedFileIndex);
+        gotoFile(edEntry.getDisplayedFileIndex());
         gotoEntry(currentEntry, new CaretPosition(caretPosition));
     }
 
@@ -1624,7 +1575,7 @@ public class EditorController implements IEditor {
     public void replaceEditText(String text) {
         UIThreadsUtil.mustBeSwingThread();
 
-        SegmentBuilder builder = m_docSegList[displayedEntryIndex];
+        SegmentBuilder builder = getBuilder();
         if (builder.hasRTL && targetLangIsRTL) {
             text = EditorUtils.addBidiAroundTags(EditorUtils.removeDirectionCharsAroundTags(text, builder.ste),
                     builder.ste);
@@ -1666,7 +1617,7 @@ public class EditorController implements IEditor {
     }
 
     private void markAsComesFromMT(String text) {
-        SegmentBuilder sb = m_docSegList[displayedEntryIndex];
+        SegmentBuilder sb = getBuilder();
         CalcMarkersThread thread = markerController.markerThreads[markerController
                 .getMarkerIndex(ComesFromMTMarker.class.getName())];
         ((ComesFromMTMarker) thread.marker).setMark(sb.getSourceTextEntry(), text);
@@ -1737,7 +1688,7 @@ public class EditorController implements IEditor {
 
         editor.checkAndFixCaret();
 
-        SegmentBuilder builder = m_docSegList[displayedEntryIndex];
+        SegmentBuilder builder = getBuilder();
         if (builder.hasRTL && targetLangIsRTL) {
             text = EditorUtils.addBidiAroundTags(EditorUtils.removeDirectionCharsAroundTags(text, builder.ste),
                     builder.ste);
@@ -1759,7 +1710,7 @@ public class EditorController implements IEditor {
 
         editor.checkAndFixCaret();
 
-        SegmentBuilder builder = m_docSegList[displayedEntryIndex];
+        SegmentBuilder builder = getBuilder();
         if (builder.hasRTL && targetLangIsRTL) {
             // add control bidi chars around
             String t = SegmentBuilder.BIDI_RLM + SegmentBuilder.BIDI_LRM + tag + SegmentBuilder.BIDI_LRM
@@ -1901,14 +1852,14 @@ public class EditorController implements IEditor {
             }
         }
 
-        SourceTextEntry realActive = m_docSegList[displayedEntryIndex].ste;
+        SourceTextEntry realActive = getBuilder().ste;
         if (realActive != requiredActiveEntry) {
             return;
         }
 
         int mi = markerController.getMarkerIndex(markerClassName);
-        EntryMarks ev = new EntryMarks(m_docSegList[displayedEntryIndex],
-                m_docSegList[displayedEntryIndex].getDisplayVersion(), mi);
+        EntryMarks ev = new EntryMarks(getBuilder(),
+                getBuilder().getDisplayVersion(), mi);
         ev.result = marks;
         markerController.queueMarksOutput(ev);
     }
@@ -1949,11 +1900,11 @@ public class EditorController implements IEditor {
                 gotoEntry(curEntry.entryNum());
             } else {
                 // Go to next (available) segment. But first, we need to reset
-                // the displayedEntryIndex to the number where the current but
+                // the edEntry.getDisplayedEntryIndex() to the number where the current but
                 // filtered entry could have been if it was not filtered.
                 for (int j = 0; j < m_docSegList.length; j++) {
                     if (m_docSegList[j].segmentNumberInProject >= curEntryNum) { //
-                        displayedEntryIndex = j - 1;
+                        edEntry.setDisplayedEntryIndex(j-1);
                         break;
                     }
                 }
@@ -1998,7 +1949,7 @@ public class EditorController implements IEditor {
      * {@inheritDoc}
      */
     public void setAlternateTranslationForCurrentEntry(boolean alternate) {
-        SegmentBuilder sb = m_docSegList[displayedEntryIndex];
+        SegmentBuilder sb = getBuilder();
 
         if (!alternate) {
             // switch to default translation

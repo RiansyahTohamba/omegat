@@ -34,10 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.omegat.core.data.EntryKey;
-import org.omegat.core.data.IProject;
-import org.omegat.core.data.NotLoadedProject;
-import org.omegat.core.data.ProjectProperties;
+import org.omegat.core.data.*;
 import org.omegat.core.segmentation.Segmenter;
 import org.omegat.core.spellchecker.ISpellChecker;
 import org.omegat.core.spellchecker.SpellChecker;
@@ -149,6 +146,25 @@ public final class Core {
         return currentProject.isProjectModified();
     }
 
+    public static TMXEntry getTranslationInfo(SourceTextEntry entry){
+        return currentProject.getTranslationInfo(entry);
+    }
+
+    public static boolean isTranslated(SourceTextEntry entry){
+        return getTranslationInfo(entry).isTranslated();
+    }
+
+    public static IProject.FileInfo getProjectFile(int indexFile){
+        return getProjectFiles().get(indexFile);
+    }
+
+    public static List<IProject.FileInfo> getProjectFiles(){
+        return currentProject.getProjectFiles();
+    }
+
+    public static String getProjectFilePath(int indexFile){
+        return getProjectFile(indexFile).filePath;
+    }
     /** Set new current project. */
     public static void setProject(final IProject newCurrentProject) {
         currentProject = newCurrentProject;

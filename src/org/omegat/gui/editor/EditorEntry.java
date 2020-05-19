@@ -2,8 +2,8 @@ package org.omegat.gui.editor;
 
 import org.omegat.core.Core;
 import org.omegat.core.CoreEvents;
+import org.omegat.core.data.IProject;
 import org.omegat.core.data.SourceTextEntry;
-import org.omegat.core.data.TMXEntry;
 import org.omegat.core.statistics.StatisticsInfo;
 import org.omegat.gui.main.MainWindowUI;
 import org.omegat.util.OStrings;
@@ -15,11 +15,23 @@ import javax.swing.*;
 import java.awt.*;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
+import java.util.List;
 
 public class EditorEntry {
+    /** Current displayed file. */
+    protected int previousDisplayedFileIndex;
     private final EditorController edCtrl;
+    //    displayedFileIndex 22 matches
+    protected int displayedFileIndex;
 
-    public EditorEntry(EditorController edCtrl) {
+    /**
+     * Current active segment in current file, if there are segments in file (can be fale if filter active!)
+     */
+    protected int displayedEntryIndex;
+    protected final EditorTextArea3 editor;
+
+    public EditorEntry(EditorController edCtrl,EditorTextArea3 edt) {
+        this.editor = edt;
         this.edCtrl = edCtrl;
     }
 
@@ -41,49 +53,102 @@ public class EditorEntry {
         showLengthMessage();
         edCtrl.checkPrefExport();
         navigateEntry(pos);
-        scrollForDisplayNearestSegments(pos);
+        edCtrl.scrollForDisplayNearestSegments(pos,displayedEntryIndex);
         fireEvent();
     }
-
-
-
-    /**
-     * Attempt to center the active segment in the editor. When the active
-     * segment is taller than the editor, the first line of the editable area
-     * will be at the bottom of the editor.
-     */
-    private void scrollForDisplayNearestSegments(final IEditor.CaretPosition pos) {
-        SwingUtilities.invokeLater(() -> {
-            Rectangle rect = getSegmentBounds(displayedEntryIndex);
-            if (rect != null) {
-                // Expand rect vertically to fill height of viewport.
-                int viewportHeight = editorUI.getViewport().getHeight();
-                rect.y -= (viewportHeight - rect.height) / 2;
-                rect.height = viewportHeight;
-                editor.scrollRectToVisible(rect);
+    public boolean iterateNonForward(java.util.List<IProject.FileInfo> files, boolean looped) {
+        displayedEntryIndex--;
+        if (displayedEntryIndex < 0) {
+            displayedFileIndex--;
+            if (displayedFileIndex < 0) {
+                displayedFileIndex = files.size() - 1;
+                looped = true;
             }
-            setCaretPosition(pos);
-        });
+            edCtrl.loadDocument();
+            displayedEntryIndex = m_docSegList.length - 1;
+        }
+        return looped;
+    }
+
+    public void setDisplayedFileIndex(int displayedFileIndex) {
+        this.displayedFileIndex = displayedFileIndex;
+    }
+
+    public int getDisplayedFileIndex() {
+        return displayedFileIndex;
+    }
+
+    public int getDisplayedEntryIndex() {
+        return displayedEntryIndex;
+    }
+
+    public void setDisplayedEntryIndex(int displayedEntryIndex) {
+        this.displayedEntryIndex = displayedEntryIndex;
+    }
+
+    public boolean iterateForward(List<IProject.FileInfo> files, boolean looped) {
+        displayedEntryIndex++;
+        if (displayedEntryIndex >= m_docSegList.length) {
+            displayedFileIndex++;
+            displayedEntryIndex = 0;
+            if (displayedFileIndex >= files.size()) {
+                displayedFileIndex = 0;
+                looped = true;
+            }
+            edCtrl.loadDocument();
+        }
+        return looped;
+    }
+    public void displayFirstEntry() {
+        // it was empty project, need to display first entry
+        displayedFileIndex = 0;
+        displayedEntryIndex = 0;
+        edCtrl.loadDocument();
+    }
+
+    public void findIndex(int entryNum) {
+        IProject dataEngine = Core.getProject();
+        for (int i = 0; i < dataEngine.getProjectFiles().size(); i++) {
+            IProject.FileInfo fi = dataEngine.getProjectFiles().get(i);
+            SourceTextEntry firstEntry = fi.entries.get(0);
+            SourceTextEntry lastEntry = fi.entries.get(fi.entries.size() - 1);
+            if (firstEntry.entryNum() <= entryNum && lastEntry.entryNum() >= entryNum) {
+                // this file
+                if (i != displayedFileIndex) {
+                    // it's other file than displayed
+                    displayedFileIndex = i;
+                    edCtrl.loadDocument();
+                }
+                findCorrectDisplayIndex(entryNum);
+                break;
+            }
+        }
     }
 
     void fireEvent() {
         // check if file was changed
-        if (edCtrl.getPreviousDisplayedFileIndex() != edCtrl.getDisplayedFileIndex()) {
-            edCtrl.setPreviousDisplayedFileIndex(edCtrl.getDisplayedFileIndex());
-//            CBO nya 2
-            CoreEvents.fireEntryNewFile(Core.getProjectFilePath(edCtrl.getDisplayedFileIndex()));
+        if (previousDisplayedFileIndex != displayedFileIndex) {
+            previousDisplayedFileIndex = displayedFileIndex;
+            CoreEvents.fireEntryNewFile(Core.getProjectFilePath(displayedFileIndex));
         }
-
-        edCtrl.getEditor().autoCompleter.setVisible(false);
-        edCtrl.getEditor().repaint();
-
+        editor.autoCompleter.setVisible(false);
+        editor.repaint();
         // fire event about new segment activated
         CoreEvents.fireEntryActivated(edCtrl.getCurrentEntry());
     }
+    private void findCorrectDisplayIndex(int entryNum) {
+        // find correct displayedEntryIndex
+        for (int j = 0; j < m_docSegList.length; j++) {
+            if (m_docSegList[j].segmentNumberInProject >= entryNum) { //
+                displayedEntryIndex = j;
+                break;
+            }
+        }
+    }
 
     void navigateEntry(IEditor.CaretPosition pos) {
-        int te = edCtrl.getEditor().getOmDocument().getTranslationEnd();
-        int ts = edCtrl.getEditor().getOmDocument().getTranslationStart();
+        int te = editor.getOmDocument().getTranslationEnd();
+        int ts = editor.getOmDocument().getTranslationStart();
         //
         // Navigate to entry as requested.
         //
@@ -104,7 +169,7 @@ public class EditorEntry {
     boolean exitActivateEntry(SegmentBuilder builder, IEditor.CaretPosition pos) {
         if (
                 edCtrl.getCurrentEntry() == null ||
-                        edCtrl.getEditorUI().getViewport().getView() != edCtrl.getEditor() ||
+                        editorUI.getViewport().getView() != editor ||
                         !Core.getProject().isProjectLoaded()
         ) {
             return true;
@@ -113,7 +178,7 @@ public class EditorEntry {
             // segment that is in the current document but not yet loaded. To avoid
             // loading large swaths of the document at once, we then re-load the
             // document centered at the destination segment.
-            edCtrl.loadDocument();
+            edCtrl.edCtrl.loadDocument();
             activateEntry(pos);
             return true;
         }
@@ -124,12 +189,12 @@ public class EditorEntry {
      * Display length of source and translation parts in the status bar.
      */
     void showLengthMessage() {
-        Document3 doc = edCtrl.getEditor().getOmDocument();
+        Document3 doc = editor.getOmDocument();
         String trans = doc.extractTranslation();
         if (trans != null) {
             SourceTextEntry ste = edCtrl.getBuilder().ste;
             String lMsg = " " + ste.getSrcText().length() + "/" + trans.length() + " ";
-            edCtrl.getMw().showLengthMessage(lMsg);
+            mw.showLengthMessage(lMsg);
         }
     }
 
@@ -141,7 +206,7 @@ public class EditorEntry {
         int translatedUniqueInFile = 0;
         int uniqueInFile = 0;
         boolean isUnique;
-        for (SourceTextEntry ste : Core.getProjectFile(edCtrl.getDisplayedFileIndex()).entries) {
+        for (SourceTextEntry ste : Core.getProjectFile(displayedFileIndex).entries) {
             isUnique = ste.getDuplicate() != SourceTextEntry.DUPLICATE.NEXT;
             if (isUnique) {
                 uniqueInFile++;
@@ -166,10 +231,14 @@ public class EditorEntry {
 
         if (progressMode == MainWindowUI.StatusBarMode.DEFAULT) {
             StringBuilder pMsg = new StringBuilder(1024).append(" ");
-            pMsg.append(translatedInFile).append("/").append(Core.getProjectFile(edCtrl.getDisplayedFileIndex()).entries.size()).append(" (")
-                    .append(stat.numberofTranslatedSegments).append("/").append(stat.numberOfUniqueSegments)
-                    .append(", ").append(stat.numberOfSegmentsTotal).append(") ");
-            edCtrl.getMw().showProgressMessage(pMsg.toString());
+            int sizeEntries = Core.getProjectFile(displayedFileIndex).entries.size();
+            pMsg.append(translatedInFile).append("/")
+                    .append(sizeEntries)
+                    .append(" (").append(stat.numberofTranslatedSegments)
+                    .append("/").append(stat.numberOfUniqueSegments)
+                    .append(", ").append(stat.numberOfSegmentsTotal)
+                    .append(") ");
+            mw.showProgressMessage(pMsg.toString());
         } else {
             /*
              * Percentage mode based on idea by Yu Tang
@@ -178,15 +247,15 @@ public class EditorEntry {
             NumberFormat nfPer = NumberFormat.getPercentInstance();
             nfPer.setRoundingMode(RoundingMode.DOWN);
             nfPer.setMaximumFractionDigits(1);
+            String arga = (translatedUniqueInFile == 0) ? "0%" : nfPer.format((double) translatedUniqueInFile / uniqueInFile);
+            String argb = (stat.numberofTranslatedSegments == 0) ? "0%" : nfPer.format((double) stat.numberofTranslatedSegments / stat.numberOfUniqueSegments);
+            int diffUnique = uniqueInFile - translatedUniqueInFile;
+            int diffSegments = stat.numberOfUniqueSegments - stat.numberofTranslatedSegments;
 
-            String message = StringUtil.format(OStrings.getString("MW_PROGRESS_DEFAULT_PERCENTAGE"),
-                    (translatedUniqueInFile == 0) ? "0%" : nfPer.format((double) translatedUniqueInFile / uniqueInFile),
-                    uniqueInFile - translatedUniqueInFile,
-                    (stat.numberofTranslatedSegments == 0) ? "0%"
-                            : nfPer.format((double) stat.numberofTranslatedSegments / stat.numberOfUniqueSegments),
-                    stat.numberOfUniqueSegments - stat.numberofTranslatedSegments, stat.numberOfSegmentsTotal);
-
-            edCtrl.getMw().showProgressMessage(message);
+            String message = StringUtil.format(
+                    OStrings.getString("MW_PROGRESS_DEFAULT_PERCENTAGE"),
+                    arga,diffUnique,argb,diffSegments,stat.numberOfSegmentsTotal);
+            mw.showProgressMessage(message);
         }
     }
 }
