@@ -5,14 +5,12 @@ import org.omegat.core.CoreEvents;
 import org.omegat.core.data.IProject;
 import org.omegat.core.data.SourceTextEntry;
 import org.omegat.core.statistics.StatisticsInfo;
+import org.omegat.gui.main.MainWindow;
 import org.omegat.gui.main.MainWindowUI;
 import org.omegat.util.OStrings;
 import org.omegat.util.Preferences;
 import org.omegat.util.StringUtil;
 import org.omegat.util.gui.UIThreadsUtil;
-
-import javax.swing.*;
-import java.awt.*;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.util.List;
@@ -29,10 +27,12 @@ public class EditorEntry {
      */
     protected int displayedEntryIndex;
     protected final EditorTextArea3 editor;
+    protected final MainWindow mw;
 
-    public EditorEntry(EditorController edCtrl,EditorTextArea3 edt) {
+    public EditorEntry(EditorController edCtrl, EditorTextArea3 edt, MainWindow mw) {
         this.editor = edt;
         this.edCtrl = edCtrl;
+        this.mw = mw;
     }
 
     /**
@@ -65,7 +65,7 @@ public class EditorEntry {
                 looped = true;
             }
             edCtrl.loadDocument();
-            displayedEntryIndex = m_docSegList.length - 1;
+            displayedEntryIndex = edCtrl.getM_docSegList().length - 1;
         }
         return looped;
     }
@@ -88,7 +88,7 @@ public class EditorEntry {
 
     public boolean iterateForward(List<IProject.FileInfo> files, boolean looped) {
         displayedEntryIndex++;
-        if (displayedEntryIndex >= m_docSegList.length) {
+        if (displayedEntryIndex >= edCtrl.getM_docSegList().length) {
             displayedFileIndex++;
             displayedEntryIndex = 0;
             if (displayedFileIndex >= files.size()) {
@@ -138,8 +138,8 @@ public class EditorEntry {
     }
     private void findCorrectDisplayIndex(int entryNum) {
         // find correct displayedEntryIndex
-        for (int j = 0; j < m_docSegList.length; j++) {
-            if (m_docSegList[j].segmentNumberInProject >= entryNum) { //
+        for (int j = 0; j < edCtrl.getM_docSegList().length; j++) {
+            if (edCtrl.getM_docSegList()[j].segmentNumberInProject >= entryNum) { //
                 displayedEntryIndex = j;
                 break;
             }
@@ -169,7 +169,7 @@ public class EditorEntry {
     boolean exitActivateEntry(SegmentBuilder builder, IEditor.CaretPosition pos) {
         if (
                 edCtrl.getCurrentEntry() == null ||
-                        editorUI.getViewport().getView() != editor ||
+                        edCtrl.getScrollPane().getViewport().getView() != editor ||
                         !Core.getProject().isProjectLoaded()
         ) {
             return true;
@@ -178,7 +178,7 @@ public class EditorEntry {
             // segment that is in the current document but not yet loaded. To avoid
             // loading large swaths of the document at once, we then re-load the
             // document centered at the destination segment.
-            edCtrl.edCtrl.loadDocument();
+            edCtrl.loadDocument();
             activateEntry(pos);
             return true;
         }

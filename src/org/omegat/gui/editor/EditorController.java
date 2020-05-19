@@ -176,9 +176,11 @@ public class EditorController implements IEditor {
     private JTextPane introPane, emptyProjectPane;
     protected final MainWindow mw;
 
+
+
     /** Currently displayed segments info. */
     protected SegmentBuilder[] m_docSegList;
-
+    // m_docSegList 42 matches
     protected int firstLoaded;
     protected int lastLoaded;
 
@@ -215,7 +217,7 @@ public class EditorController implements IEditor {
         this.mw = mainWindow;
         segmentExportImport = new SegmentExportImport(this);
         editor = new EditorTextArea3(this);
-        this.edEntry = new EditorEntry(this,editor);
+        this.edEntry = new EditorEntry(this,editor,mw);
 
         DragTargetOverlay.apply(editor, dropInfo);
         setFont(mainWindow.getApplicationFont());
@@ -327,7 +329,9 @@ public class EditorController implements IEditor {
             }
         });
     }
-
+    public SegmentBuilder[] getM_docSegList() {
+        return m_docSegList;
+    }
     private void createUI() {
         pane = new DockablePanel("EDITOR", " ", false);
         pane.setComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));
@@ -478,6 +482,10 @@ public class EditorController implements IEditor {
             }
             scrollPane.setViewportView(data);
         }
+    }
+
+    public JScrollPane getScrollPane() {
+        return scrollPane;
     }
 
     private final IDropInfo dropInfo = new IDropInfo() {
