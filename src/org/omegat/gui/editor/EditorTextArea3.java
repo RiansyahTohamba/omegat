@@ -157,7 +157,7 @@ public class EditorTextArea3 extends JEditorPane {
                 set.removeAttributes(set);
                 EditorController c = EditorTextArea3.this.controller;
                 try {
-                    c.m_docSegList[c.displayedEntryIndex].createInputAttributes(element, set);
+                    c.m_docSegList[c.getDisplayedEntryIndex()].createInputAttributes(element, set);
                 } catch (Exception ex) {
                 }
             }
@@ -280,7 +280,7 @@ public class EditorTextArea3 extends JEditorPane {
         }
 
         boolean isInActiveEntry;
-        int ae = controller.displayedEntryIndex;
+        int ae = controller.getDisplayedEntryIndex();
         SegmentBuilder sb = controller.m_docSegList[ae];
         if (sb.isActive()) {
             isInActiveEntry = pos >= sb.getStartPosition() && pos <= sb.getEndPosition();

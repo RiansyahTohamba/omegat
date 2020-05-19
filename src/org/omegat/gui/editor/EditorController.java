@@ -329,6 +329,9 @@ public class EditorController implements IEditor {
             }
         });
     }
+    public int getDisplayedEntryIndex(){
+        return edEntry.getDisplayedEntryIndex();
+    }
     public SegmentBuilder[] getM_docSegList() {
         return m_docSegList;
     }
@@ -1582,24 +1585,30 @@ public class EditorController implements IEditor {
 //    todo: replaceEditText & 9.0 & 0.666 & 2.0 & 0 & 0 & 0
     public void replaceEditText(String text) {
         UIThreadsUtil.mustBeSwingThread();
-
-        SegmentBuilder builder = getBuilder();
-        if (builder.hasRTL && targetLangIsRTL) {
-            text = EditorUtils.addBidiAroundTags(EditorUtils.removeDirectionCharsAroundTags(text, builder.ste),
-                    builder.ste);
-        }
-
+        text = setTextEditor(text);
+        setMarker();
         // build local offsets
         int start = editor.getOmDocument().getTranslationStart();
         int end = editor.getOmDocument().getTranslationEnd();
-
-        CalcMarkersThread thread = markerController.markerThreads[markerController
-                .getMarkerIndex(ComesFromMTMarker.class.getName())];
-        ((ComesFromMTMarker) thread.marker).setMark(null, null);
-
         // remove text
         editor.select(start, end);
         editor.replaceSelection(text);
+    }
+
+    private void setMarker() {
+        int idxThread = markerController.getMarkerIndex(ComesFromMTMarker.class.getName());
+        CalcMarkersThread thread = markerController.markerThreads[idxThread];
+        ComesFromMTMarker marker = (ComesFromMTMarker) thread.marker;
+        marker.setMark(null, null);
+    }
+
+    private String setTextEditor(String text) {
+        SegmentBuilder builder = getBuilder();
+        if (builder.hasRTL && targetLangIsRTL) {
+            String rmDirection = EditorUtils.removeDirectionCharsAroundTags(text, builder.ste);
+            text = EditorUtils.addBidiAroundTags(rmDirection,builder.ste);
+        }
+        return text;
     }
 
     public void replacePartOfText(final String text, int start, int end) {
