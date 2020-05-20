@@ -103,7 +103,7 @@ public final class ProjectUICommands {
     public static void projectCreate() {
         UIThreadsUtil.mustBeSwingThread();
 
-        if (Core.getProject().isProjectLoaded()) {
+        if (Core.isProjectLoaded()) {
             return;
         }
 
@@ -168,7 +168,7 @@ public final class ProjectUICommands {
     public static void projectOpenMED() {
         UIThreadsUtil.mustBeSwingThread();
 
-        if (Core.getProject().isProjectLoaded()) {
+        if (Core.isProjectLoaded()) {
             return;
         }
 
@@ -223,12 +223,7 @@ public final class ProjectUICommands {
     }
 //projectCreateMED & 12.0 & 0.666 & 3.0 & 0 & 0 & 0
     public static void projectCreateMED() {
-        UIThreadsUtil.mustBeSwingThread();
-        if (!Core.getProject().isProjectLoaded()) {
-            return;
-        }
-        // commit the current entry first
-        Core.getEditor().commitAndLeave();
+        if (initProjectFunc()) return;
         // ask for new MED file
         ChooseMedProject ndm = new ChooseMedProject();
         String zipName = setZipName();
@@ -305,8 +300,7 @@ public final class ProjectUICommands {
 
     public static void projectTeamCreate() {
         UIThreadsUtil.mustBeSwingThread();
-
-        if (Core.getProject().isProjectLoaded()) {
+        if (Core.isProjectLoaded()) {
             return;
         }
         new SwingWorker<Void, Void>() {
@@ -418,11 +412,10 @@ public final class ProjectUICommands {
      * @param closeCurrent
      *            whether or not to close the current project first, if any
      */
-//    todo: projectOpen & 8.0 & 0.875 & 7.0 & 0 & 0 & 0
+//    sudah projectOpen & 8.0 & 0.875 & 7.0 & 0 & 0 & 0
     public static void projectOpen(final File projectDirectory, boolean closeCurrent) {
         UIThreadsUtil.mustBeSwingThread();
-
-        if (Core.getProject().isProjectLoaded()) {
+        if (Core.isProjectLoaded()) {
             if (closeCurrent) {
                 // Register to try again after closing the current project.
                 CoreEvents.registerProjectChangeListener(new IProjectEventListener() {
@@ -437,20 +430,30 @@ public final class ProjectUICommands {
             }
             return;
         }
+        initSwing(projectDirectory);
+    }
 
+    private static void initSwing(File projectDirectory) {
         final File projectRootFolder;
         if (projectDirectory == null) {
+            if (stopOpen()) return;
             // select existing project file - open it
-            OmegaTFileChooser pfc = new OpenProjectFileChooser();
-            if (OmegaTFileChooser.APPROVE_OPTION != pfc.showOpenDialog(Core.getMainWindow()
-                    .getApplicationFrame())) {
-                return;
-            }
-            projectRootFolder = pfc.getSelectedFile();
+            projectRootFolder = new OpenProjectFileChooser().getSelectedFile();
         } else {
             projectRootFolder = projectDirectory;
         }
+        swingProjectOpen(projectRootFolder);
+    }
 
+    private static boolean stopOpen() {
+        OmegaTFileChooser pfc = new OpenProjectFileChooser();
+        if (OmegaTFileChooser.APPROVE_OPTION != pfc.showOpenDialog(Core.getMainWindow().getApplicationFrame()) ) {
+            return true;
+        }
+        return false;
+    }
+
+    private static void swingProjectOpen(File projectRootFolder) {
         new SwingWorker<Void, Void>() {
             protected Void doInBackground() throws Exception {
 
@@ -468,7 +471,7 @@ public final class ProjectUICommands {
                     mainWindow.setCursor(oldCursor);
                     return null;
                 }
-                
+
                 // check if project okay
                 ProjectProperties props;
                 try {
@@ -491,7 +494,7 @@ public final class ProjectUICommands {
                             // Update project.properties
                             mainWindow.showStatusMessageRB("TEAM_OPEN");
                             try {
-                                RemoteRepositoryProvider remoteRepositoryProvider = 
+                                RemoteRepositoryProvider remoteRepositoryProvider =
                                         new RemoteRepositoryProvider(props.getProjectRootDir(),
                                         props.getRepositories());
                                 remoteRepositoryProvider.switchToVersion(OConsts.FILE_PROJECT, null);
@@ -510,7 +513,7 @@ public final class ProjectUICommands {
                                 Log.logErrorRB(e, "TF_PROJECT_PROPERTIES_ERROR");
                                 throw e;
                             }
-                        }                       
+                        }
                         // team project - non-exist directories could be created from repo
                         props.autocreateDirectories();
                     } else {
@@ -576,7 +579,7 @@ public final class ProjectUICommands {
      * Prompt the user to reload the current project
      */
     public static void promptReload() {
-        if (!Core.getProject().isProjectLoaded()) {
+        if (!Core.isProjectLoaded()) {
             return;
         }
         // asking to reload a project
@@ -589,14 +592,7 @@ public final class ProjectUICommands {
     }
 
     public static void projectReload() {
-        UIThreadsUtil.mustBeSwingThread();
-
-        if (!Core.getProject().isProjectLoaded()) {
-            return;
-        }
-
-        // commit the current entry first
-        Core.getEditor().commitAndLeave();
+        if (initProjectFunc()) return;
 
         final ProjectProperties props = Core.getProject().getProjectProperties();
 
@@ -635,14 +631,7 @@ public final class ProjectUICommands {
     }
 
     public static void projectSave() {
-        UIThreadsUtil.mustBeSwingThread();
-
-        if (!Core.getProject().isProjectLoaded()) {
-            return;
-        }
-
-        // commit the current entry first
-        Core.getEditor().commitAndLeave();
+        if (initProjectFunc()) return;
 
         new SwingWorker<Void, Void>() {
             protected Void doInBackground() throws Exception {
@@ -671,14 +660,7 @@ public final class ProjectUICommands {
     }
 
     public static void projectClose() {
-        UIThreadsUtil.mustBeSwingThread();
-
-        if (!Core.getProject().isProjectLoaded()) {
-            return;
-        }
-
-        // commit the current entry first
-        Core.getEditor().commitAndLeave();
+        if (initProjectFunc()) return;
 
         new SwingWorker<Void, Void>() {
             protected Void doInBackground() throws Exception {
@@ -721,36 +703,45 @@ public final class ProjectUICommands {
             }
         }.execute();
     }
-//todo: projectEditProperties & 12.0 & 0.666 & 3.0 & 0 & 0 & 0
+//sudah projectEditProperties & 12.0 & 0.666 & 3.0 & 0 & 0 & 0
     public static void projectEditProperties() {
-        UIThreadsUtil.mustBeSwingThread();
-
-        if (!Core.getProject().isProjectLoaded()) {
-            return;
-        }
-
-        // commit the current entry first
-        Core.getEditor().commitAndLeave();
-
-        // displaying the dialog to change paths and other properties
-        ProjectPropertiesDialog prj = new ProjectPropertiesDialog(Core.getMainWindow().getApplicationFrame(),
-                Core.getProject().getProjectProperties(),
-                Core.getProject().getProjectProperties().getProjectName(),
-                ProjectPropertiesDialog.Mode.EDIT_PROJECT);
-        prj.setVisible(true);
-        final ProjectProperties newProps = prj.getResult();
-        prj.dispose();
+        if (initProjectFunc()) return;
+        final ProjectProperties newProps = getProjectProperties();
         if (newProps == null) {
             return;
         }
+        if (setRes()) return;
+        execProject(newProps);
+    }
 
-        int res = JOptionPane.showConfirmDialog(Core.getMainWindow().getApplicationFrame(),
-                OStrings.getString("MW_REOPEN_QUESTION"), OStrings.getString("MW_REOPEN_TITLE"),
-                JOptionPane.YES_NO_OPTION);
+    private static ProjectProperties getProjectProperties() {
+        // displaying the dialog to change paths and other properties
+        ProjectPropertiesDialog prj = new ProjectPropertiesDialog(
+                Core.getMainWindow().getApplicationFrame(),
+                Core.getProjectProperties(),
+                Core.getProjectProperties().getProjectName(),
+                ProjectPropertiesDialog.Mode.EDIT_PROJECT
+        );
+        prj.setVisible(true);
+        final ProjectProperties newProps = prj.getResult();
+        prj.dispose();
+        return newProps;
+    }
+
+    private static boolean setRes() {
+        int res = JOptionPane.showConfirmDialog(
+                Core.getMainWindow().getApplicationFrame(),
+                OStrings.getString("MW_REOPEN_QUESTION"),
+                OStrings.getString("MW_REOPEN_TITLE"),
+                JOptionPane.YES_NO_OPTION
+        );
         if (res != JOptionPane.YES_OPTION) {
-            return;
+            return true;
         }
+        return false;
+    }
 
+    private static void execProject(ProjectProperties newProps) {
         new SwingWorker<Void, Void>() {
             int previousCurEntryNum = Core.getEditor().getCurrentEntryNumber();
 
@@ -781,14 +772,7 @@ public final class ProjectUICommands {
     }
 
     public static void projectCompile() {
-        UIThreadsUtil.mustBeSwingThread();
-
-        if (!Core.getProject().isProjectLoaded()) {
-            return;
-        }
-
-        // commit the current entry first
-        Core.getEditor().commitAndLeave();
+        if (initProjectFunc()) return;
 
         new SwingWorker<Void, Void>() {
             protected Void doInBackground() throws Exception {
@@ -814,14 +798,7 @@ public final class ProjectUICommands {
     }
 
     public static void projectSingleCompile(final String sourcePattern) {
-        UIThreadsUtil.mustBeSwingThread();
-
-        if (!Core.getProject().isProjectLoaded()) {
-            return;
-        }
-
-        // commit the current entry first
-        Core.getEditor().commitAndLeave();
+        if (initProjectFunc()) return;
 
         new SwingWorker<Void, Void>() {
             @Override
@@ -849,14 +826,7 @@ public final class ProjectUICommands {
     }
 
     public static void projectCompileAndCommit() {
-        UIThreadsUtil.mustBeSwingThread();
-
-        if (!Core.getProject().isProjectLoaded()) {
-            return;
-        }
-
-        // commit the current entry first
-        Core.getEditor().commitAndLeave();
+        if (initProjectFunc()) return;
 
         new SwingWorker<Void, Void>() {
             protected Void doInBackground() throws Exception {
@@ -881,15 +851,18 @@ public final class ProjectUICommands {
         }.execute();
     }
 
-    public static void projectCommitSourceFiles() {
+    private static boolean initProjectFunc() {
         UIThreadsUtil.mustBeSwingThread();
-
-        if (!Core.getProject().isProjectLoaded()) {
-            return;
+        if (!Core.isProjectLoaded()) {
+            return true;
         }
-
-        // Commit the current entry first
+        // commit the current entry first
         Core.getEditor().commitAndLeave();
+        return false;
+    }
+
+    public static void projectCommitSourceFiles() {
+        if (initProjectFunc()) return;
 
         new SwingWorker<Void, Void>() {
             @Override
@@ -959,17 +932,9 @@ public final class ProjectUICommands {
      * @param doReload
      *            If true, the project will be reloaded after the files are successfully copied
      */
-//    todo: projectImportFiles & 9.0 & 0.778 & 3.0 & 0 & 0 & 0
+//    sudah projectImportFiles & 9.0 & 0.778 & 3.0 & 0 & 0 & 0
     public static void projectImportFiles(String destination, File[] toImport, boolean doReload) {
-        UIThreadsUtil.mustBeSwingThread();
-
-        if (!Core.getProject().isProjectLoaded()) {
-            return;
-        }
-
-        // commit the current entry first
-        Core.getEditor().commitAndLeave();
-
+        if (initProjectFunc()) return;
         try {
             FileUtil.copyFilesTo(new File(destination), toImport, new CollisionCallback());
             if (doReload) {
@@ -1030,18 +995,23 @@ public final class ProjectUICommands {
     /**
      * Does wikiread
      */
-//    todo: doWikiImport & 9.0 & 0.778 & 2.0 & 0 & 0 & 0
+//    sudah doWikiImport & 9.0 & 0.778 & 2.0 & 0 & 0 & 0
     public static void doWikiImport() {
-        String remoteUrl = JOptionPane.showInputDialog(Core.getMainWindow().getApplicationFrame(),
+        String remoteUrl = JOptionPane.showInputDialog(
+                Core.getMainWindow().getApplicationFrame(),
                 OStrings.getString("TF_WIKI_IMPORT_PROMPT"),
-                OStrings.getString("TF_WIKI_IMPORT_TITLE"), JOptionPane.OK_CANCEL_OPTION);
-        String projectsource = Core.getProject().getProjectProperties().getSourceRoot();
+                OStrings.getString("TF_WIKI_IMPORT_TITLE"),
+                JOptionPane.WARNING_MESSAGE);
         if (remoteUrl == null || remoteUrl.trim().isEmpty()) {
             // [1762625] Only try to get MediaWiki page if a string has been entered
             return;
         }
+        wikiImport(remoteUrl);
+    }
+
+    private static void wikiImport(String remoteUrl) {
         try {
-            WikiGet.doWikiGet(remoteUrl, projectsource);
+            WikiGet.doWikiGet(remoteUrl, Core.getProjectSourceRoot());
             projectReload();
         } catch (Exception ex) {
             Log.log(ex);

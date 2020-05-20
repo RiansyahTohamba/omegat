@@ -142,6 +142,9 @@ public final class Core {
     public static ProjectProperties getProjectProperties(){
         return currentProject.getProjectProperties();
     }
+    public static String getProjectSourceRoot(){
+        return getProjectProperties().getSourceRoot();
+    }
 
     public static File getParentFileProject(){
         return getProjectProperties().getProjectRootDir().getParentFile();
