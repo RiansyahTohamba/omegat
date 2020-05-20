@@ -114,68 +114,55 @@ public class AlignFilePickerController {
      *            Parent window of file picker and align window
      */
     @SuppressWarnings("serial")
-//    todo: show & 8.0 & 1.0 & 5.0 & 0 & 0 & 0
+//    sudah show & 8.0 & 1.0 & 5.0 & 0 & 0 & 0
     public void show(final Component parent) {
         final JFrame frame = new JFrame(OStrings.getString("ALIGNER_FILEPICKER"));
         frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         StaticUIUtils.setEscapeClosable(frame);
-
         final AlignFilePicker picker = new AlignFilePicker();
-        picker.sourceLanguagePicker.setModel(new DefaultComboBoxModel<>(new Vector<>(Language.getLanguages())));
-        picker.sourceLanguagePicker.setRenderer(new LanguageComboBoxRenderer());
-        picker.sourceLanguagePicker.setSelectedItem(sourceLanguage);
-        picker.sourceLanguagePicker.addItemListener(new ItemListener() {
-            @Override
-            public void itemStateChanged(ItemEvent e) {
-                if (e.getStateChange() != ItemEvent.SELECTED) {
-                    return;
+        sourceLangPicker(frame, picker);
+        targetLangPicker(frame, picker);
+        addListenerChooseFileBtn(frame, picker);
+        addLangFieldListener(picker);
+        setTransferHandler(picker);
+        picker.okButton.addActionListener(e -> {
+            picker.bottomPanel.remove(picker.messageTextArea);
+            picker.bottomPanel.add(picker.progressBar, BorderLayout.CENTER);
+            picker.bottomPanel.revalidate();
+            new SwingWorker<Aligner, Void>() {
+                @Override
+                protected Aligner doInBackground() throws Exception {
+                    Aligner aligner = new Aligner(sourceFile, sourceLanguage, targetFile, targetLanguage);
+                    aligner.loadFiles();
+                    return aligner;
                 }
-                if (e.getItem() instanceof String) {
-                    String newVal = (String) e.getItem();
-                    if (Language.verifySingleLangCode(newVal)) {
-                        sourceLanguage = new Language(newVal);
-                    } else {
-                        sourceLanguage = null;
-                        JOptionPane.showMessageDialog(frame,
-                                OStrings.getString("NP_INVALID_SOURCE_LOCALE")
-                                        + OStrings.getString("NP_LOCALE_SUGGESTION"),
-                                OStrings.getString("TF_ERROR"), JOptionPane.ERROR_MESSAGE);
-                        picker.sourceLanguagePicker.requestFocusInWindow();
+
+                @Override
+                protected void done() {
+                    try {
+                        Aligner aligner = get();
+                        new AlignPanelController(aligner, defaultSaveDir).show(parent);
+                    } catch (CancellationException e) {
+                        // Ignore
+                    } catch (Exception e) {
+                        Log.log(e);
+                        JOptionPane.showMessageDialog(frame, OStrings.getString("ALIGNER_ERROR_LOADING"),
+                                OStrings.getString("ERROR_TITLE"), JOptionPane.ERROR_MESSAGE);
                     }
-                } else if (e.getItem() instanceof Language) {
-                    sourceLanguage = (Language) e.getItem();
-                } else {
-                    throw new IllegalArgumentException();
+                    frame.dispose();
                 }
-                updatePicker(picker);
-            }
+            }.execute();
         });
-        picker.targetLanguagePicker.setModel(new DefaultComboBoxModel<>(new Vector<>(Language.getLanguages())));
-        picker.targetLanguagePicker.setRenderer(new LanguageComboBoxRenderer());
-        picker.targetLanguagePicker.setSelectedItem(targetLanguage);
-        picker.targetLanguagePicker.addItemListener(e -> {
-            if (e.getStateChange() != ItemEvent.SELECTED) {
-                return;
-            }
-            if (e.getItem() instanceof String) {
-                String newVal = (String) e.getItem();
-                if (Language.verifySingleLangCode(newVal)) {
-                    targetLanguage = new Language(newVal);
-                } else {
-                    targetLanguage = null;
-                    JOptionPane.showMessageDialog(frame,
-                            OStrings.getString("NP_INVALID_TARGET_LOCALE")
-                                    + OStrings.getString("NP_LOCALE_SUGGESTION"),
-                            OStrings.getString("TF_ERROR"), JOptionPane.ERROR_MESSAGE);
-                    picker.targetLanguagePicker.requestFocusInWindow();
-                }
-            } else if (e.getItem() instanceof Language) {
-                targetLanguage = (Language) e.getItem();
-            } else {
-                throw new IllegalArgumentException();
-            }
-            updatePicker(picker);
-        });
+        picker.cancelButton.addActionListener(e -> frame.dispose());
+        frame.getRootPane().setDefaultButton(picker.okButton);
+        updatePicker(picker);
+        frame.add(picker);
+        frame.pack();
+        frame.setLocationRelativeTo(parent);
+        frame.setVisible(true);
+    }
+
+    private void addListenerChooseFileBtn(JFrame frame, AlignFilePicker picker) {
         picker.sourceChooseFileButton.addActionListener(e -> {
             File file = chooseFile(frame, OStrings.getString("ALIGNER_FILEPICKER_CHOOSE_SOURCE"),
                     StringUtil.isEmpty(sourceFile) ? sourceDefaultDir : sourceFile);
@@ -196,6 +183,9 @@ public class AlignFilePickerController {
                 picker.targetLanguageFileField.setText(file.getAbsolutePath());
             }
         });
+    }
+
+    private void addLangFieldListener(AlignFilePicker picker) {
         picker.sourceLanguageFileField.setText(sourceFile);
         picker.sourceLanguageFileField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
@@ -234,7 +224,9 @@ public class AlignFilePickerController {
                 updatePicker(picker);
             }
         });
+    }
 
+    private void setTransferHandler(AlignFilePicker picker) {
         TransferHandler transferHandler = new TransferHandler() {
             @Override
             public boolean canImport(TransferSupport support) {
@@ -262,7 +254,6 @@ public class AlignFilePickerController {
         };
         picker.sourceLanguageFileField.setTransferHandler(transferHandler);
         picker.targetLanguageFileField.setTransferHandler(transferHandler);
-
         picker.setTransferHandler(new TransferHandler() {
             @Override
             public boolean canImport(TransferSupport support) {
@@ -296,45 +287,67 @@ public class AlignFilePickerController {
                 }
             }
         });
+    }
 
-        picker.okButton.addActionListener(e -> {
-            picker.bottomPanel.remove(picker.messageTextArea);
-            picker.bottomPanel.add(picker.progressBar, BorderLayout.CENTER);
-            picker.bottomPanel.revalidate();
-            new SwingWorker<Aligner, Void>() {
-                @Override
-                protected Aligner doInBackground() throws Exception {
-                    Aligner aligner = new Aligner(sourceFile, sourceLanguage, targetFile, targetLanguage);
-                    aligner.loadFiles();
-                    return aligner;
+    private void targetLangPicker(JFrame frame, AlignFilePicker picker) {
+        picker.targetLanguagePicker.setModel(new DefaultComboBoxModel<>(new Vector<>(Language.getLanguages())));
+        picker.targetLanguagePicker.setRenderer(new LanguageComboBoxRenderer());
+        picker.targetLanguagePicker.setSelectedItem(targetLanguage);
+        picker.targetLanguagePicker.addItemListener(e -> {
+            if (e.getStateChange() != ItemEvent.SELECTED) {
+                return;
+            }
+            if (e.getItem() instanceof String) {
+                String newVal = (String) e.getItem();
+                if (Language.verifySingleLangCode(newVal)) {
+                    targetLanguage = new Language(newVal);
+                } else {
+                    targetLanguage = null;
+                    JOptionPane.showMessageDialog(frame,
+                            OStrings.getString("NP_INVALID_TARGET_LOCALE")
+                                    + OStrings.getString("NP_LOCALE_SUGGESTION"),
+                            OStrings.getString("TF_ERROR"), JOptionPane.ERROR_MESSAGE);
+                    picker.targetLanguagePicker.requestFocusInWindow();
                 }
-
-                @Override
-                protected void done() {
-                    try {
-                        Aligner aligner = get();
-                        new AlignPanelController(aligner, defaultSaveDir).show(parent);
-                    } catch (CancellationException e) {
-                        // Ignore
-                    } catch (Exception e) {
-                        Log.log(e);
-                        JOptionPane.showMessageDialog(frame, OStrings.getString("ALIGNER_ERROR_LOADING"),
-                                OStrings.getString("ERROR_TITLE"), JOptionPane.ERROR_MESSAGE);
-                    }
-                    frame.dispose();
-                }
-            }.execute();
+            } else if (e.getItem() instanceof Language) {
+                targetLanguage = (Language) e.getItem();
+            } else {
+                throw new IllegalArgumentException();
+            }
+            updatePicker(picker);
         });
-        picker.cancelButton.addActionListener(e -> frame.dispose());
+    }
 
-        frame.getRootPane().setDefaultButton(picker.okButton);
-
-        updatePicker(picker);
-
-        frame.add(picker);
-        frame.pack();
-        frame.setLocationRelativeTo(parent);
-        frame.setVisible(true);
+    private void sourceLangPicker(JFrame frame, AlignFilePicker picker) {
+        picker.sourceLanguagePicker.setModel(new DefaultComboBoxModel<>(new Vector<>(Language.getLanguages())));
+        picker.sourceLanguagePicker.setRenderer(new LanguageComboBoxRenderer());
+        picker.sourceLanguagePicker.setSelectedItem(sourceLanguage);
+        picker.sourceLanguagePicker.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                if (e.getStateChange() != ItemEvent.SELECTED) {
+                    return;
+                }
+                if (e.getItem() instanceof String) {
+                    String newVal = (String) e.getItem();
+                    if (Language.verifySingleLangCode(newVal)) {
+                        sourceLanguage = new Language(newVal);
+                    } else {
+                        sourceLanguage = null;
+                        JOptionPane.showMessageDialog(frame,
+                                OStrings.getString("NP_INVALID_SOURCE_LOCALE")
+                                        + OStrings.getString("NP_LOCALE_SUGGESTION"),
+                                OStrings.getString("TF_ERROR"), JOptionPane.ERROR_MESSAGE);
+                        picker.sourceLanguagePicker.requestFocusInWindow();
+                    }
+                } else if (e.getItem() instanceof Language) {
+                    sourceLanguage = (Language) e.getItem();
+                } else {
+                    throw new IllegalArgumentException();
+                }
+                updatePicker(picker);
+            }
+        });
     }
 
     private void updatePicker(final AlignFilePicker picker) {
@@ -426,8 +439,7 @@ public class AlignFilePickerController {
      * @param args
      * @throws Exception
      */
-//    todo: ada main disini wkwkw
-//    todo: main & 9.0 & 0.778 & 2.0 & 0 & 0 & 0
+//    sudah main & 9.0 & 0.778 & 2.0 & 0 & 0 & 0,tidak dulu deh
     public static void main(String[] args) throws Exception {
         System.setProperty("apple.laf.useScreenMenuBar", "true");
 
@@ -436,6 +448,10 @@ public class AlignFilePickerController {
         Core.setFilterMaster(new FilterMaster(FilterMaster.createDefaultFiltersConfig()));
         Core.setSegmenter(new Segmenter(SRX.getDefault()));
 
+        showPicker(args);
+    }
+
+    private static void showPicker(String[] args) {
         AlignFilePickerController picker = new AlignFilePickerController();
         if (args.length == 4) {
             picker.sourceLanguage = new Language(args[0]);
