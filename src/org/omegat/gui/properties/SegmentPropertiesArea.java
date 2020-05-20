@@ -100,7 +100,7 @@ public class SegmentPropertiesArea implements IPaneMenu {
     final DockableScrollPane scrollPane;
 
     private ISegmentPropertiesView viewImpl;
-//SegmentPropertiesArea & 13.0 & 0.769 & 3.0 & 0 & 0 & 0
+//sudah SegmentPropertiesArea & 13.0 & 0.769 & 3.0 & 0 & 0 & 0
     public SegmentPropertiesArea(IMainWindow mw) {
         scrollPane = new DockableScrollPane("SEGMENTPROPERTIES", OStrings.getString("SEGPROP_PANE_TITLE"),
                 null, true);

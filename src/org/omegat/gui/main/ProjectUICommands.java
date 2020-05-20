@@ -49,6 +49,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 
 import org.apache.commons.io.FileUtils;
+import org.jetbrains.annotations.NotNull;
 import org.omegat.CLIParameters;
 import org.omegat.convert.ConvertProject;
 import org.omegat.core.Core;
@@ -220,42 +221,28 @@ public final class ProjectUICommands {
             }
         }.execute();
     }
-//todo: projectCreateMED & 12.0 & 0.666 & 3.0 & 0 & 0 & 0
+//projectCreateMED & 12.0 & 0.666 & 3.0 & 0 & 0 & 0
     public static void projectCreateMED() {
         UIThreadsUtil.mustBeSwingThread();
-
         if (!Core.getProject().isProjectLoaded()) {
             return;
         }
-
         // commit the current entry first
         Core.getEditor().commitAndLeave();
-
         // ask for new MED file
         ChooseMedProject ndm = new ChooseMedProject();
-        // default name
-        String zipName = null;
-        try {
-            File origin = ProjectMedProcessing.getOriginMedFile(Core.getProject().getProjectProperties());
-            if (origin != null) {
-                zipName = origin.getName();
-            }
-        } catch (Exception ex) {
-        }
-        if (zipName == null) {
-            zipName = Core.getProject().getProjectProperties().getProjectName() + "-MED.zip";
-        }
-        ndm.setSelectedFile(new File(
-                Core.getProject().getProjectProperties().getProjectRootDir().getParentFile(), zipName));
+        String zipName = setZipName();
+        ndm.setSelectedFile(new File(Core.getParentFileProject(), zipName));
         int ndmResult = ndm.showSaveDialog(Core.getMainWindow().getApplicationFrame());
         if (ndmResult != OmegaTFileChooser.APPROVE_OPTION) {
             // user press 'Cancel' in project creation dialog
             return;
         }
-        // add .zip extension if there is no
-        final File med = ndm.getSelectedFile().getName().toLowerCase(Locale.ENGLISH).endsWith(".zip")
-                ? ndm.getSelectedFile() : new File(ndm.getSelectedFile().getAbsolutePath() + ".zip");
+        final File med = setMed(ndm);
+        execSwingWorker(med);
+    }
 
+    private static void execSwingWorker(File med) {
         new SwingWorker<Void, Void>() {
             protected Void doInBackground() throws Exception {
                 IMainWindow mainWindow = Core.getMainWindow();
@@ -291,6 +278,29 @@ public final class ProjectUICommands {
                 }
             }
         }.execute();
+    }
+
+    @NotNull
+    private static String setZipName() {
+        // default name
+        String zipName = null;
+        try {
+            File origin = ProjectMedProcessing.getOriginMedFile(Core.getProject().getProjectProperties());
+            if (origin != null) {
+                zipName = origin.getName();
+            }
+        } catch (Exception ex) {
+        }
+        if (zipName == null) {
+            zipName = Core.getProject().getProjectProperties().getProjectName() + "-MED.zip";
+        }
+        return zipName;
+    }
+
+    private static File setMed(ChooseMedProject ndm) {
+        // add .zip extension if there is no
+        return ndm.getSelectedFile().getName().toLowerCase(Locale.ENGLISH).endsWith(".zip")
+                    ? ndm.getSelectedFile() : new File(ndm.getSelectedFile().getAbsolutePath() + ".zip");
     }
 
     public static void projectTeamCreate() {

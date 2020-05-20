@@ -26,6 +26,7 @@
 
 package org.omegat.core;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -133,11 +134,21 @@ public final class Core {
     private static final List<IMarker> MARKERS = new ArrayList<IMarker>();
 
     /** Get project instance. */
+//    nanti coba buat subset kelas Project ini
     public static IProject getProject() {
         return currentProject;
     }
+
+    public static ProjectProperties getProjectProperties(){
+        return currentProject.getProjectProperties();
+    }
+
+    public static File getParentFileProject(){
+        return getProjectProperties().getProjectRootDir().getParentFile();
+    }
+
     public static String getProjectInternal(){
-        return currentProject.getProjectProperties().getProjectInternal();
+        return getProjectProperties().getProjectInternal();
     }
     public static boolean isProjectLoaded() {
         return currentProject.isProjectLoaded();
