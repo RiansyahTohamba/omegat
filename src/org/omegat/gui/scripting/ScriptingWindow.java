@@ -844,16 +844,12 @@ public class ScriptingWindow {
             }
         }
     }
-
+//sudah
     private JMenuBar createMenuBar() {
         mb = new JMenuBar();
         JMenu menu = new JMenu();
         Mnemonics.setLocalizedText(menu, OStrings.getString("SCW_MENU_TITLE"));
-        // https://sourceforge.net/p/omegat/feature-requests/1314/
-        addJMenuItemAcce(menu,"SCW_LOAD_FILE",new OpenScriptAction(),KeyEvent.VK_O);
-        addJMenuItemAcce(menu,"SCW_NEW_SCRIPT",new NewScriptAction(),KeyEvent.VK_N);
-        addJMenuItemAcce(menu,"SCW_SAVE_SCRIPT",new SaveScriptAction(),KeyEvent.VK_S);
-        addJMenuItemAcce(menu,"SCW_RUN_SCRIPT",new RunScriptAction(),KeyEvent.VK_R);
+        addItemAccelerator(menu);
         menu.addSeparator();
         menu.add(addJMenuItemLis("SCW_MENU_SET_SCRIPTS_FOLDER",new SelectScriptFolderAction()));
         menu.add(addJMenuItemLis("SCW_MENU_ACCESS_FOLDER",new ExploreScriptFolderAction()));
@@ -866,6 +862,14 @@ public class ScriptingWindow {
         buildSetsMenu(mb);
         mb.add(getjMenu());
         return mb;
+    }
+
+    private void addItemAccelerator(JMenu menu) {
+        // https://sourceforge.net/p/omegat/feature-requests/1314/
+        addJMenuItemAcce(menu,"SCW_LOAD_FILE",new OpenScriptAction(), KeyEvent.VK_O);
+        addJMenuItemAcce(menu,"SCW_NEW_SCRIPT",new NewScriptAction(),KeyEvent.VK_N);
+        addJMenuItemAcce(menu,"SCW_SAVE_SCRIPT",new SaveScriptAction(),KeyEvent.VK_S);
+        addJMenuItemAcce(menu,"SCW_RUN_SCRIPT",new RunScriptAction(),KeyEvent.VK_R);
     }
 
     private void addJMenuItemMenuClose(JMenu menu) {
