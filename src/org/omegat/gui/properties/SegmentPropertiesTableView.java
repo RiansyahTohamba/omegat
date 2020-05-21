@@ -86,19 +86,18 @@ public class SegmentPropertiesTableView implements ISegmentPropertiesView {
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         table.setGridColor(Color.WHITE);
         table.setFillsViewportHeight(true);
-        table.getColumnModel().getColumn(0).setCellRenderer(new SingleLineCellRenderer());
-        table.getColumnModel().getColumn(1).setCellRenderer(new MultilineCellRenderer());
-        table.getColumnModel().getColumn(2).setCellRenderer(new SingleLineCellRenderer());
+        setCellTable();
         DataTableStyling.applyFont(table, Core.getMainWindow().getApplicationFont());
-        TableColumnSizer.autoSize(table, 1, true).addColumnAdjustmentListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                adjustRowHeights();
-            }
-        });
+        TableColumnSizer.autoSize(table, 1, true).addColumnAdjustmentListener(e -> adjustRowHeights());
         table.addMouseListener(mouseAdapter);
         table.addMouseMotionListener(mouseAdapter);
         parent.scrollPane.setViewportView(table);
+    }
+
+    private void setCellTable() {
+        table.getColumnModel().getColumn(0).setCellRenderer(new SingleLineCellRenderer());
+        table.getColumnModel().getColumn(1).setCellRenderer(new MultilineCellRenderer());
+        table.getColumnModel().getColumn(2).setCellRenderer(new SingleLineCellRenderer());
     }
 
     private final MouseAdapter mouseAdapter = new MouseAdapter() {

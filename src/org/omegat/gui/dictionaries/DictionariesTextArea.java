@@ -99,30 +99,23 @@ public class DictionariesTextArea extends EntryInfoThreadPane<List<DictionaryEnt
 
     public DictionariesTextArea(IMainWindow mw) {
         super(true);
-
         setContentType("text/html");
         ((HTMLDocument) getDocument()).setPreservesUnknownTags(false);
         setFont(getFont());
-
         String title = OStrings.getString("GUI_MATCHWINDOW_SUBWINDOWTITLE_Dictionary");
         scrollPane = new DockableScrollPane("DICTIONARY", title, this, true);
         mw.addDockable(scrollPane);
-
         addMouseListener(mouseCallback);
-
         setEditable(false);
         StaticUIUtils.makeCaretAlwaysVisible(this);
         setText(EXPLANATION);
         setMinimumSize(new Dimension(100, 50));
-
-        CoreEvents.registerEditorEventListener(new IEditorEventListener() {
-            public void onNewWord(String newWord) {
-                callDictionary(newWord);
-            }
-        });
-
+        CoreEvents.registerEditorEventListener(newWord -> callDictionary(newWord));
         Core.getEditor().registerPopupMenuConstructors(750, new DictionaryPopup());
+        setListenerPref();
+    }
 
+    private void setListenerPref() {
         Preferences.addPropertyChangeListener(Preferences.DICTIONARY_FUZZY_MATCHING, e -> refresh());
         Preferences.addPropertyChangeListener(Preferences.DICTIONARY_AUTO_SEARCH, e -> refresh());
     }

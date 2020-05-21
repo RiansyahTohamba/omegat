@@ -71,26 +71,30 @@ public final class BrowseTaasCollectionsController {
 
     private BrowseTaasCollectionsController() {
     }
-
+//sudah
     public static void show() {
-        dialog = new BrowseTaasCollectionsUI(Core.getMainWindow().getApplicationFrame(), true);
-
-        final Language sourceLang = Core.getProject().getProjectProperties().getSourceLanguage();
-        final Language targetLang = Core.getProject().getProjectProperties().getTargetLanguage();
-
+        dialog = new BrowseTaasCollectionsUI(Core.getApplicationFrame(), true);
+        final Language sourceLang = Core.getProjectSrcLang();
+        final Language targetLang = Core.getProjectTargetLang();
         List<TaasCollection> list = Collections.emptyList();
         CollectionsTable model = new CollectionsTable(list, sourceLang, targetLang);
         dialog.tableCollections.setModel(model);
         dialog.tableCollections.setColumnModel(createColumnModel());
-
         dialog.labelStatus.setText(OStrings.getString("TAAS_STATUS_LIST"));
-        new SwingWorker<List<TaasCollection>, Void>() {
+        execSwingWorker(sourceLang, targetLang);
+        dialog.btnDownload.addActionListener(DOWNLOAD_LISTENER);
+        StaticUIUtils.setEscapeClosable(dialog);
+        dialog.btnClose.addActionListener(e -> dialog.dispose());
+        dialog.setLocationRelativeTo(Core.getApplicationFrame());
+        dialog.setVisible(true);
+    }
 
+    private static void execSwingWorker(Language sourceLang, Language targetLang) {
+        new SwingWorker<List<TaasCollection>, Void>() {
             @Override
             protected List<TaasCollection> doInBackground() throws Exception {
                 return TaaSPlugin.getClient().getCollectionsList();
             }
-
             @Override
             protected void done() {
                 try {
@@ -121,19 +125,6 @@ public final class BrowseTaasCollectionsController {
                 }
             }
         }.execute();
-        dialog.btnDownload.addActionListener(DOWNLOAD_LISTENER);
-
-        StaticUIUtils.setEscapeClosable(dialog);
-        dialog.btnClose.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                dialog.dispose();
-            }
-        });
-
-        dialog.setLocationRelativeTo(Core.getMainWindow().getApplicationFrame());
-
-        dialog.setVisible(true);
     }
 
     /**

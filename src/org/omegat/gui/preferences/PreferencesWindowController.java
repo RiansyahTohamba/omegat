@@ -155,7 +155,7 @@ public class PreferencesWindowController implements FurtherActionListener {
         show(parent, null);
     }
 
-//    todo:8.875 & PreferencesWindowController & show & 11.0 & 0.8181818181818182 & 3.0 & 0 & 0 & 0
+//    sudah 8.875 & PreferencesWindowController & show & 11.0 & 0.8181818181818182 & 3.0 & 0 & 0 & 0
     @SuppressWarnings("serial")
     public void show(Window parent, Class<? extends IPreferencesController> initialSelection) {
         dialog = new JDialog();

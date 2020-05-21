@@ -142,16 +142,28 @@ class EntryListPane extends JTextPane {
 
     EntryListPane() {
         setDocument(new DefaultStyledDocument());
-
         setDragEnabled(true);
         setFont(Core.getMainWindow().getApplicationFont());
         StaticUIUtils.makeCaretAlwaysVisible(this);
         StaticUIUtils.setCaretUpdateEnabled(this, false);
+        setStyle();
+        initListener();
+        setDocument(new DefaultStyledDocument());
+        getDocument().addDocumentListener(new FontFallbackListener(EntryListPane.this));
+        initActions();
+        useTabForAdvance = Core.getEditor().getSettings().isUseTabForAdvance();
+        autoSyncWithEditor = Preferences.isPreferenceDefault(Preferences.SEARCHWINDOW_AUTO_SYNC, false);
+        initInputMap(useTabForAdvance);
+        setEditable(false);
+    }
 
+    private void setStyle() {
         setForeground(Styles.EditorColor.COLOR_FOREGROUND.getColor());
         setCaretColor(Styles.EditorColor.COLOR_FOREGROUND.getColor());
         setBackground(Styles.EditorColor.COLOR_BACKGROUND.getColor());
+    }
 
+    private void initListener() {
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -184,15 +196,6 @@ class EntryListPane extends JTextPane {
                 getActiveDisplayedEntry().gotoEntryInEditor();
             }
         });
-
-        setDocument(new DefaultStyledDocument());
-        getDocument().addDocumentListener(new FontFallbackListener(EntryListPane.this));
-
-        initActions();
-        useTabForAdvance = Core.getEditor().getSettings().isUseTabForAdvance();
-        autoSyncWithEditor = Preferences.isPreferenceDefault(Preferences.SEARCHWINDOW_AUTO_SYNC, false);
-        initInputMap(useTabForAdvance);
-        setEditable(false);
     }
 
     private void initInputMap(boolean useTabForAdvance) {
