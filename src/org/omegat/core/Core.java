@@ -83,7 +83,10 @@ import org.omegat.gui.notes.NotesTextArea;
 import org.omegat.gui.properties.SegmentPropertiesArea;
 import org.omegat.languagetools.LanguageToolWrapper;
 import org.omegat.tokenizer.ITokenizer;
+import org.omegat.util.Language;
 import org.omegat.util.Preferences;
+
+import javax.swing.*;
 
 /**
  * Class which contains all components instances.
@@ -146,6 +149,14 @@ public final class Core {
         return getProjectProperties().getSourceRoot();
     }
 
+    public static Language getProjectSrcLang(){
+        return getProjectProperties().getSourceLanguage();
+    }
+
+    public static Language getProjectTargetLang(){
+        return getProjectProperties().getTargetLanguage();
+    }
+
     public static File getParentFileProject(){
         return getProjectProperties().getProjectRootDir().getParentFile();
     }
@@ -188,7 +199,9 @@ public final class Core {
     public static IMainWindow getMainWindow() {
         return mainWindow;
     }
-
+    public static JFrame getApplicationFrame(){
+        return mainWindow.getApplicationFrame();
+    }
     /** Get editor instance. */
     public static IEditor getEditor() {
         return editor;
