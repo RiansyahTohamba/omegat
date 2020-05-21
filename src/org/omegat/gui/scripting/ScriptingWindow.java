@@ -83,6 +83,7 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 
 import org.apache.commons.io.FilenameUtils;
+import org.jetbrains.annotations.NotNull;
 import org.omegat.core.Core;
 import org.omegat.core.CoreEvents;
 import org.omegat.core.events.IApplicationEventListener;
@@ -845,57 +846,30 @@ public class ScriptingWindow {
     }
 
     private JMenuBar createMenuBar() {
-
         mb = new JMenuBar();
         JMenu menu = new JMenu();
         Mnemonics.setLocalizedText(menu, OStrings.getString("SCW_MENU_TITLE"));
-
-        JMenuItem item;
-
         // https://sourceforge.net/p/omegat/feature-requests/1314/
-        item = new JMenuItem();
-        Mnemonics.setLocalizedText(item, OStrings.getString("SCW_LOAD_FILE"));
-        item.addActionListener(new OpenScriptAction());
-        item.setAccelerator(
-                KeyStroke.getKeyStroke(KeyEvent.VK_O, Java8Compat.getMenuShortcutKeyMaskEx()));
-        menu.add(item);
-
-        item = new JMenuItem();
-        Mnemonics.setLocalizedText(item, OStrings.getString("SCW_NEW_SCRIPT"));
-        item.addActionListener(new NewScriptAction());
-        item.setAccelerator(
-                KeyStroke.getKeyStroke(KeyEvent.VK_N, Java8Compat.getMenuShortcutKeyMaskEx()));
-        menu.add(item);
-
-        item = new JMenuItem();
-        Mnemonics.setLocalizedText(item, OStrings.getString("SCW_SAVE_SCRIPT"));
-        item.addActionListener(new SaveScriptAction());
-        item.setAccelerator(
-                KeyStroke.getKeyStroke(KeyEvent.VK_S, Java8Compat.getMenuShortcutKeyMaskEx()));
-        menu.add(item);
-
-        item = new JMenuItem();
-        Mnemonics.setLocalizedText(item, OStrings.getString("SCW_RUN_SCRIPT"));
-        item.addActionListener(new RunScriptAction());
-        item.setAccelerator(
-                KeyStroke.getKeyStroke(KeyEvent.VK_R, Java8Compat.getMenuShortcutKeyMaskEx()));
-        menu.add(item);
-
+        addJMenuItemAcce(menu,"SCW_LOAD_FILE",new OpenScriptAction(),KeyEvent.VK_O);
+        addJMenuItemAcce(menu,"SCW_NEW_SCRIPT",new NewScriptAction(),KeyEvent.VK_N);
+        addJMenuItemAcce(menu,"SCW_SAVE_SCRIPT",new SaveScriptAction(),KeyEvent.VK_S);
+        addJMenuItemAcce(menu,"SCW_RUN_SCRIPT",new RunScriptAction(),KeyEvent.VK_R);
         menu.addSeparator();
-
-        item = new JMenuItem();
-        Mnemonics.setLocalizedText(item, OStrings.getString("SCW_MENU_SET_SCRIPTS_FOLDER"));
-        item.addActionListener(new SelectScriptFolderAction());
-        menu.add(item);
-
-        item = new JMenuItem();
-        Mnemonics.setLocalizedText(item, OStrings.getString("SCW_MENU_ACCESS_FOLDER"));
-        item.addActionListener(new ExploreScriptFolderAction());
-        menu.add(item);
-
+        menu.add(addJMenuItemLis("SCW_MENU_SET_SCRIPTS_FOLDER",new SelectScriptFolderAction()));
+        menu.add(addJMenuItemLis("SCW_MENU_ACCESS_FOLDER",new ExploreScriptFolderAction()));
         menu.addSeparator();
+        addJMenuItemMenuClose(menu);
+        PropertiesShortcuts.getMainMenuShortcuts().bindKeyStrokes(menu);
+        mb.add(menu);
+        // Edit Menu
+        m_txtScriptEditor.enhanceMenu(mb);
+        buildSetsMenu(mb);
+        mb.add(getjMenu());
+        return mb;
+    }
 
-        item = new JMenuItem();
+    private void addJMenuItemMenuClose(JMenu menu) {
+        JMenuItem item = new JMenuItem();
         Mnemonics.setLocalizedText(item, OStrings.getString("SCW_MENU_CLOSE"));
         item.setAccelerator(
                 KeyStroke.getKeyStroke(KeyEvent.VK_W, Java8Compat.getMenuShortcutKeyMaskEx()));
@@ -904,16 +878,25 @@ public class ScriptingWindow {
             frame.dispose();
         });
         menu.add(item);
+    }
 
-        PropertiesShortcuts.getMainMenuShortcuts().bindKeyStrokes(menu);
+    private JMenuItem addJMenuItemLis(String key,ActionListener lis) {
+        JMenuItem item = new JMenuItem();
+        Mnemonics.setLocalizedText(item, OStrings.getString(key));
+        item.addActionListener(lis);
+        return item;
+    }
 
-        mb.add(menu);
+    private void addJMenuItemAcce(JMenu menu,String key,ActionListener lis, int keyKode) {
+        JMenuItem item = addJMenuItemLis(key,lis);
+        item.setAccelerator(KeyStroke.getKeyStroke(keyKode, Java8Compat.getMenuShortcutKeyMaskEx()));
+        menu.add(item);
+    }
 
-        // Edit Menu
-        m_txtScriptEditor.enhanceMenu(mb);
-
-        buildSetsMenu(mb);
-
+    @NotNull
+    private JMenu getjMenu() {
+        JMenu menu;
+        JMenuItem item;
         menu = new JMenu();
         Mnemonics.setLocalizedText(menu, OStrings.getString("SCW_MENU_HELP"));
         item = new JMenuItem();
@@ -928,9 +911,7 @@ public class ScriptingWindow {
             }
         });
         menu.add(item);
-        mb.add(menu);
-
-        return mb;
+        return menu;
     }
 
     private class SaveSetAction implements ActionListener {
