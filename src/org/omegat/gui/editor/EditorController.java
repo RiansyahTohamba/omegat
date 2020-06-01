@@ -1371,7 +1371,6 @@ public class EditorController implements IEditor {
     public void gotoEntry(final int entryNum) {
         gotoEntry(entryNum, CaretPosition.startOfEntry());
     }
-//  sudah: gotoEntry & 8.0 & 0.75 & 4.0 & 0 & 0 & 0
     public void gotoEntry(final int entryNum, final CaretPosition pos) {
         UIThreadsUtil.mustBeSwingThread();
         if (!Core.getProject().isProjectLoaded() || m_docSegList == null) {
@@ -1392,7 +1391,8 @@ public class EditorController implements IEditor {
         updateTitleCurrentFile();
     }
 
-
+//  todo: gotoEntry & 8.0 & 0.75 & 4.0 & 0 & 0 & 0
+    // salah refactor kemarin wkwkw
     public void gotoEntry(String srcString, EntryKey key) {
         UIThreadsUtil.mustBeSwingThread();
 

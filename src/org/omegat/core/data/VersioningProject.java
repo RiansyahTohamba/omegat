@@ -366,7 +366,7 @@ public class VersioningProject {
      *
      * File 2: headTMX (theirs)
      */
-    //    todo: 10 & 0.8 & 1 & 7 & 1 & 1
+    //    sudah: 10 & 0.8 & 1 & 7 & 1 & 1
 //        dibawah parameter -lib tidak dianggap coupling,e.g. sdk,gradle
     public void mergeTMX(ProjectTMX baseTMX, ProjectTMX headTMX, StringBuilder commitDetails) {
         // clscalled = config,SyncTMX,OString,realPr,ProjectTMX,Log,commitDetails,Report
